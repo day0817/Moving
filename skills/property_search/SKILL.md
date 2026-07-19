@@ -35,28 +35,38 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 
 ---
 
-## 3. 使用方法
+## 3. 使用方法と自動公開手順
 
-カレントディレクトリ（`Note`ワークスペース of ルート）にて、以下のコマンドを実行します。
+カレントディレクトリ（リポジトリルート）にて、以下のコマンドを実行します。
 
-```bash
+### 基本コマンド
+```powershell
 # 環境変数をUTF-8に設定して実行（コンソールでのcp932エンコーディングエラー回避のため）
 $env:PYTHONIOENCODING="utf-8"
 
-# 1. 検索結果とproperties.jsのみを更新する場合
+# 最新の物件データを検索・抽出して出力ファイルを更新する
 py skills/property_search/property_search.py --output 物件検索結果.md
+```
 
-# 2. 最新データの取得からWebアプリ（GitHub Pages）への自動デプロイまで一括実行する場合
-py skills/property_search/property_search.py --output 物件検索結果.md --push
+### GitHub Pages への公開・デプロイ手順
+物件データの更新、または HTML/CSS/JS などのアプリ更新を行った際は、**必ず以下の Git コマンドを実行して GitHub へのプッシュおよび Pages での公開を完了させてください。**
+
+```powershell
+# 変更されたデータおよびアプリの主要ファイルをステージング
+git add index.html style.css app.js properties.js 物件検索結果.md geocoding_cache.json
+
+# コミットを作成
+git commit -m "Update properties data and application"
+
+# リモートリポジトリにプッシュ (プッシュ完了後、数分で https://day0817.github.io/Moving/ に自動反映されます)
+git push origin main
 ```
 
 ### パラメータオプション
 
-* `--stations`: 検索する駅をカンマ区切りで絞り込みます（`matsudo`, `koshigaya`, `myoden`, `tsudanuma`, `motoyawata`, `moriya`）。
 * `--max-rent`: 総額家賃上限（万円、管理費・駐車場代込み）。デフォルトは `18.0`。
 * `--min-area`: 専有面積下限（m²）。デフォルトは `80`。
 * `--max-walk`: 駅徒歩上限（分）。デフォルトは `15`。
-* `--push`: 生成された `properties.js` を `scratch/bukken-compare/` にコピーし、コミット・GitHub Pagesへのプッシュまで自動実行します。
 
 ---
 
