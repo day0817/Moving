@@ -6,48 +6,113 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import random
-import subprocess
 import json
-
-# 対象の6駅のSUUMOシステムパラメータ（路線コード・駅コード・エリアコード）
-STATIONS = {
-    "matsudo": {"name": "松戸", "rn": "0500", "ek": "050035990", "ra": "012"},
-    "koshigaya": {"name": "越谷", "rn": "0440", "ek": "044014820", "ra": "011"},
-    "myoden": {"name": "妙典", "rn": "0025", "ek": "002538520", "ra": "012"},
-    "tsudanuma": {"name": "津田沼", "rn": "0580", "ek": "058024780", "ra": "012"},
-    "motoyawata": {"name": "本八幡", "rn": "0065", "ek": "006539350", "ra": "012"},
-    "moriya": {"name": "守谷", "rn": "0760", "ek": "076039550", "ra": "008"}
-}
-
-# 各駅から大手町までの標準乗車時間（分）
-TRAIN_TIMES = {
-    "松戸": 30,
-    "越谷": 40,
-    "妙典": 25,
-    "津田沼": 40,
-    "本八幡": 35,
-    "守谷": 45
-}
-
 import re
 
+# 都道府県コード（SUUMOパラメータ ta）
+PREFECTURES = {
+    "東京": "13",
+    "神奈川": "14",
+    "埼玉": "11",
+    "千葉": "12",
+    "茨城": "08"
+}
+
+# 静的な駅座標辞書（ハブ駅や主要駅をあらかじめ定義）
+STATIC_STATION_COORDS = {
+    "大手町": {"lat": 35.6848, "lng": 139.7661},
+    "東京": {"lat": 35.6812, "lng": 139.7671},
+    "松戸": {"lat": 35.7845, "lng": 139.9007},
+    "越谷": {"lat": 35.8897, "lng": 139.7891},
+    "妙典": {"lat": 35.6924, "lng": 139.9251},
+    "津田沼": {"lat": 35.6917, "lng": 140.0204},
+    "本八幡": {"lat": 35.7208, "lng": 139.9273},
+    "守谷": {"lat": 35.9503, "lng": 139.9755},
+    "北千住": {"lat": 35.7444, "lng": 139.8044},
+    "西船橋": {"lat": 35.7075, "lng": 139.9592},
+    "船橋": {"lat": 35.7014, "lng": 139.9850},
+    "浦安": {"lat": 35.6663, "lng": 139.8973},
+    "柏": {"lat": 35.8622, "lng": 139.9711},
+    "南越谷": {"lat": 35.8753, "lng": 139.7909},
+    "新越谷": {"lat": 35.8753, "lng": 139.7909},
+    "武蔵小杉": {"lat": 35.5758, "lng": 139.6631},
+    "川崎": {"lat": 35.5313, "lng": 139.6969},
+    "横浜": {"lat": 35.4658, "lng": 139.6222},
+    "浦和": {"lat": 35.8597, "lng": 139.6572},
+    "大宮": {"lat": 35.9063, "lng": 139.6233},
+}
+
+CACHE_FILE_PATH = "geocoding_cache.json"
+
+def load_geocoding_cache():
+    if os.path.exists(CACHE_FILE_PATH):
+        try:
+            with open(CACHE_FILE_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"キャッシュのロードに失敗: {e}", file=sys.stderr)
+    return {}
+
+def save_geocoding_cache(cache):
+    try:
+        with open(CACHE_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"キャッシュの保存に失敗: {e}", file=sys.stderr)
+
+# 地理座標の解決（静的辞書 -> キャッシュ -> API）
+def get_station_coords(station_name, cache):
+    clean_name = station_name.replace("駅", "").strip()
+    
+    if clean_name in STATIC_STATION_COORDS:
+        return STATIC_STATION_COORDS[clean_name]
+    
+    if clean_name in cache:
+        return cache[clean_name]
+    
+    print(f"  [API] 駅の座標を取得中: {clean_name}... ", end="", flush=True, file=sys.stderr)
+    headers = {
+        "User-Agent": "AntigravityBukkenCompareMap/1.0 (dh081@gemini-agent)"
+    }
+    url = f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(clean_name + '駅')}&format=json&limit=1"
+    try:
+        time.sleep(1.5)
+        res = requests.get(url, headers=headers, timeout=10)
+        if res.status_code == 200:
+            data = res.json()
+            if data:
+                lat = float(data[0]["lat"])
+                lng = float(data[0]["lon"])
+                coords = {"lat": lat, "lng": lng}
+                cache[clean_name] = coords
+                save_geocoding_cache(cache)
+                print("完了", file=sys.stderr)
+                return coords
+        print("失敗", file=sys.stderr)
+    except Exception as e:
+        print(f"エラー ({e})", file=sys.stderr)
+        
+    return None
+
 def extract_walk_minutes(station_walk_str, target_station_name):
-    # 駅名に続く「歩X分」を抽出
     pattern = rf"{target_station_name}(?:駅)?\s*歩(\d+)分"
     match = re.search(pattern, station_walk_str)
     if match:
         return int(match.group(1))
-    
-    # マッチしない場合は、最初の「歩X分」をフォールバックとして使用
     fallback_match = re.search(r"歩(\d+)分", station_walk_str)
     if fallback_match:
         return int(fallback_match.group(1))
-        
-    return 15  # デフォルト値
+    return 10
 
+def parse_age_num(age_floor_str):
+    if "新築" in age_floor_str:
+        return 0
+    match = re.search(r"築(\d+)年", age_floor_str)
+    if match:
+        return int(match.group(1))
+    return 99 # 不明な場合は安全のため築古扱い
 
 def calculate_self_pay(rent_str, admin_str, parking_fee=0.0):
-    # 家賃総額の算出
     rent_match = re.search(r"([\d.]+)", rent_str)
     rent = float(rent_match.group(1)) if rent_match else 0.0
     
@@ -65,23 +130,19 @@ def calculate_self_pay(rent_str, admin_str, parking_fee=0.0):
     return house_self_pay + parking_fee
 
 def parse_parking_info(detail_html):
-    # デフォルト値
-    parking_fee = 0.0  # 万円
-    parking_dist = 0   # メートル
+    parking_fee = 0.0
+    parking_dist = 0
     parking_text = "-"
     
     if not detail_html or detail_html == "BLOCKED":
         return parking_fee, parking_dist, parking_text
         
     soup = BeautifulSoup(detail_html, "html.parser")
-    # thのテキストが「駐車場」のものを探す
     th_el = soup.find(lambda tag: tag.name == "th" and tag.text and "駐車場" in tag.text.strip())
     if th_el:
         td_el = th_el.find_next_sibling("td")
         if td_el:
             parking_text = td_el.text.strip()
-            # parking_text の例: "近隣600m16500円", "付無料", "無", "敷地内10000円"
-            # 1. 距離の解析
             if "敷地内" in parking_text or "付" in parking_text:
                 parking_dist = 0
             else:
@@ -89,50 +150,42 @@ def parse_parking_info(detail_html):
                 if dist_match:
                     parking_dist = int(dist_match.group(1))
             
-            # 2. 料金の解析
             if "無料" in parking_text:
                 parking_fee = 0.0
             else:
                 fee_match = re.search(r"(\d+)\s*円", parking_text)
                 if fee_match:
-                    parking_fee = float(fee_match.group(1)) / 10000.0  # 円を万円に変換
+                    parking_fee = float(fee_match.group(1)) / 10000.0
                 else:
                     parking_fee = 0.0
                     
     return parking_fee, parking_dist, parking_text
 
-
-
-def build_suumo_url(station_key, max_rent=18.0, min_area=80, max_walk=15):
-    station = STATIONS.get(station_key)
-    if not station:
-        return None
-    
+def build_suumo_url(pref_code, max_rent=18.0, min_area=80, max_walk=15):
     base_url = "https://suumo.jp/jj/chintai/ichiran/FR301FC001/"
     params = {
         "ar": "030",            # 関東
+        "ta": pref_code,        # 都道府県コード
         "bs": "040",            # 賃貸
         "pc": "30",             # 表示件数
-        "smk": "",
-        "po1": "25",            # 表示順（標準）
+        "po1": "25",            # 標準順
         "po2": "99",
         "shkr1": "03",
         "shkr2": "03",
         "shkr3": "03",
         "shkr4": "03",
-        "rn": station["rn"],    # 路線コード
-        "ek": station["ek"],    # 駅コード
-        "ra": station["ra"],    # エリアコード（都道府県）
+        "ekInput": "06050",     # 大手町駅起点
+        "tj": "50",             # 通勤時間 50分以内
+        "nk": "1",              # 乗換 1回以下
         "cb": "0.0",            # 賃料下限
         "ct": str(max_rent),    # 賃料上限
         "co": "1",              # 管理費込み
-        "ts": "3",              # 建物種別: 一戸建て
-        "et": str(max_walk),    # 駅徒歩
+        "ts": "3",              # 一戸建て
+        "et": str(max_walk),    # 駅徒歩上限 (徒歩10〜15分は後でフィルタリングするため15でリクエスト)
         "mb": str(min_area),    # 専有面積下限
         "mt": "9999999",
         "cn": "9999999",
-        "tc": "0400901",        # こだわり条件: 駐車場あり
-        "fw2": ""
+        "tc": "0400901",        # 駐車場あり
     }
     
     query_str = urllib.parse.urlencode(params)
@@ -154,7 +207,26 @@ def fetch_properties(url):
         print(f"エラー: リクエストに失敗しました ({e})", file=sys.stderr)
         return None
 
-def parse_suumo_html(html_content, station_name):
+def parse_commute_info_from_row(row):
+    commute_text = ""
+    transfer_el = row.find(class_=re.compile(r"cassetteitem_transfer"))
+    if transfer_el:
+        commute_text = transfer_el.text.strip()
+    
+    minutes = 50
+    transfers = 1
+    
+    m_min = re.search(r"(\d+)分", commute_text)
+    if m_min:
+        minutes = int(m_min.group(1))
+    
+    m_tr = re.search(r"乗換(\d+)回", commute_text)
+    if m_tr:
+        transfers = int(m_tr.group(1))
+        
+    return minutes, transfers
+
+def parse_suumo_html(html_content):
     if html_content == "BLOCKED":
         return "BLOCKED"
     
@@ -166,8 +238,8 @@ def parse_suumo_html(html_content, station_name):
         title_el = item.find("div", class_="cassetteitem_content-title")
         title = title_el.text.strip() if title_el else "不明"
         
-        type_el = item.find("span", class_="cassetteitem_content-label")
-        prop_type = type_el.text.strip() if type_el else "不明"
+        prop_type_el = item.find("span", class_="cassetteitem_content-label")
+        prop_type = prop_type_el.text.strip() if prop_type_el else "不明"
         
         # 駅徒歩情報の抽出
         stations_el = item.find_all("div", class_="cassetteitem_detail-text")
@@ -175,6 +247,10 @@ def parse_suumo_html(html_content, station_name):
         for s in stations_el:
             station_info.append(s.text.strip())
         station_str = " / ".join(station_info)
+        
+        # 住所
+        address_el = item.find("li", class_="cassetteitem_detail-col1")
+        address = address_el.text.strip() if address_el else ""
         
         # 築年数・階数
         col3_el = item.find("li", class_="cassetteitem_detail-col3")
@@ -219,11 +295,14 @@ def parse_suumo_html(html_content, station_name):
                 if link_el and link_el.has_attr("href"):
                     detail_url = "https://suumo.jp" + link_el["href"]
                 
+                # 大手町への通勤時間・乗換回数の抽出
+                commute_min, commute_transfers = parse_commute_info_from_row(row)
+                
                 properties.append({
-                    "station_group": station_name,
                     "title": title,
                     "type": prop_type,
                     "station_walk": station_str,
+                    "address": address,
                     "age_floor": age_floor,
                     "rent": rent,
                     "admin": admin,
@@ -231,10 +310,31 @@ def parse_suumo_html(html_content, station_name):
                     "gratuity": gratuity,
                     "madori": madori,
                     "menseki": menseki,
-                    "url": detail_url
+                    "url": detail_url,
+                    "commute_min": commute_min,
+                    "commute_transfers": commute_transfers
                 })
                 
     return properties
+
+def parse_max_pages(html_content):
+    if not html_content or html_content == "BLOCKED":
+        return 1
+    soup = BeautifulSoup(html_content, "html.parser")
+    pagination = soup.find("ol", class_="pagination-parts")
+    if not pagination:
+        return 1
+    page_links = pagination.find_all("a")
+    pages = [1]
+    for a in page_links:
+        m = re.search(r"page=(\d+)", a.get("href", ""))
+        if m:
+            pages.append(int(m.group(1)))
+        else:
+            m2 = re.search(r"\d+", a.text)
+            if m2:
+                pages.append(int(m2.group(0)))
+    return max(pages)
 
 def load_existing_properties(js_path):
     if not os.path.exists(js_path):
@@ -245,195 +345,169 @@ def load_existing_properties(js_path):
         match = re.search(r"const\s+bukkenData\s*=\s*(.*);", content, re.DOTALL)
         if match:
             return json.loads(match.group(1).strip())
-        if "=" in content:
-            json_str = content.split("=", 1)[1].strip()
-            if json_str.endswith(";"):
-                json_str = json_str[:-1].strip()
-            return json.loads(json_str)
     except Exception as e:
         print(f"既存データのロードに失敗: {e}", file=sys.stderr)
     return []
 
-def compare_properties(old_props, new_props):
-    def make_key(p):
-        return (p.get("station", ""), p.get("title", ""), p.get("madori", ""))
-
-    def parse_rent(rent_str):
-        if not rent_str:
-            return 0.0
-        m = re.search(r"([\d.]+)", str(rent_str))
-        return float(m.group(1)) if m else 0.0
-
-    old_map = {make_key(p): p for p in old_props if make_key(p)[0]}
-    new_map = {make_key(p): p for p in new_props if make_key(p)[0]}
-
-    added = []
-    removed = []
-    changed = []
-
-    for key, new_p in new_map.items():
-        if key not in old_map:
-            added.append(new_p)
-        else:
-            old_p = old_map[key]
-            old_rent = parse_rent(old_p.get("rent"))
-            new_rent = parse_rent(new_p.get("rent"))
-            if old_rent != new_rent:
-                changed.append({
-                    "station": new_p["station"],
-                    "title": new_p["title"],
-                    "madori": new_p["madori"],
-                    "old_rent": old_p.get("rent"),
-                    "new_rent": new_p.get("rent"),
-                    "old_self_pay": old_p.get("self_pay"),
-                    "new_self_pay": new_p.get("self_pay"),
-                    "url": new_p.get("url")
-                })
-
-    for key, old_p in old_map.items():
-        if key not in new_map:
-            removed.append(old_p)
-
-    return added, removed, changed
-
-def push_to_github(compare_repo_path, js_content):
-    if not os.path.exists(compare_repo_path):
-        print(f"エラー: 指定されたリポジトリパス {compare_repo_path} が存在しません。", file=sys.stderr)
-        return False
-
-    dest_path = os.path.join(compare_repo_path, "properties.js")
-    try:
-        with open(dest_path, "w", encoding="utf-8") as f:
-            f.write(js_content)
-        print(f"[{compare_repo_path}] に properties.js を上書きコピーしました。", file=sys.stderr)
-    except Exception as e:
-        print(f"ファイルのコピーに失敗しました: {e}", file=sys.stderr)
-        return False
-
-    try:
-        subprocess.run(["git", "add", "properties.js"], cwd=compare_repo_path, check=True)
-        status_res = subprocess.run(["git", "status", "--porcelain"], cwd=compare_repo_path, capture_output=True, text=True, check=True)
-        if not status_res.stdout.strip():
-            print("変更がないため、GitHubへのプッシュをスキップします。", file=sys.stderr)
-            return True
-        
-        subprocess.run(["git", "commit", "-m", "update: 物件データを最新情報に更新"], cwd=compare_repo_path, check=True)
-        subprocess.run(["git", "push", "origin", "main"], cwd=compare_repo_path, check=True)
-        print("GitHubへの自動プッシュが完了しました。", file=sys.stderr)
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"Gitコマンドの実行に失敗しました: {e}", file=sys.stderr)
-        return False
-
 def main():
-    parser = argparse.ArgumentParser(description="SUUMO賃貸一戸建て物件検索スクリプト")
-    parser.add_argument("--stations", type=str, help="カンマ区切りの駅キー（matsudo,koshigaya,myoden,tsudanuma,motoyawata,moriya,yashio）。未指定なら全駅")
+    parser = argparse.ArgumentParser(description="大手町起点通勤時間指定SUUMO一括物件検索スクリプト")
     parser.add_argument("--max-rent", type=float, default=18.0, help="家賃上限（万円）、管理費込み。デフォルト18.0")
     parser.add_argument("--min-area", type=int, default=80, help="最小専有面積（m2）。デフォルト80")
     parser.add_argument("--max-walk", type=int, default=15, help="駅徒歩上限（分）。デフォルト15")
-    parser.add_argument("--output", type=str, help="出力先のMarkdownファイルパス。未指定なら標準出力")
-    parser.add_argument("--push", action="store_true", help="GitHubへの自動コピーとプッシュを実行")
-    parser.add_argument("--compare-repo-path", type=str, default="scratch/bukken-compare", help="比較Webアプリ用リポジトリのパス")
+    parser.add_argument("--output", type=str, default="物件検索結果.md", help="出力先のMarkdownファイルパス")
     
     args = parser.parse_args()
     
-    target_keys = list(STATIONS.keys())
-    if args.stations:
-        target_keys = [k.strip() for k in args.stations.split(",") if k.strip() in STATIONS]
-        
+    geocoding_cache = load_geocoding_cache()
     all_properties = []
-    search_urls = {}
-    blocked_any = False
-    failed_stations = []
     
-    print("物件情報を検索中...", file=sys.stderr)
-    for key in target_keys:
-        station_name = STATIONS[key]["name"]
-        url = build_suumo_url(key, max_rent=args.max_rent, min_area=args.min_area, max_walk=args.max_walk)
-        search_urls[station_name] = url
+    print("物件情報を各都県から検索中...", file=sys.stderr)
+    for pref_name, pref_code in PREFECTURES.items():
+        print(f"[{pref_name}] 検索中... ", file=sys.stderr)
+        # 徒歩15分以内でリクエストを投げる ( et=15 )
+        base_url = build_suumo_url(pref_code, max_rent=args.max_rent, min_area=args.min_area, max_walk=args.max_walk)
         
-        print(f"[{station_name}] 検索中... ", end="", flush=True, file=sys.stderr)
-        html = fetch_properties(url)
+        # 1ページ目を取得して最大ページ数を確認
+        first_page_html = fetch_properties(base_url)
+        if first_page_html == "BLOCKED":
+            print(f"  -> {pref_name}でアクセスブロックが発生しました。", file=sys.stderr)
+            continue
+        elif first_page_html is None:
+            print(f"  -> {pref_name}の取得に失敗しました。", file=sys.stderr)
+            continue
+            
+        max_pages = parse_max_pages(first_page_html)
+        print(f"  -> 最大ページ数: {max_pages}", file=sys.stderr)
         
-        station_success = False
-        if html == "BLOCKED":
-            print("ブロックされました（直URLをご利用ください）", file=sys.stderr)
-            blocked_any = True
-        elif html is None:
-            print("エラー", file=sys.stderr)
-        else:
-            props = parse_suumo_html(html, station_name)
-            if props == "BLOCKED":
-                print("ブロックされました", file=sys.stderr)
-                blocked_any = True
-            else:
-                print(f"{len(props)} 件取得", file=sys.stderr)
-                all_properties.extend(props)
-                station_success = True
+        pref_properties = parse_suumo_html(first_page_html)
+        if isinstance(pref_properties, list):
+            all_properties.extend(pref_properties)
+            
+        # 2ページ目以降をループ
+        for page in range(2, max_pages + 1):
+            time.sleep(random.uniform(2.0, 4.0)) # ウェイト
+            print(f"  -> ページ {page} / {max_pages} を取得中... ", end="", flush=True, file=sys.stderr)
+            page_url = f"{base_url}&page={page}"
+            page_html = fetch_properties(page_url)
+            if page_html == "BLOCKED":
+                print("ブロック発生", file=sys.stderr)
+                break
+            elif page_html is None:
+                print("エラー", file=sys.stderr)
+                continue
                 
-        if not station_success:
-            failed_stations.append(station_name)
+            page_properties = parse_suumo_html(page_html)
+            if isinstance(page_properties, list):
+                print(f"{len(page_properties)}件取得", file=sys.stderr)
+                all_properties.extend(page_properties)
+            else:
+                print("エラー", file=sys.stderr)
+                
+        # サーバー負荷防止用
+        time.sleep(random.uniform(3.0, 5.0))
         
-        # サーバー負荷防止用のランダムウェイト
-        time.sleep(random.uniform(2.0, 4.0))
-        
-    # 重複排除 (家賃、駅徒歩、間取りが一致するものを排除)
+    print(f"\n合計取得レコード数: {len(all_properties)} 件 (重複排除前)", file=sys.stderr)
+
+    # 1. 厳格な重複排除 (タイトル、家賃、間取り、面積、住所が同じものは同一物件とみなす)
     unique_properties = []
-    seen = set()
+    seen_keys = set()
     for p in all_properties:
-        station_name = p['station_group']
-        walk_min = extract_walk_minutes(p['station_walk'], station_name)
-        key = (p["rent"], station_name, walk_min, p["madori"])
-        if key not in seen:
-            seen.add(key)
+        key = (
+            p["title"].strip(),
+            p["rent"].strip(),
+            p["madori"].strip(),
+            p["menseki"].strip(),
+            p["address"].strip()
+        )
+        if key not in seen_keys:
+            seen_keys.add(key)
             unique_properties.append(p)
-    all_properties = unique_properties
-
-    # 既存データのロードと新旧比較
-    existing_js_path = ""
-    if args.output:
-        dir_name = os.path.dirname(args.output)
-        existing_js_path = os.path.join(dir_name, "物件比較アプリ", "properties.js")
+            
+    print(f"重複排除後のユニーク物件数: {len(unique_properties)} 件", file=sys.stderr)
     
-    old_properties = []
-    if existing_js_path:
-        old_properties = load_existing_properties(existing_js_path)
-
-    # 駐車場情報の取得とキャッシュ（既存データ）再利用
-    print("駐車場情報を解析中...", file=sys.stderr)
-    for p in all_properties:
-        # 既存データに駐車場情報があるかチェック
-        old_p = next((x for x in old_properties if x.get("url") == p["url"]), None)
-        if old_p and "parking_fee" in old_p:
-            p["parking_fee"] = old_p["parking_fee"]
-            p["parking_dist"] = old_p.get("parking_dist", 0)
-            p["parking_text"] = old_p.get("parking_text", "-")
+    # 既存データの読み込み (駐車場情報のキャッシュ引き継ぎ用)
+    dir_name = os.path.dirname(args.output) or "."
+    existing_js_path = os.path.join(dir_name, "物件比較アプリ", "properties.js")
+    old_properties = load_existing_properties(existing_js_path)
+    
+    # 2. 駐車場情報の取得とキャッシュ再利用、最寄り駅の路線名と駅名、および新フィルタリングルールの適用
+    json_properties = []
+    
+    print("詳細情報・最寄り駅座標の処理とフィルタリング中...", file=sys.stderr)
+    for idx, p in enumerate(unique_properties):
+        # 最寄り駅のパース
+        station_name = "不明"
+        line_name = "不明"
+        walk_min = 15
+        
+        # 最初の駅情報をメインとする
+        first_walk_part = p["station_walk"].split("/")[0] if "/" in p["station_walk"] else p["station_walk"]
+        
+        # 正規表現で「路線名」と「駅名」「徒歩」を綺麗に抜く
+        match = re.search(r"([^/]+)/([^/]+駅)\s*歩(\d+)分", p["station_walk"])
+        if match:
+            line_name = match.group(1).strip()
+            station_name = match.group(2).replace("駅", "").strip()
+            walk_min = int(match.group(3))
         else:
-            # 詳細ページを取得して解析
-            print(f"  詳細から駐車場情報を取得中: {p['title']} ({p['url']})... ", end="", flush=True, file=sys.stderr)
+            match_fallback = re.search(r"([^/]+)歩(\d+)分", first_walk_part)
+            if match_fallback:
+                raw_station_line = match_fallback.group(1).strip()
+                walk_min = int(match_fallback.group(2))
+                if "駅" in raw_station_line:
+                    station_name = raw_station_line.split("駅")[0].split("/")[-1].strip()
+                    line_name = raw_station_line.split("/")[0].strip() if "/" in raw_station_line else "不明"
+            else:
+                station_name = "不明"
+        
+        # === 新フィルタリングルールの適用 ===
+        # 1. 駅徒歩10分以内なら全件取得
+        # 2. 駅徒歩10〜15分なら築10年以下のみ取得
+        age_years = parse_age_num(p["age_floor"])
+        
+        is_valid_property = False
+        if walk_min <= 10:
+            is_valid_property = True
+        elif 10 < walk_min <= 15:
+            if age_years <= 10:
+                is_valid_property = True
+                
+        if not is_valid_property:
+            # 条件に合致しないためスキップ
+            continue
+            
+        # 駅の座標を取得 (ハイブリッド方式)
+        coords = None
+        if station_name != "不明":
+            coords = get_station_coords(station_name, geocoding_cache)
+            
+        # 駐車場情報のキャッシュ引き継ぎ
+        old_p = next((x for x in old_properties if x.get("url") == p["url"]), None)
+        p_fee = 0.0
+        p_dist = 0
+        p_text = "-"
+        if old_p and "parking_fee" in old_p:
+            p_fee = old_p["parking_fee"]
+            p_dist = old_p.get("parking_dist", 0)
+            p_text = old_p.get("parking_text", "-")
+        else:
+            # 新規物件のみ詳細ページを取得して駐車場情報を取得
+            print(f"  [{idx+1}/{len(unique_properties)}] 駐車場情報を取得中: {p['title']} ({p['url']})... ", end="", flush=True, file=sys.stderr)
             time.sleep(random.uniform(2.5, 4.0)) # ウェイト
             detail_html = fetch_properties(p["url"])
             p_fee, p_dist, p_text = parse_parking_info(detail_html)
-            p["parking_fee"] = p_fee
-            p["parking_dist"] = p_dist
-            p["parking_text"] = p_text
             print(f"完了 ({p_text})", file=sys.stderr)
-
-    # Webアプリ形式 of データに変換
-    json_properties = []
-    for p in all_properties:
-        st_name = p['station_group']
-        w_min = extract_walk_minutes(p['station_walk'], st_name)
-        t_min = TRAIN_TIMES.get(st_name, 30)
-        d_to_d = w_min + t_min
-        
-        p_fee = p.get("parking_fee", 0.0)
-        p_dist = p.get("parking_dist", 0)
-        p_text = p.get("parking_text", "-")
-        
+            
         s_pay = calculate_self_pay(p['rent'], p['admin'], p_fee)
+        
+        # ドアドア通勤時間の計算 (SUUMOの通勤検索結果の時間を優先的に使用)
+        commute_min = p.get("commute_min", 50)
+        commute_transfers = p.get("commute_transfers", 1)
+        door_to_door = commute_min + walk_min
+        
         json_properties.append({
-            "station": st_name,
+            "station": station_name,
+            "line": line_name,
             "title": p['title'],
             "rent": p['rent'],
             "admin": p['admin'],
@@ -446,127 +520,63 @@ def main():
             "madori": p['madori'],
             "menseki": p['menseki'],
             "station_walk": p['station_walk'],
+            "address": p['address'],
             "age_floor": p['age_floor'],
             "url": p['url'],
-            "walk_min": w_min,
-            "train_min": t_min,
-            "door_to_door": d_to_d
+            "walk_min": walk_min,
+            "train_min": commute_min,
+            "door_to_door": door_to_door,
+            "transfers": commute_transfers,
+            "lat": coords["lat"] if coords else None,
+            "lng": coords["lng"] if coords else None
         })
 
-    # 取得に失敗した駅については、既存データから物件を引き継ぐ
-    if failed_stations and old_properties:
-        print(f"\n以下の駅のデータ取得に失敗したため、既存データを引き継ぎます: {', '.join(failed_stations)}", file=sys.stderr)
-        for p in old_properties:
-            if p.get("station") in failed_stations:
-                # 重複して追加されないようにチェック（念のため）
-                if not any(x.get("url") == p.get("url") for x in json_properties):
-                    json_properties.append(p)
+    print(f"新ルール適用・フィルタリング後の物件数: {len(json_properties)} 件", file=sys.stderr)
 
-    added, removed, changed = compare_properties(old_properties, json_properties)
-        
     # 結果のMarkdown生成
     md_lines = []
     md_lines.append("# 物件検索結果一覧\n")
-    md_lines.append(f"検索条件：管理費・駐車場込み {args.max_rent}万円以下 / 面積 {args.min_area}m²以上 / 一戸建て / 駅徒歩 {args.max_walk}分以内\n")
-    
-    if old_properties:
-        md_lines.append("## 前回からの変更点（差分）\n")
-        if added:
-            md_lines.append("### 新規掲載された物件")
-            for p in added:
-                link = f"[詳細を表示]({p['url']})" if p['url'] else "-"
-                md_lines.append(f"- **[{p['station']}] {p['title']}** ({p['rent']} / {p['madori']} / {p['menseki']} / 徒歩: {p['station_walk']}) - {link}")
-            md_lines.append("")
-        if removed:
-            md_lines.append("### 掲載終了した物件")
-            for p in removed:
-                md_lines.append(f"- **[{p['station']}] {p['title']}** ({p['rent']} / {p['madori']} / {p['menseki']})")
-            md_lines.append("")
-        if changed:
-            md_lines.append("### 条件・家賃が変更された物件")
-            for p in changed:
-                link = f"[詳細を表示]({p['url']})" if p['url'] else "-"
-                md_lines.append(f"- **[{p['station']}] {p['title']}** (家賃: {p['old_rent']} → {p['new_rent']} / 自己負担: {p['old_self_pay']:.2f}万円 → {p['new_self_pay']:.2f}万円) - {link}")
-            md_lines.append("")
-        if not added and not removed and not changed:
-            md_lines.append("前回からの変更点はありません。\n")
-        md_lines.append("---")
-        md_lines.append("")
-
-    if blocked_any:
-        md_lines.append("> [!WARNING]")
-        md_lines.append("> SUUMO側でアクセス制限（ブロック）が発生したため、一部またはすべての自動取得に失敗しました。以下の検索リンクから直接ブラウザでご確認ください。\n")
-        
-    md_lines.append("## 各エリアのSUUMO直リンク")
-    for name, url in search_urls.items():
-        md_lines.append(f"- [{name}駅エリアの検索結果URL]({url})")
-    md_lines.append("")
+    md_lines.append(f"検索条件：管理費・駐車場込み {args.max_rent}万円以下 / 面積 {args.min_area}m²以上 / 一戸建て / 大手町まで50分・乗換1回以下\n")
+    md_lines.append("※絞り込みルール：駅徒歩10分以内は全件、駅徒歩10〜15分は築10年以下のみ取得\n")
     
     md_lines.append("## 抽出された物件一覧")
-    if all_properties:
-        md_lines.append("| エリア | 物件名 | 家賃/管理費 | 自己負担額 | ドアドア通勤時間 | 間取り/面積 | 徒歩・立地 | リンク |")
-        md_lines.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
+    if json_properties:
+        md_lines.append("| エリア | 最寄り路線 | 物件名 | 家賃/管理費 | 自己負担額 | ドアドア通勤時間 (乗換) | 間取り/面積 | 徒歩・立地 | リンク |")
+        md_lines.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
         for p in json_properties:
             rent_info = f"{p['rent']} / {p['admin']}"
             room_info = f"{p['madori']} / {p['menseki']}"
             link = f"[詳細を表示]({p['url']})" if p['url'] else "-"
             self_pay_str = f"**{p['self_pay']:.2f}万円**"
-            commute_info = f"**{p['door_to_door']}分** (徒歩{p['walk_min']}分+乗車{p['train_min']}分)"
-            md_lines.append(f"| {p['station']} | {p['title']} | {rent_info} | {self_pay_str} | {commute_info} | {room_info} | {p['station_walk']} ({p['age_floor']}) | {link} |")
+            commute_info = f"**{p['door_to_door']}分** (徒歩{p['walk_min']}分+乗車{p['train_min']}分, 乗換{p['transfers']}回)"
+            md_lines.append(f"| {p['station']} | {p['line']} | {p['title']} | {rent_info} | {self_pay_str} | {commute_info} | {room_info} | {p['station_walk']} ({p['age_floor']}) | {link} |")
     else:
-        md_lines.append("条件に合致する物件が自動取得できませんでした。上記の検索リンクから直接ブラウザでご確認いただくか、時間をおいて再試行してください。")
+        md_lines.append("条件に合致する物件が自動取得できませんでした。時間をおいて再試行してください。")
         
     md_content = "\n".join(md_lines)
     
-    # 差分のコンソール出力
-    if old_properties:
-        print("\n=== 前回からの変更点 ===", file=sys.stderr)
-        if added:
-            print(f"新規掲載: {len(added)} 件", file=sys.stderr)
-            for p in added:
-                print(f"  + [{p['station']}] {p['title']} ({p['rent']})", file=sys.stderr)
-        if removed:
-            print(f"掲載終了: {len(removed)} 件", file=sys.stderr)
-            for p in removed:
-                print(f"  - [{p['station']}] {p['title']} ({p['rent']})", file=sys.stderr)
-        if changed:
-            print(f"条件変更: {len(changed)} 件", file=sys.stderr)
-            for p in changed:
-                print(f"  * [{p['station']}] {p['title']} ({p['old_rent']} -> {p['new_rent']})", file=sys.stderr)
-        if not added and not removed and not changed:
-            print("変更なし", file=sys.stderr)
-        print("=======================\n", file=sys.stderr)
+    # ファイル書き出し
+    with open(args.output, "w", encoding="utf-8") as f:
+        f.write(md_content)
+    print(f"\n結果を {args.output} に書き出しました。", file=sys.stderr)
+    
+    # properties.js の書き出し
+    js_content = f"const bukkenData = {json.dumps(json_properties, ensure_ascii=False, indent=2)};"
+    
+    try:
+        with open(existing_js_path, "w", encoding="utf-8") as f:
+            f.write(js_content)
+        print(f"properties.js を書き出しました ({existing_js_path})。", file=sys.stderr)
+    except Exception as e:
+        print(f"properties.js の書き出しに失敗: {e}", file=sys.stderr)
 
-    if args.output:
-        with open(args.output, "w", encoding="utf-8") as f:
-            f.write(md_content)
-        print(f"\n結果を {args.output} に書き出しました。", file=sys.stderr)
-        
-        # properties.js を書き出す
-        js_content = f"const bukkenData = {json.dumps(json_properties, ensure_ascii=False, indent=2)};"
-        
-        try:
-            with open(existing_js_path, "w", encoding="utf-8") as f:
-                f.write(js_content)
-            print(f"properties.js を書き出しました ({existing_js_path})。", file=sys.stderr)
-        except Exception as e:
-            print(f"properties.js の書き出しに失敗: {e}", file=sys.stderr)
-
-        # properties.js (ルート直下) にも書き出す
-        root_js_path = os.path.join(dir_name, "properties.js")
-        try:
-            with open(root_js_path, "w", encoding="utf-8") as f:
-                f.write(js_content)
-            print(f"properties.js を書き出しました ({root_js_path})。", file=sys.stderr)
-        except Exception as e:
-            print(f"properties.js の書き出しに失敗: {e}", file=sys.stderr)
-
-        # GitHubへのプッシュ
-        if args.push:
-            repo_path = args.compare_repo_path or "scratch/bukken-compare"
-            push_to_github(repo_path, js_content)
-    else:
-        print(md_content)
+    root_js_path = os.path.join(dir_name, "properties.js")
+    try:
+        with open(root_js_path, "w", encoding="utf-8") as f:
+            f.write(js_content)
+        print(f"properties.js を書き出しました ({root_js_path})。", file=sys.stderr)
+    except Exception as e:
+        print(f"properties.js の書き出しに失敗: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
     main()

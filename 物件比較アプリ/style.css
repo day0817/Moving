@@ -1,16 +1,16 @@
 :root {
-    --bg-dark: #070a13;
-    --card-bg: rgba(20, 27, 45, 0.65);
+    --bg-dark: #1e222b;
+    --card-bg: rgba(33, 38, 48, 0.7);
     --border-color: rgba(255, 255, 255, 0.08);
-    --text-primary: #f3f4f6;
+    --text-primary: #e5e7eb;
     --text-secondary: #9ca3af;
-    --accent: #00d2ff;
-    --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #4f46e5 100%);
+    --accent: #3b82f6;
+    --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     --font-outfit: 'Outfit', 'Inter', sans-serif;
     
     --color-green: #10b981;
-    --color-yellow: #f59e0b;
-    --color-red: #ef4444;
+    --color-yellow: #fbbf24;
+    --color-red: #f87171;
 }
 
 * {
@@ -648,5 +648,372 @@ header {
     background: rgba(236, 18, 52, 0.12);
     border: 1px solid rgba(236, 18, 52, 0.35);
     color: #ff4a5a;
+}
+
+/* タブナビゲーション */
+.app-tabs-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nav-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--font-outfit);
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.25s ease;
+}
+
+.nav-tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.nav-tab-btn.active {
+    color: var(--accent);
+}
+
+.nav-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 3px 3px 0 0;
+}
+
+/* タブコンテンツ表示制御 */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* 地図表示エリア */
+.map-panel {
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.map-header {
+    margin-bottom: 1.5rem;
+}
+
+.map-header h3 {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.map-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.map-wrapper {
+    width: 100%;
+    height: 600px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+    background-color: #2b303c;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.map-legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-line {
+    display: inline-block;
+    width: 30px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.legend-line.direct {
+    background-color: #3b82f6;
+}
+
+.legend-line.transfer {
+    background: repeating-linear-gradient(90deg, #ff9f0a, #ff9f0a 4px, transparent 4px, transparent 8px);
+}
+
+/* Leaflet ポップアップとコントロールのスモークグレー調カスタマイズ */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background: #212630 !important;
+    color: #e5e7eb !important;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+    font-family: var(--font-outfit);
+}
+
+.leaflet-popup-content {
+    margin: 12px 16px !important;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.leaflet-popup-content h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 4px;
+    color: #60a5fa !important;
+}
+
+.leaflet-popup-content .popup-route {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.leaflet-popup-content .popup-count {
+    margin-top: 6px;
+    font-weight: bold;
+    color: #fbbf24;
+}
+
+.leaflet-popup-content .popup-link {
+    display: inline-block;
+    margin-top: 8px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.leaflet-popup-content .popup-link:hover {
+    text-decoration: underline;
+}
+
+.leaflet-bar {
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+
+.leaflet-bar a {
+    background-color: #212630 !important;
+    color: #e5e7eb !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.leaflet-bar a:hover {
+    background-color: #2b323f !important;
+    color: #fff !important;
+}
+
+/* 物件一覧（シート）用のスタイル */
+.sheet-panel {
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.sheet-header {
+    margin-bottom: 1.5rem;
+}
+
+.sheet-header h3 {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.sheet-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* スプレッドシート専用フィルタ */
+.sheet-filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sheet-filters .search-box {
+    flex-grow: 1;
+    min-width: 300px;
+}
+
+.sheet-filters .search-box input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.75rem 1.2rem;
+    border-radius: 8px;
+    outline: none;
+    font-family: var(--font-outfit);
+    font-size: 0.95rem;
+    transition: border-color 0.25s;
+}
+
+.sheet-filters .search-box input:focus {
+    border-color: var(--accent);
+}
+
+.sheet-filter-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.sheet-filter-group .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.sheet-filter-group .filter-item label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* スプレッドシートテーブルコンテナ */
+.sheet-table-container {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    background: rgba(21, 25, 32, 0.5);
+}
+
+.sheet-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.sheet-table th, .sheet-table td {
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sheet-table th {
+    background: #1b2029;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sheet-table th:hover {
+    background: #252c38;
+    color: var(--text-primary);
+}
+
+.sheet-table th .sort-icon {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.75rem;
+    opacity: 0.5;
+}
+
+.sheet-table th.active-sort {
+    color: var(--accent);
+}
+
+.sheet-table th.active-sort .sort-icon {
+    opacity: 1;
+}
+
+.sheet-table td {
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+.sheet-table tbody tr {
+    transition: background-color 0.15s;
+}
+
+.sheet-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.sheet-table tbody tr:hover {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.sheet-table td.rent-cell {
+    font-weight: bold;
+}
+
+.sheet-table td.self-pay-cell {
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.sheet-table td.commute-cell {
+    font-weight: 600;
+}
+
+.sheet-table td.commute-cell.green { color: var(--color-green); }
+.sheet-table td.commute-cell.yellow { color: var(--color-yellow); }
+.sheet-table td.commute-cell.red { color: var(--color-red); }
+
+.sheet-table td.age-cell {
+    color: var(--text-secondary);
+}
+
+.sheet-table .table-action-btn {
+    display: inline-block;
+    padding: 0.35rem 0.8rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: var(--accent);
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+}
+
+.sheet-table .table-action-btn:hover {
+    background: var(--accent-gradient);
+    color: #fff;
+    border-color: transparent;
 }
 
