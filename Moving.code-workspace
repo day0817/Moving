@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.colorCustomizations": {
+			"activityBar.foreground": "#2fa731",
+			"activityBar.inactiveForeground": "#747474"
+		},
+		"markdown.styles": [
+			"./.vscode/markdown.css"
+		]
+	}
+}

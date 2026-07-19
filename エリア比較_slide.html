@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>候補エリア比較分析 - スライド資料</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       1. 基本スタイル・リセット
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      background-color: #111111;
+      color: #222222;
+      font-family: 'Noto Sans JP', sans-serif;
+      overflow: hidden;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* ==========================================================================
+       2. スライドデッキ・コンテナ (16:9比率固定スケーリング方式)
+       ========================================================================== */
+    .deck {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1920px;
+      height: 1080px;
+      transform-origin: center center;
+      transform: translate(-50%, -50%) scale(1);
+      background-color: #FFFFFF;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1080px;
+      display: none;
+      background-color: #FFFFFF;
+      padding: 160px 80px 60px 80px; /* 上部160pxはヘッダー領域 */
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    /* ==========================================================================
+       3. 共通コンポーネント (ヘッダー等)
+       ========================================================================== */
+    .slide-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 130px;
+      background-color: #2E4FB5; /* Primary Blue */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 80px;
+    }
+
+    .slide-title {
+      color: #FFFFFF;
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .slide-date {
+      color: #FFFFFF;
+      font-size: 20px;
+      opacity: 0.9;
+    }
+
+    /* ==========================================================================
+       4. 各スライドのレイアウト・デザイン
+       ========================================================================== */
+    
+    /* 改行崩れ防止のためのインラインブロック化 */
+    span, td span {
+      display: inline-block;
+      white-space: normal;
+    }
+    
+    .highlight-red {
+      color: #EC1234 !important; /* Accent Red */
+      font-weight: 700;
+    }
+
+    /* --- スライド1: 表紙 --- */
+    .slide-cover {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 0;
+    }
+    .cover-banner {
+      width: 100%;
+      height: 280px;
+      background-color: #2E4FB5;
+      display: flex;
+      align-items: center;
+      padding: 0 100px;
+    }
+    .cover-title {
+      color: #FFFFFF;
+      font-size: 64px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .cover-body {
+      flex: 1;
+      padding: 60px 100px;
+      background-color: #FFFFFF;
+    }
+    .cover-card {
+      width: 100%;
+      height: 100%;
+      background-color: #F0F8FF; /* Card Background */
+      border-radius: 8px;
+      padding: 40px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .cover-card h2 {
+      font-size: 32px;
+      color: #2E4FB5;
+      margin-bottom: 24px;
+      font-weight: 700;
+      border-bottom: 3px solid #2E4FB5;
+      padding-bottom: 10px;
+    }
+    .cover-list {
+      list-style-type: none;
+    }
+    .cover-list li {
+      font-size: 24px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      color: #222222;
+      position: relative;
+      padding-left: 30px;
+    }
+    .cover-list li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      color: #2E4FB5;
+    }
+    .cover-list li ul {
+      margin-top: 8px;
+      list-style-type: none;
+    }
+    .cover-list li ul li {
+      font-size: 22px;
+      margin-bottom: 8px;
+      padding-left: 20px;
+    }
+    .cover-list li ul li::before {
+      content: "-";
+      color: #444444;
+    }
+
+    /* --- スライド2: 比較一覧表 --- */
+    .table-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .compare-table th {
+      background-color: #2E4FB5;
+      color: #FFFFFF;
+      font-size: 22px;
+      font-weight: 700;
+      padding: 20px 15px;
+      text-align: left;
+      border: 1px solid #FFFFFF;
+    }
+    .compare-table td {
+      font-size: 20px;
+      padding: 22px 20px;
+      line-height: 1.4;
+      border: 1px solid #DDDDDD;
+      background-color: #FFFFFF;
+    }
+    .compare-table tr:nth-child(even) td {
+      background-color: #F0F8FF; /* 1行おきに淡い青 */
+    }
+    .cell-center {
+      text-align: center !important;
+    }
+    .cell-bold {
+      font-weight: 700;
+    }
+
+    /* --- スライド3・4: 3カラム詳細カード --- */
+    .columns-3 {
+      display: flex;
+      justify-content: space-between;
+      height: 100%;
+      gap: 40px;
+    }
+    .card-3 {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #F0F8FF;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .card-header {
+      background-color: #2E4FB5;
+      color: #FFFFFF;
+      font-size: 26px;
+      font-weight: 700;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+    }
+    .card-body {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .info-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .info-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #222222;
+      display: flex;
+      align-items: center;
+    }
+    .info-title::before {
+      content: "■";
+      color: #2E4FB5;
+      margin-right: 8px;
+      font-size: 18px;
+    }
+    .info-list {
+      list-style-type: none;
+      padding-left: 10px;
+    }
+    .info-list li {
+      font-size: 19px;
+      line-height: 1.45;
+      margin-bottom: 8px;
+      color: #444444;
+      position: relative;
+      padding-left: 20px;
+    }
+    .info-list li::before {
+      content: "-";
+      position: absolute;
+      left: 0;
+      color: #666666;
+    }
+
+    /* --- スライド5: 2カラム洞察カード --- */
+    .columns-2 {
+      display: flex;
+      justify-content: space-between;
+      height: 100%;
+      gap: 50px;
+    }
+    .card-2 {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #F0F8FF;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+
+    /* --- ナビゲーションUI --- */
+    .nav-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 80px;
+      display: flex;
+      gap: 15px;
+      z-index: 100;
+    }
+    .nav-btn {
+      background-color: rgba(46, 79, 181, 0.8);
+      color: #FFFFFF;
+      border: none;
+      padding: 10px 20px;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .nav-btn:hover {
+      background-color: #2E4FB5;
+    }
+    .page-number {
+      position: absolute;
+      bottom: 25px;
+      left: 80px;
+      font-size: 18px;
+      color: #666666;
+    }
+
+    /* ==========================================================================
+       5. 印刷用スタイル (@media print)
+       ========================================================================== */
+    @media print {
+      html, body {
+        background-color: #FFFFFF;
+        overflow: visible !important;
+        width: 297mm;
+        height: 210mm;
+      }
+      .deck {
+        position: static;
+        transform: none !important;
+        width: 100% !important;
+        height: auto !important;
+        box-shadow: none !important;
+      }
+      .slide {
+        position: relative !important;
+        display: block !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        page-break-after: always;
+        break-after: page;
+        padding: 40mm 15mm 15mm 15mm !important; /* 印刷時の余白微調整 */
+        box-sizing: border-box;
+      }
+      .slide-header {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 297mm !important;
+        height: 30mm !important;
+        padding: 0 15mm !important;
+      }
+      .slide-title {
+        font-size: 32px !important;
+      }
+      .slide-date {
+        font-size: 16px !important;
+      }
+      /* スライド1の表紙も印刷サイズにアジャスト */
+      .slide-cover {
+        padding: 0 !important;
+      }
+      .cover-banner {
+        height: 60mm !important;
+        padding: 0 20mm !important;
+      }
+      .cover-title {
+        font-size: 48px !important;
+      }
+      .cover-body {
+        padding: 10mm 20mm !important;
+      }
+      /* テーブルフォント調整 */
+      .compare-table th {
+        font-size: 16px !important;
+        padding: 10px 8px !important;
+      }
+      .compare-table td {
+        font-size: 14px !important;
+        padding: 12px 10px !important;
+      }
+      /* カードフォント調整 */
+      .card-header {
+        font-size: 20px !important;
+        padding: 12px 16px !important;
+      }
+      .card-body {
+        padding: 16px !important;
+        gap: 12px !important;
+      }
+      .info-title {
+        font-size: 16px !important;
+      }
+      .info-list li {
+        font-size: 14px !important;
+        margin-bottom: 4px !important;
+      }
+      .nav-controls {
+        display: none !important;
+      }
+      .page-number {
+        bottom: 10mm !important;
+        left: 15mm !important;
+        font-size: 12px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="deck">
+    <!-- ----------------------------------------------------------------------
+         Slide 1: 表紙
+         ---------------------------------------------------------------------- -->
+    <section class="slide slide-cover" id="slide-1">
+      <div class="cover-banner">
+        <h1 class="cover-title">候補エリア比較分析</h1>
+      </div>
+      <div class="cover-body">
+        <div class="cover-card">
+          <h2>■ 分析概要と前提条件</h2>
+          <ul class="cover-list">
+            <li>
+              <span>大手町駅へのアクセス、</span><span>住環境、</span><span>賃貸一戸建ての</span><span>市場流通状況の比較。</span>
+            </li>
+            <li>
+              <span>賃貸一戸建て検索条件（2026年6月時点）：</span>
+              <ul>
+                <li><span>広さ・間取り：80m²以上、</span><span>3LDK以上</span></li>
+                <li><span>駐車場：込み（無料または家賃内）</span></li>
+                <li><span>家賃上限：18万円以下</span><span>（自己負担額目安：</span><span>社宅制度等適用後の</span><span>自己負担分を算出）</span></li>
+              </ul>
+            </li>
+            <li><span>対象エリア：</span><span>①妙典、</span><span>②松戸、</span><span>③本八幡、</span><span>④越谷、</span><span>⑤津田沼、</span><span>⑥守谷</span></li>
+            <li><span>本資料は客観的事実および</span><span>検索結果データに基づき、</span><span>機能性を重視して整理している。</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="page-number">1 / 5</div>
+    </section>
+
+    <!-- ----------------------------------------------------------------------
+         Slide 2: 比較一覧表
+         ---------------------------------------------------------------------- -->
+    <section class="slide" id="slide-2">
+      <header class="slide-header">
+        <div class="slide-title">候補エリア比較一覧</div>
+        <div class="slide-date">2026年6月時点</div>
+      </header>
+      <div class="table-container">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th style="width: 10%;" class="cell-center">エリア</th>
+              <th style="width: 25%;">大手町への通勤</th>
+              <th style="width: 18%;" class="cell-center">朝の着席可能性</th>
+              <th style="width: 18%;" class="cell-center">買い物利便性(車)</th>
+              <th style="width: 17%;">一戸建て実現性(検出数)</th>
+              <th style="width: 12%;" class="cell-center">自己負担目安</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cell-center cell-bold">① 妙典</td>
+              <td><span>直通約25〜30分</span><span>（東西線）</span></td>
+              <td class="cell-center"><span>中</span><span>（始発列車あり）</span></td>
+              <td class="cell-center"><span>○ 普通</span><span>（駅周辺）</span></td>
+              <td><span class="highlight-red">◎ 極めて高い</span> <span>(4件、徒歩5〜9分)</span></td>
+              <td class="cell-center cell-bold"><span class="highlight-red">2.60万〜5.10万円</span></td>
+            </tr>
+            <tr>
+              <td class="cell-center cell-bold">② 松戸</td>
+              <td><span>直通約30分</span><span>（千代田線）</span></td>
+              <td class="cell-center"><span>低</span></td>
+              <td class="cell-center"><span>高</span><span>（駅周辺・国道沿い）</span></td>
+              <td><span>○ 普通</span> <span>(2件、築27年あり)</span></td>
+              <td class="cell-center cell-bold"><span>2.90万〜3.00万円</span></td>
+            </tr>
+            <tr>
+              <td class="cell-center cell-bold">③ 本八幡</td>
+              <td><span>乗換1回約35〜40分</span></td>
+              <td class="cell-center"><span class="highlight-red">◎ 確実</span><span>（新宿線始発）</span></td>
+              <td class="cell-center"><span class="highlight-red">◎ 非常に高</span><span>（駅周辺・商業）</span></td>
+              <td><span>○ 良好</span> <span>(4件、築古中心だが多様)</span></td>
+              <td class="cell-center cell-bold"><span>2.40万〜5.20万円</span></td>
+            </tr>
+            <tr>
+              <td class="cell-center cell-bold">④ 越谷</td>
+              <td><span>直通約40分</span><span>（半蔵門線）</span></td>
+              <td class="cell-center"><span>低</span><span>（一部始発有）</span></td>
+              <td class="cell-center"><span class="highlight-red">◎ 非常に高</span><span>（レイクタウン等）</span></td>
+              <td><span class="highlight-red">◎ 非常に高い</span> <span>(3件、新築〜築浅あり)</span></td>
+              <td class="cell-center cell-bold"><span>2.96万〜4.80万円</span></td>
+            </tr>
+            <tr>
+              <td class="cell-center cell-bold">⑤ 津田沼</td>
+              <td><span>乗換1回/直通約30〜40分</span></td>
+              <td class="cell-center"><span>中</span><span>（東西線始発有）</span></td>
+              <td class="cell-center"><span class="highlight-red">◎ 非常に高</span><span>（駅周辺・大型商業）</span></td>
+              <td><span class="highlight-red">△ やや低い</span> <span>(1件、築31年のみ)</span></td>
+              <td class="cell-center cell-bold"><span>約2.76万円</span></td>
+            </tr>
+            <tr>
+              <td class="cell-center cell-bold">⑥ 守谷</td>
+              <td><span>乗換1回約45分</span><span>（TX・千代田線）</span></td>
+              <td class="cell-center"><span class="highlight-red">◎ 確実</span><span>（TX始発）</span></td>
+              <td class="cell-center"><span class="highlight-red">◎ 非常に高</span><span>（ロードサイド等）</span></td>
+              <td><span class="highlight-red">◎ 非常に高い</span> <span>(2件、築浅あり)</span></td>
+              <td class="cell-center cell-bold"><span class="highlight-red">1.70万〜2.87万円</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="page-number">2 / 5</div>
+    </section>
+
+    <!-- ----------------------------------------------------------------------
+         Slide 3: エリア別詳細比較 (1/2)
+         ---------------------------------------------------------------------- -->
+    <section class="slide" id="slide-3">
+      <header class="slide-header">
+        <div class="slide-title">エリア別詳細比較 (①妙典・②松戸・③本八幡)</div>
+        <div class="slide-date">2026年6月時点</div>
+      </header>
+      <div class="columns-3">
+        <!-- 妙典 -->
+        <div class="card-3">
+          <div class="card-header">① 妙典（千葉県市川市）</div>
+          <div class="card-body">
+            <div class="info-group">
+              <h3 class="info-title">大手町へのアクセス</h3>
+              <ul class="info-list">
+                <li><span>東京メトロ東西線で</span><span>大手町駅まで直通約25〜30分</span><span>（乗換0回）。</span></li>
+                <li><span>朝の混雑は激しいが、</span><span>始発電車（一部時間帯）を</span><span>狙えば着席通勤可能。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">住環境・教育環境</h3>
+              <ul class="info-list">
+                <li><span>区画整理された新しい街並み。</span><span>江戸川河川敷近く自然環境良好。</span></li>
+                <li><span>ファミリー世帯比率が高く、</span><span>学校は落ち着いたアットホームな雰囲気。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">予算・一戸建て実現性</h3>
+              <ul class="info-list">
+                <li><span>検出数：</span><span class="highlight-red">4件。</span><span>駅徒歩5〜9分の好立地。</span></li>
+                <li><span>家賃13.0万〜17.2万円</span><span>（自己負担：</span><span class="highlight-red">2.60万〜5.10万円</span><span>）。</span></li>
+                <li><span>築16年の物件や築古4LDKあり、</span><span>実現性は</span><span class="highlight-red">極めて高い。</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 松戸 -->
+        <div class="card-3">
+          <div class="card-header">② 松戸（千葉県松戸市）</div>
+          <div class="card-body">
+            <div class="info-group">
+              <h3 class="info-title">大手町へのアクセス</h3>
+              <ul class="info-list">
+                <li><span>JR常磐線各駅停車</span><span>（千代田線直通）で</span><span>大手町まで直通約30分。</span></li>
+                <li><span>朝の千代田線は混雑するが、</span><span>乗車時間は比較的短め。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">住環境・教育環境</h3>
+              <ul class="info-list">
+                <li><span>「共働き子育てしやすい街」として</span><span>行政支援が手厚い。</span></li>
+                <li><span>駅周辺および国道沿いの</span><span>商業施設が充実。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">予算・一戸建て実現性</h3>
+              <ul class="info-list">
+                <li><span>検出数：</span><span class="highlight-red">2件。</span><span>家賃14.5万円</span><span>（自己負担2.90万〜3.00万円）。</span></li>
+                <li><span>築41年の築古に加え、</span><span>築27年で広めの4LDK</span><span>（徒歩12分、99m²）を検出。</span></li>
+                <li><span>選択肢は限定的だが、</span><span>広さの妥協点は改善されている。</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 本八幡 -->
+        <div class="card-3">
+          <div class="card-header">③ 本八幡（千葉県市川市）</div>
+          <div class="card-body">
+            <div class="info-group">
+              <h3 class="info-title">大手町へのアクセス</h3>
+              <ul class="info-list">
+                <li><span>都営新宿線（始発駅）で</span><span>神保町・九段下等へ。</span><span>東西線乗換で約35〜40分。</span></li>
+                <li><span>都営新宿線は始発駅のため</span><span class="highlight-red">確実に着席通勤可能。</span><span>（大きなメリット）</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">住環境・教育環境</h3>
+              <ul class="info-list">
+                <li><span>市川市の中心地。</span><span>商業施設や行政機能が</span><span>集約され利便性高い。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">予算・一戸建て実現性</h3>
+              <ul class="info-list">
+                <li><span>検出数：</span><span class="highlight-red">4件。</span><span>家賃16.8万〜18.0万</span><span>（自己負担4.00万〜5.20万）。</span></li>
+                <li><span>駅徒歩10〜15分圏内。</span><span>築古（築37〜76年）が中心。</span></li>
+                <li><span>127m²（5LDK）の広大物件や、</span><span>12万円（自己負担2.40万）の</span><span>安価物件が検出。</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page-number">3 / 5</div>
+    </section>
+
+    <!-- ----------------------------------------------------------------------
+         Slide 4: エリア別詳細比較 (2/2)
+         ---------------------------------------------------------------------- -->
+    <section class="slide" id="slide-4">
+      <header class="slide-header">
+        <div class="slide-title">エリア別詳細比較 (④越谷・⑤津田沼・⑥守谷)</div>
+        <div class="slide-date">2026年6月時点</div>
+      </header>
+      <div class="columns-3">
+        <!-- 越谷 -->
+        <div class="card-3">
+          <div class="card-header">④ 越谷（埼玉県越谷市）</div>
+          <div class="card-body">
+            <div class="info-group">
+              <h3 class="info-title">大手町へのアクセス</h3>
+              <ul class="info-list">
+                <li><span>東武伊勢崎線</span><span>（半蔵門線直通）急行で</span><span>大手町駅まで直通約40分。</span></li>
+                <li><span>乗車時間は長めだが、</span><span>直通のため乗り換え負担なし。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">住環境・教育環境</h3>
+              <ul class="info-list">
+                <li><span>坂の少ない平坦地形。</span><span>自転車移動がスムーズ。</span></li>
+                <li><span>郊外のゆったりした環境が広がる。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">予算・一戸建て実現性</h3>
+              <ul class="info-list">
+                <li><span>検出数：</span><span class="highlight-red">3件。</span><span>家賃14.8万〜17.5万</span><span>（自己負担2.96万〜4.80万）。</span></li>
+                <li><span>新築（徒歩15分）や</span><span>築4年築浅（徒歩9分）、</span><span>100m²超など良質物件。</span></li>
+                <li><span>予算内での築浅・新築の</span><span>実現性は</span><span class="highlight-red">非常に高い。</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 津田沼 -->
+        <div class="card-3">
+          <div class="card-header">⑤ 津田沼（千葉県船橋市・習志野市）</div>
+          <div class="card-body">
+            <div class="info-group">
+              <h3 class="info-title">大手町へのアクセス</h3>
+              <ul class="info-list">
+                <li><span>JR総武線快速で東京駅まで</span><span>約30分（徒歩乗換）。</span><span>または東西線直通約40分。</span></li>
+                <li><span>総武線快速ルートは</span><span>東京駅から大手町への</span><span>徒歩移動が必要。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">住環境・教育環境</h3>
+              <ul class="info-list">
+                <li><span>駅周辺が繁栄しており、</span><span>買い物利便性抜群。</span></li>
+                <li><span>周辺には閑静な住宅街が広がる。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">予算・一戸建て実現性</h3>
+              <ul class="info-list">
+                <li><span>検出数：</span><span class="highlight-red">1件。</span><span>家賃13.8万円</span><span>（自己負担2.76万円）。</span></li>
+                <li><span>築31年の物件1件のみの検出。</span><span>選択肢は</span><span class="highlight-red">極めて限定的。</span></li>
+                <li><span>津田沼エリア希望の場合、</span><span>市場への新規出回りを</span><span>待つ必要あり。</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 守谷 -->
+        <div class="card-3">
+          <div class="card-header">⑥ 守谷（茨城県守谷市）</div>
+          <div class="card-body">
+            <div class="info-group">
+              <h3 class="info-title">大手町へのアクセス</h3>
+              <ul class="info-list">
+                <li><span>つくばエクスプレス（始発）で</span><span>北千住乗換、千代田線で</span><span>計約45分。</span></li>
+                <li><span>守谷始発電車が多数あり、</span><span>朝は</span><span class="highlight-red">確実に着席通勤可能。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">住環境・教育環境</h3>
+              <ul class="info-list">
+                <li><span>計画開発された美しい街並み。</span><span>子育て世帯に絶大な人気。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">予算・一戸建て実現性</h3>
+              <ul class="info-list">
+                <li><span>検出数：</span><span class="highlight-red">2件。</span><span>家賃8.5万〜14.0万</span><span>（自己負担：</span><span class="highlight-red">1.70万〜2.87万円</span><span>）。</span></li>
+                <li><span>8.5万円（122.8m²）の</span><span>築古格安から、</span><span>14.00万円の築5年築浅まで存在。</span></li>
+                <li><span>低コストまたは良質築浅の</span><span>選択肢があり、実現性は</span><span class="highlight-red">非常に高い。</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page-number">4 / 5</div>
+    </section>
+
+    <!-- ----------------------------------------------------------------------
+         Slide 5: 実際のデータからの分析・洞察
+         ---------------------------------------------------------------------- -->
+    <section class="slide" id="slide-5">
+      <header class="slide-header">
+        <div class="slide-title">実際のデータからの分析・洞察</div>
+        <div class="slide-date">2026年6月時点</div>
+      </header>
+      <div class="columns-2">
+        <!-- 左カード -->
+        <div class="card-2">
+          <div class="card-header">■ 総合本命エリアおよびクオリティ重視エリア</div>
+          <div class="card-body" style="gap: 30px;">
+            <div class="info-group">
+              <h3 class="info-title">妙典エリア（総合的な本命候補）</h3>
+              <ul class="info-list">
+                <li><span>大手町直通25〜30分と</span><span>最も好アクセス。</span></li>
+                <li><span>家賃13万円台・自己負担4万円台で</span><span>駅近（徒歩5〜9分）物件が</span><span class="highlight-red">4件検出。</span></li>
+                <li><span>通勤利便性と物件の</span><span>選択肢の多さから、</span><span>最優先で検討すべきエリア。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">越谷エリア（クオリティ重視候補）</h3>
+              <ul class="info-list">
+                <li><span>新築（16.9万円）や</span><span>築4年築浅（17.5万円）など</span><span>良質な物件が検出。</span></li>
+                <li><span>自己負担4万円台以内で</span><span class="highlight-red">築浅・新築一戸建て</span><span>にこだわる場合の最有力候補。</span></li>
+                <li><span>半蔵門線直通で乗り換えなし</span><span>約40分とアクセスも実用範囲内。</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右カード -->
+        <div class="card-2">
+          <div class="card-header">■ 着席快適性重視エリアおよび市場動向</div>
+          <div class="card-body" style="gap: 30px;">
+            <div class="info-group">
+              <h3 class="info-title">本八幡・守谷エリア（着席通勤重視）</h3>
+              <ul class="info-list">
+                <li><span>いずれも</span><span class="highlight-red">始発駅</span><span>であり、朝の着席通勤が</span><span>確実に満たされる。</span></li>
+                <li><span>本八幡は自己負担2.4万円（築古広大）、</span><span>守谷は自己負担1.7万円（8.5万・122m²）や</span><span>築5年物件あり。</span></li>
+                <li><span>通勤時の快適性（着席）と</span><span>広い居住空間、低コストを</span><span>重視する場合に極めて有力。</span></li>
+              </ul>
+            </div>
+            <div class="info-group">
+              <h3 class="info-title">津田沼・松戸エリア（市場動向）</h3>
+              <ul class="info-list">
+                <li><span>津田沼は検出</span><span class="highlight-red">1件のみ</span><span>、松戸は</span><span class="highlight-red">2件</span><span>と市場流通量が極めて少ない。</span></li>
+                <li><span>現時点での即時決定は難しく、</span><span>希望する場合は</span><span>長期的な市場監視が必要。</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page-number">5 / 5</div>
+    </section>
+
+    <!-- ナビゲーションコントロール -->
+    <div class="nav-controls">
+      <button class="nav-btn" onclick="prevSlide()">前へ (←)</button>
+      <button class="nav-btn" onclick="nextSlide()">次へ (→)</button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       6. スライド制御JavaScript
+       ========================================================================== */ -->
+  <script>
+    // --- スライド切り替え制御 ---
+    let currentSlideIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+
+    function showSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= slides.length) index = slides.length - 1;
+      
+      slides[currentSlideIndex].classList.remove('active');
+      slides[index].classList.add('active');
+      currentSlideIndex = index;
+    }
+
+    function nextSlide() {
+      showSlide(currentSlideIndex + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentSlideIndex - 1);
+    }
+
+    // キーボード操作対応
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+        prevSlide();
+      }
+    });
+
+    // 初期化表示
+    showSlide(0);
+
+    // --- ウィンドウリサイズ時のアスペクト比追従スケーリング ---
+    const deck = document.querySelector('.deck');
+    
+    function handleResize() {
+      // 印刷時はスケーリングを行わない
+      if (window.matchMedia('print').matches) {
+        deck.style.transform = 'none';
+        deck.style.position = 'static';
+        return;
+      }
+      
+      deck.style.position = 'absolute';
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      
+      // 1920x1080 に合わせた比率スケール
+      const scale = Math.min(w / 1920, h / 1080);
+      deck.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('load', handleResize);
+    
+    // 印刷開始・終了イベントでレイアウト崩れを防ぐ
+    window.addEventListener('beforeprint', () => {
+      deck.style.transform = 'none';
+      deck.style.position = 'static';
+    });
+    window.addEventListener('afterprint', handleResize);
+  </script>
+</body>
+</html>
