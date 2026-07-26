@@ -461,18 +461,11 @@ def main():
                 station_name = "不明"
         
         # === 新フィルタリングルールの適用 ===
-        # 1. 駅徒歩10分以内なら全件取得
-        # 2. 駅徒歩10〜15分なら築10年以下のみ取得
+        # 1. 駅徒歩10分以下
+        # 2. 築30年以下
         age_years = parse_age_num(p["age_floor"])
         
-        is_valid_property = False
-        if walk_min <= 10:
-            is_valid_property = True
-        elif 10 < walk_min <= 15:
-            if age_years <= 10:
-                is_valid_property = True
-                
-        if not is_valid_property:
+        if walk_min > 10 or age_years > 30:
             # 条件に合致しないためスキップ
             continue
             
@@ -505,6 +498,11 @@ def main():
         commute_transfers = p.get("commute_transfers", 1)
         door_to_door = commute_min + walk_min
         
+        # 3. 自己負担5.2万円以下
+        # 4. ドアドア通勤時間60分以下
+        if s_pay > 5.2 or door_to_door > 60:
+            continue
+            
         json_properties.append({
             "station": station_name,
             "line": line_name,
@@ -537,7 +535,7 @@ def main():
     md_lines = []
     md_lines.append("# 物件検索結果一覧\n")
     md_lines.append(f"検索条件：管理費・駐車場込み {args.max_rent}万円以下 / 面積 {args.min_area}m²以上 / 一戸建て / 大手町まで50分・乗換1回以下\n")
-    md_lines.append("※絞り込みルール：駅徒歩10分以内は全件、駅徒歩10〜15分は築10年以下のみ取得\n")
+    md_lines.append("※絞り込みルール：自己負担額5.2万円以下 / ドアドア通勤時間60分以下 / 駅徒歩10分以下 / 築30年以下\n")
     
     md_lines.append("## 抽出された物件一覧")
     if json_properties:
