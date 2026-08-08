@@ -9,8 +9,12 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 ## 1. ディレクトリ構造
 
 * `skills/property_search/property_search.py` : 物件検索・データ抽出・詳細スクレイピングの本体スクリプト。
+* `skills/property_search/station_commute.py` : 駅→大手町駅の実測通勤時間・乗換回数をGoogle Maps Directions APIで取得し、`station_commute_cache.json` を更新するスクリプト（詳細は `通勤時間キャッシュ更新_手順書.md` を参照）。
+* `skills/property_search/通勤時間キャッシュ更新_手順書.md` : ローカル実行担当（AIエージェント想定）向けの、通勤時間キャッシュ更新の手順書。
 * `skills/property_search/SKILL.md` : この説明書（本ドキュメント）。
 * `properties.js` : 同期保存される物件データJSON。
+* `station_commute_cache.json` : 駅→大手町駅の実測通勤時間キャッシュ（`station_commute.py` が作成・更新。`property_search.py` は読み取り専用で参照する）。
+* `geocoding_cache.json` : 駅の緯度経度キャッシュ。
 * `物件検索結果.md` : 検索結果および前回差分のレポート。
 * `物件比較アプリ/` : ローカルWebアプリ関連ファイル（`index.html`, `style.css`, `app.js`, `properties.js`）。
 
@@ -32,6 +36,11 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
      - 家賃＋管理費の合計が16万円を超える場合の超過分は全額自己負担となります。
 5. **複数ファイルの同期更新**:
    - 取得結果を `物件比較アプリ/properties.js` に書き出すと同時に、ルートの `properties.js` にも同期して書き出します。
+6. **通勤時間の実測データ活用（駅ズレ対策）**:
+   - 物件の`station_walk`には複数の候補駅（例: 支線の最寄り駅、少し歩くが本線の駅、など）が並記されることがあるが、SUUMOの通勤検索バッジ（例:「50分・乗換1回」）はどの候補駅発の経路かを特定できず、徒歩時間の起点駅とズレて過小/過大な「ドアドア通勤時間」になることがある。
+   - これを避けるため、`property_search.py` は候補駅ごとに `station_commute_cache.json`（`station_commute.py` が事前にGoogle Maps Directions APIで取得・保存した実測値）を照会し、「徒歩時間 + 実測乗車時間」が最短になる候補駅を採用する。
+   - **`property_search.py` はこのキャッシュを読み取るだけで、Google Maps APIへの新規アクセスは行わない**（駅の追加時などに `station_commute.py` を個別に実行してキャッシュを補充する運用。詳細手順は `通勤時間キャッシュ更新_手順書.md` を参照）。
+   - 実測キャッシュに該当駅が1件も無い場合のみ、従来通りSUUMOバッジ値にフォールバックする（`properties.js` の各物件データの `commute_source` フィールドが `"google_maps"`（実測）か `"suumo_badge"`（推定）かで判別可能。`物件検索結果.md` のドアドア通勤時間欄にも `[実測]` / `[推定]` を明示）。
 
 ---
 
@@ -53,7 +62,7 @@ py skills/property_search/property_search.py --output 物件検索結果.md
 
 ```powershell
 # 変更されたデータおよびアプリの主要ファイルをステージング
-git add index.html style.css app.js properties.js 物件検索結果.md geocoding_cache.json
+git add index.html style.css app.js properties.js 物件検索結果.md geocoding_cache.json station_commute_cache.json
 
 # コミットを作成
 git commit -m "Update properties data and application"
@@ -61,6 +70,8 @@ git commit -m "Update properties data and application"
 # リモートリポジトリにプッシュ (プッシュ完了後、数分で https://day0817.github.io/Moving/ に自動反映されます)
 git push origin main
 ```
+
+> `station_commute_cache.json` は `station_commute.py` を実行した場合のみ更新されます（詳細は `通勤時間キャッシュ更新_手順書.md`）。更新していない回はこのファイルに差分は出ません。
 
 ### パラメータオプション
 
