@@ -408,12 +408,11 @@ def main():
         
     print(f"\n合計取得レコード数: {len(all_properties)} 件 (重複排除前)", file=sys.stderr)
 
-    # 1. 厳格な重複排除 (タイトル、家賃、間取り、面積、住所が同じものは同一物件とみなす)
+    # 1. 厳格な重複排除 (家賃、間取り、面積、住所が同じものは、物件名が異なっても同一物件とみなす)
     unique_properties = []
     seen_keys = set()
     for p in all_properties:
         key = (
-            p["title"].strip(),
             p["rent"].strip(),
             p["madori"].strip(),
             p["menseki"].strip(),
