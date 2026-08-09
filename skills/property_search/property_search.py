@@ -60,20 +60,6 @@ def save_geocoding_cache(cache):
     except Exception as e:
         print(f"キャッシュの保存に失敗: {e}", file=sys.stderr)
 
-COMMUTE_CACHE_FILE_PATH = "station_commute_cache.json"
-
-def load_commute_cache():
-    """駅→大手町駅の実測通勤時間キャッシュ (station_commute.py が事前に作成) を読み込む。
-    このスクリプト自身はGoogle Maps APIへのアクセスは行わず、既存キャッシュの参照のみ行う。
-    未登録の駅はSUUMOの通勤検索バッジ値へフォールバックする。"""
-    if os.path.exists(COMMUTE_CACHE_FILE_PATH):
-        try:
-            with open(COMMUTE_CACHE_FILE_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"通勤時間キャッシュのロードに失敗: {e}", file=sys.stderr)
-    return {}
-
 # 地理座標の解決（静的辞書 -> キャッシュ -> API）
 def get_station_coords(station_name, cache):
     clean_name = station_name.replace("駅", "").strip()
@@ -117,17 +103,6 @@ def extract_walk_minutes(station_walk_str, target_station_name):
     if fallback_match:
         return int(fallback_match.group(1))
     return 10
-
-def parse_all_stations(station_walk_str):
-    """station_walk文字列 (例: '東武大師線/大師前駅 歩4分 / 東武伊勢崎線/西新井駅 歩14分')
-    から (路線名, 駅名, 徒歩分) のタプルを、記載順(=SUUMO表示順、通常は近い順)で全て抽出する。"""
-    results = []
-    for m in re.finditer(r"([^/]+)/([^/]+駅)\s*歩(\d+)分", station_walk_str):
-        line_name = m.group(1).strip()
-        station_name = m.group(2).replace("駅", "").strip()
-        walk_min = int(m.group(3))
-        results.append((line_name, station_name, walk_min))
-    return results
 
 def parse_age_num(age_floor_str):
     if "新築" in age_floor_str:
@@ -384,7 +359,6 @@ def main():
     args = parser.parse_args()
     
     geocoding_cache = load_geocoding_cache()
-    commute_cache = load_commute_cache()
     all_properties = []
     
     print("物件情報を各都県から検索中...", file=sys.stderr)
@@ -460,18 +434,21 @@ def main():
     
     print("詳細情報・最寄り駅座標の処理とフィルタリング中...", file=sys.stderr)
     for idx, p in enumerate(unique_properties):
-        # 全候補駅 (路線名, 駅名, 徒歩分) を記載順に抽出。station_name/line_name/walk_min は
-        # 従来通り「最も近い駅」(先頭の候補) を代表値として扱う。
-        all_stations = parse_all_stations(p["station_walk"])
-
-        if all_stations:
-            line_name, station_name, walk_min = all_stations[0]
+        # 最寄り駅のパース
+        station_name = "不明"
+        line_name = "不明"
+        walk_min = 15
+        
+        # 最初の駅情報をメインとする
+        first_walk_part = p["station_walk"].split("/")[0] if "/" in p["station_walk"] else p["station_walk"]
+        
+        # 正規表現で「路線名」と「駅名」「徒歩」を綺麗に抜く
+        match = re.search(r"([^/]+)/([^/]+駅)\s*歩(\d+)分", p["station_walk"])
+        if match:
+            line_name = match.group(1).strip()
+            station_name = match.group(2).replace("駅", "").strip()
+            walk_min = int(match.group(3))
         else:
-            # 正規表現でうまく分解できない表記 (バス停経由など) 用のフォールバック
-            station_name = "不明"
-            line_name = "不明"
-            walk_min = 15
-            first_walk_part = p["station_walk"].split("/")[0] if "/" in p["station_walk"] else p["station_walk"]
             match_fallback = re.search(r"([^/]+)歩(\d+)分", first_walk_part)
             if match_fallback:
                 raw_station_line = match_fallback.group(1).strip()
@@ -479,6 +456,8 @@ def main():
                 if "駅" in raw_station_line:
                     station_name = raw_station_line.split("駅")[0].split("/")[-1].strip()
                     line_name = raw_station_line.split("/")[0].strip() if "/" in raw_station_line else "不明"
+            else:
+                station_name = "不明"
         
         # === 新フィルタリングルールの適用 ===
         # 1. 駅徒歩10分以下
@@ -512,39 +491,12 @@ def main():
             print(f"完了 ({p_text})", file=sys.stderr)
             
         s_pay = calculate_self_pay(p['rent'], p['admin'], p_fee)
-
-        # ドアドア通勤時間の計算
-        # 候補駅ごとに station_commute_cache.json (Google Maps実測データ) を照会し、
-        # 「駅までの徒歩時間(SUUMO) + 駅から大手町までの実測所要時間」が最短になる駅を採用する。
-        # SUUMOの通勤検索バッジ値は、複数候補駅のうちどの駅発の経路を表しているか特定できず、
-        # 徒歩時間の起点駅とズレることがあるため、実測キャッシュがある限りそちらを優先する。
-        station_candidates = []
-        for line_nm, st_nm, w_min in (all_stations or [(line_name, station_name, walk_min)]):
-            commute = commute_cache.get(st_nm)
-            if not commute:
-                continue
-            station_candidates.append({
-                "station": st_nm,
-                "line": line_nm,
-                "walk_min": w_min,
-                "commute_min": commute["duration_min"],
-                "transfers": commute["transfers"],
-                "door_to_door": w_min + commute["duration_min"],
-            })
-
-        if station_candidates:
-            best = min(station_candidates, key=lambda c: c["door_to_door"])
-            commute_min = best["commute_min"]
-            commute_transfers = best["transfers"]
-            door_to_door = best["door_to_door"]
-            commute_source = "google_maps"
-        else:
-            # 実測キャッシュに候補駅が1件も無い場合のみ、従来通りSUUMOバッジ値へフォールバック
-            commute_min = p.get("commute_min", 50)
-            commute_transfers = p.get("commute_transfers", 1)
-            door_to_door = commute_min + walk_min
-            commute_source = "suumo_badge"
-
+        
+        # ドアドア通勤時間の計算 (SUUMOの通勤検索結果の時間を優先的に使用)
+        commute_min = p.get("commute_min", 50)
+        commute_transfers = p.get("commute_transfers", 1)
+        door_to_door = commute_min + walk_min
+        
         # 3. 自己負担5.2万円以下
         # 4. ドアドア通勤時間60分以下
         if s_pay > 5.2 or door_to_door > 60:
@@ -572,8 +524,6 @@ def main():
             "train_min": commute_min,
             "door_to_door": door_to_door,
             "transfers": commute_transfers,
-            "commute_source": commute_source,  # "google_maps"(実測) または "suumo_badge"(推定)
-            "station_candidates": station_candidates,  # 候補駅ごとの実測データ(参考表示用)
             "lat": coords["lat"] if coords else None,
             "lng": coords["lng"] if coords else None
         })
@@ -585,7 +535,6 @@ def main():
     md_lines.append("# 物件検索結果一覧\n")
     md_lines.append(f"検索条件：管理費・駐車場込み {args.max_rent}万円以下 / 面積 {args.min_area}m²以上 / 一戸建て / 大手町まで50分・乗換1回以下\n")
     md_lines.append("※絞り込みルール：自己負担額5.2万円以下 / ドアドア通勤時間60分以下 / 駅徒歩10分以下 / 築30年以下\n")
-    md_lines.append("※ドアドア通勤時間の[実測]はGoogle Maps実測データ(station_commute_cache.json)、[推定]はSUUMO検索バッジ値による概算（実測データ未登録駅）\n")
     
     md_lines.append("## 抽出された物件一覧")
     if json_properties:
@@ -596,8 +545,7 @@ def main():
             room_info = f"{p['madori']} / {p['menseki']}"
             link = f"[詳細を表示]({p['url']})" if p['url'] else "-"
             self_pay_str = f"**{p['self_pay']:.2f}万円**"
-            source_mark = "実測" if p.get('commute_source') == 'google_maps' else "推定"
-            commute_info = f"**{p['door_to_door']}分**[{source_mark}] (徒歩{p['walk_min']}分+乗車{p['train_min']}分, 乗換{p['transfers']}回)"
+            commute_info = f"**{p['door_to_door']}分** (徒歩{p['walk_min']}分+乗車{p['train_min']}分, 乗換{p['transfers']}回)"
             md_lines.append(f"| {p['station']} | {p['line']} | {p['title']} | {rent_info} | {self_pay_str} | {commute_info} | {room_info} | {p['station_walk']} ({p['age_floor']}) | {link} |")
     else:
         md_lines.append("条件に合致する物件が自動取得できませんでした。時間をおいて再試行してください。")
