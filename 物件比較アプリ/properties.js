@@ -296,8 +296,8 @@ const bukkenData = [
     "train_min": 50,
     "door_to_door": 60,
     "transfers": 1,
-    "lat": 34.921762,
-    "lng": 135.4509594
+    "lat": null,
+    "lng": null
   },
   {
     "station": "三ツ沢下町",
@@ -1221,8 +1221,8 @@ const bukkenData = [
     "train_min": 50,
     "door_to_door": 60,
     "transfers": 1,
-    "lat": 42.6420743,
-    "lng": 129.7509492
+    "lat": null,
+    "lng": null
   },
   {
     "station": "南与野",
@@ -1496,8 +1496,8 @@ const bukkenData = [
     "train_min": 50,
     "door_to_door": 55,
     "transfers": 1,
-    "lat": 31.579172,
-    "lng": 131.322315
+    "lat": null,
+    "lng": null
   },
   {
     "station": "滝不動",
@@ -2246,8 +2246,8 @@ const bukkenData = [
     "train_min": 50,
     "door_to_door": 55,
     "transfers": 1,
-    "lat": 31.579172,
-    "lng": 131.322315
+    "lat": null,
+    "lng": null
   },
   {
     "station": "南柏",

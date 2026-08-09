@@ -60,21 +60,37 @@ def save_geocoding_cache(cache):
     except Exception as e:
         print(f"キャッシュの保存に失敗: {e}", file=sys.stderr)
 
+# 関東地方をやや広めに囲む範囲。この範囲外の結果はジオコーディングの誤マッチとみなして棄却する
+# (例: 「黒川」「塚田」「新田」等の全国に同名駅がある地名で、関東以外の地点が誤って返るケースがある)
+KANTO_BOUNDS = {"min_lat": 34.5, "max_lat": 37.2, "min_lng": 138.3, "max_lng": 141.2}
+
+def is_within_kanto_bounds(lat, lng):
+    return (KANTO_BOUNDS["min_lat"] <= lat <= KANTO_BOUNDS["max_lat"] and
+            KANTO_BOUNDS["min_lng"] <= lng <= KANTO_BOUNDS["max_lng"])
+
 # 地理座標の解決（静的辞書 -> キャッシュ -> API）
 def get_station_coords(station_name, cache):
     clean_name = station_name.replace("駅", "").strip()
-    
+
     if clean_name in STATIC_STATION_COORDS:
         return STATIC_STATION_COORDS[clean_name]
-    
+
     if clean_name in cache:
         return cache[clean_name]
-    
+
     print(f"  [API] 駅の座標を取得中: {clean_name}... ", end="", flush=True, file=sys.stderr)
     headers = {
         "User-Agent": "AntigravityBukkenCompareMap/1.0 (dh081@gemini-agent)"
     }
-    url = f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(clean_name + '駅')}&format=json&limit=1"
+    params = {
+        "q": clean_name + "駅",
+        "format": "json",
+        "limit": 1,
+        "countrycodes": "jp",              # 日本国内に限定
+        "viewbox": "138.3,37.2,141.2,34.5", # 関東地方周辺 (left,top,right,bottom)
+        "bounded": 0,                       # 見つからない場合は範囲外も許容し、後段のbounds検証で弾く
+    }
+    url = f"https://nominatim.openstreetmap.org/search?{urllib.parse.urlencode(params)}"
     try:
         time.sleep(1.5)
         res = requests.get(url, headers=headers, timeout=10)
@@ -83,6 +99,9 @@ def get_station_coords(station_name, cache):
             if data:
                 lat = float(data[0]["lat"])
                 lng = float(data[0]["lon"])
+                if not is_within_kanto_bounds(lat, lng):
+                    print(f"棄却 (関東地方外の座標: {lat},{lng})", file=sys.stderr)
+                    return None
                 coords = {"lat": lat, "lng": lng}
                 cache[clean_name] = coords
                 save_geocoding_cache(cache)
@@ -91,7 +110,7 @@ def get_station_coords(station_name, cache):
         print("失敗", file=sys.stderr)
     except Exception as e:
         print(f"エラー ({e})", file=sys.stderr)
-        
+
     return None
 
 def extract_walk_minutes(station_walk_str, target_station_name):
