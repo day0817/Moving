@@ -33,6 +33,12 @@ import argparse
 import datetime
 import requests
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # 本スクリプトはリポジトリルートで実行する前提 (property_search.py と同じ規約)
 CACHE_FILE_PATH = "station_commute_cache.json"
 GEOCODING_CACHE_PATH = "geocoding_cache.json"
