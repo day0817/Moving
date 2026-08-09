@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 .env
 skills/property_search/ksj_data/
+.claude/

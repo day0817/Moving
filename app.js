@@ -32,16 +32,48 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const TRANSFER_LINE_COLOR = '#9ca3af'; // 乗換が必要な路線は一律グレー
 
+    // 関東7都県（build_rail_lines.pyのKANTO_BOUNDSと対象範囲を合わせる）。
+    // addressの先頭一致でどの都道府県かを判定するための一覧。
+    const KANTO_PREFECTURES = ['東京都', '神奈川県', '埼玉県', '千葉県', '茨城県', '群馬県', '栃木県'];
+
+    // 住所文字列から都道府県を取り出す（例: "神奈川県川崎市麻生区はるひ野３" -> "神奈川県"）
+    function getPrefecture(address) {
+        if (!address) return null;
+        return KANTO_PREFECTURES.find(pref => address.startsWith(pref)) || null;
+    }
+
+    // 住所文字列から市区町村を取り出す（例: "神奈川県川崎市麻生区はるひ野３" -> "川崎市"。
+    // 政令指定都市の区(麻生区等)は、駅名ほど細かくしすぎないためにあえて市までで丸める）
+    function getCity(address) {
+        const pref = getPrefecture(address);
+        if (!pref) return null;
+        const rest = address.slice(pref.length);
+        const m = rest.match(/^(.+?[市区町村])/);
+        return m ? m[1] : null;
+    }
+
+    // 並び替え条件の定義: キー -> (表示ラベル, 比較関数)。
+    // 比較関数は「aを優先すべきとき負の値」を返す(Array.prototype.sortの規約通り)。
+    const SORT_CRITERIA = {
+        'walk-asc': { label: '徒歩時間（短い順）', compare: (a, b) => a.walk_min - b.walk_min },
+        'commute-asc': { label: 'ドアドア時間（短い順）', compare: (a, b) => a.door_to_door - b.door_to_door },
+        'age-asc': { label: '築年数（浅い順）', compare: (a, b) => parseAge(a.age_floor) - parseAge(b.age_floor) },
+        'rent-asc': { label: '自己負担額（低い順）', compare: (a, b) => a.self_pay - b.self_pay },
+        'menseki-desc': { label: '専有面積（広い順）', compare: (a, b) => parseAreaSize(b.menseki) - parseAreaSize(a.menseki) },
+    };
+
     // 要素取得
     const bukkenGrid = document.getElementById("bukkenGrid");
     const areaTabs = document.getElementById("areaTabs");
+    const cityTabs = document.getElementById("cityTabs");
+    const stationFocusChip = document.getElementById("stationFocusChip");
     const rentFilter = document.getElementById("rentFilter");
     const rentValue = document.getElementById("rentValue");
     const commuteFilter = document.getElementById("commuteFilter");
     const commuteValue = document.getElementById("commuteValue");
     const areaSizeFilter = document.getElementById("areaSizeFilter");
     const areaSizeValue = document.getElementById("areaSizeValue");
-    const sortSelect = document.getElementById("sortSelect");
+    const sortPriorityList = document.getElementById("sortPriorityList");
     const openCompareBtn = document.getElementById("openCompareBtn");
     const compareCount = document.getElementById("compareCount");
     
@@ -59,11 +91,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 現在のフィルタ状態
     const state = {
-        area: "all",
+        prefecture: "all",
+        city: "all",
+        // 通勤マップの「この駅の物件を見る」から遷移した際の一時的な駅名絞り込み。
+        // エリアタブ(都道府県/市区町村)とは独立していて、タブ操作やチップの✕で解除される。
+        stationFocus: null,
         maxRent: 18.0,
         maxCommute: 60,
         minArea: 80,
-        sortBy: "walk-asc",
+        // 並び替えの優先順位（先頭ほど優先度が高い。第1条件が同値の場合のみ第2条件で比較…と続く）
+        sortPriority: ['walk-asc', 'commute-asc', 'age-asc', 'rent-asc', 'menseki-desc'],
         // スプレッドシート専用状態
         sheetSortKey: "walk_min",
         sheetSortOrder: "asc",
@@ -107,7 +144,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // フィルタ・ソートのイベントリスナー
     areaTabs.addEventListener("click", (e) => {
         if (e.target.classList.contains("tab-btn")) {
-            state.area = e.target.dataset.area;
+            state.prefecture = e.target.dataset.pref;
+            state.city = "all"; // 都道府県を切り替えたら市区町村の絞り込みはリセット
+            state.stationFocus = null;
+            render();
+            updateMapData();
+            renderSheetTable();
+        }
+    });
+
+    cityTabs.addEventListener("click", (e) => {
+        if (e.target.classList.contains("tab-btn")) {
+            state.city = e.target.dataset.city;
+            state.stationFocus = null;
+            render();
+            updateMapData();
+            renderSheetTable();
+        }
+    });
+
+    stationFocusChip.addEventListener("click", (e) => {
+        if (e.target.closest("button")) {
+            state.stationFocus = null;
             render();
             updateMapData();
             renderSheetTable();
@@ -138,12 +196,86 @@ document.addEventListener("DOMContentLoaded", () => {
         renderSheetTable();
     });
 
-    sortSelect.addEventListener("change", (e) => {
-        state.sortBy = e.target.value;
+    // 並び替え優先順位リストの描画（順位バッジ・▲▼の活性状態を含めて再構築する）
+    function renderSortPriorityList() {
+        sortPriorityList.innerHTML = state.sortPriority.map((key, idx) => `
+            <li class="sort-priority-item" draggable="true" data-key="${key}">
+                <span class="priority-rank">${idx + 1}</span>
+                <span class="drag-handle" aria-hidden="true">⠿</span>
+                <span class="priority-label">${SORT_CRITERIA[key].label}</span>
+                <span class="priority-arrows">
+                    <button type="button" class="priority-arrow-btn" data-dir="up" aria-label="優先順位を上げる" ${idx === 0 ? "disabled" : ""}>▲</button>
+                    <button type="button" class="priority-arrow-btn" data-dir="down" aria-label="優先順位を下げる" ${idx === state.sortPriority.length - 1 ? "disabled" : ""}>▼</button>
+                </span>
+            </li>
+        `).join('');
+    }
+
+    // 優先順位の入れ替え（▲▼ボタン用）
+    function moveSortPriority(key, direction) {
+        const idx = state.sortPriority.indexOf(key);
+        const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+        if (idx === -1 || targetIdx < 0 || targetIdx >= state.sortPriority.length) return;
+        [state.sortPriority[idx], state.sortPriority[targetIdx]] = [state.sortPriority[targetIdx], state.sortPriority[idx]];
+        renderSortPriorityList();
         render();
-        updateMapData();
-        renderSheetTable();
+    }
+
+    sortPriorityList.addEventListener("click", (e) => {
+        const btn = e.target.closest(".priority-arrow-btn");
+        if (!btn) return;
+        const li = btn.closest(".sort-priority-item");
+        moveSortPriority(li.dataset.key, btn.dataset.dir);
     });
+
+    // ドラッグ&ドロップによる並び替え。
+    // dragover中はDOMを再生成せず(ドラッグ中の要素を破壊するとブラウザがドラッグを打ち切るため)
+    // ドロップ先候補にハイライトのみ行い、実際の並び替え・再レンダリングはdrop時にまとめて行う。
+    let dragSrcKey = null;
+
+    sortPriorityList.addEventListener("dragstart", (e) => {
+        const li = e.target.closest(".sort-priority-item");
+        if (!li) return;
+        dragSrcKey = li.dataset.key;
+        li.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", dragSrcKey);
+    });
+
+    sortPriorityList.addEventListener("dragend", () => {
+        sortPriorityList.querySelectorAll(".sort-priority-item").forEach(li => li.classList.remove("dragging", "drag-over"));
+        dragSrcKey = null;
+    });
+
+    sortPriorityList.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        const li = e.target.closest(".sort-priority-item");
+        sortPriorityList.querySelectorAll(".sort-priority-item").forEach(item => item.classList.remove("drag-over"));
+        if (li && li.dataset.key !== dragSrcKey) {
+            li.classList.add("drag-over");
+        }
+    });
+
+    sortPriorityList.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const li = e.target.closest(".sort-priority-item");
+        sortPriorityList.querySelectorAll(".sort-priority-item").forEach(item => item.classList.remove("drag-over"));
+        if (!li || !dragSrcKey) return;
+        const targetKey = li.dataset.key;
+        if (targetKey === dragSrcKey) return;
+
+        const fromIdx = state.sortPriority.indexOf(dragSrcKey);
+        const toIdx = state.sortPriority.indexOf(targetKey);
+        if (fromIdx === -1 || toIdx === -1) return;
+        state.sortPriority.splice(fromIdx, 1);
+        state.sortPriority.splice(toIdx, 0, dragSrcKey);
+
+        renderSortPriorityList();
+        render();
+    });
+
+    renderSortPriorityList();
 
     // スプレッドシート専用フィルタのイベントリスナー
     sheetSearchInput.addEventListener("input", (e) => {
@@ -231,9 +363,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // フィルタに合致する物件リストを抽出
     function getFilteredProperties(includeAreaFilter = true) {
         return properties.filter(item => {
-            // エリアフィルタ
-            if (includeAreaFilter && state.area !== "all" && item.station !== state.area) return false;
-            
+            // エリアフィルタ（都道府県 → 市区町村の順に絞り込み）
+            if (includeAreaFilter) {
+                if (state.prefecture !== "all" && getPrefecture(item.address) !== state.prefecture) return false;
+                if (state.city !== "all" && getCity(item.address) !== state.city) return false;
+                // 通勤マップの「この駅の物件を見る」由来の一時的な駅名絞り込み
+                if (state.stationFocus && item.station !== state.stationFocus) return false;
+            }
+
             // 家賃
             const totalRent = parseTotalRent(item.rent, item.admin, item.parking_fee || 0);
             if (totalRent > state.maxRent) return false;
@@ -251,38 +388,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // メインのカード一覧レンダリング
     function render() {
-        // エリア切替ボタン用の件数（エリアフィルタ適用前）
-        const allFiltered = getFilteredProperties(false);
-        
-        // 存在する駅の一覧を取得
-        const uniqueStations = [...new Set(properties.map(p => p.station))].filter(s => s && s !== "不明");
-        uniqueStations.sort();
+        // エリア切替ボタン用の件数（都道府県/市区町村フィルタ適用前、他の条件は適用済み）
+        const areaBaseFiltered = getFilteredProperties(false);
 
-        // タブ生成
-        let tabsHtml = `<button class="tab-btn ${state.area === "all" ? "active" : ""}" data-area="all">すべて (${allFiltered.length})</button>`;
-        uniqueStations.forEach(stationName => {
-            const count = allFiltered.filter(p => p.station === stationName).length;
-            if (count > 0 || state.area === stationName) {
-                tabsHtml += `<button class="tab-btn ${state.area === stationName ? "active" : ""}" data-area="${stationName}">${stationName} (${count})</button>`;
+        // 都道府県タブ生成（該当物件が存在する都道府県のみ表示）
+        let tabsHtml = `<button class="tab-btn ${state.prefecture === "all" ? "active" : ""}" data-pref="all">すべて (${areaBaseFiltered.length})</button>`;
+        KANTO_PREFECTURES.forEach(pref => {
+            const count = areaBaseFiltered.filter(p => getPrefecture(p.address) === pref).length;
+            if (count > 0 || state.prefecture === pref) {
+                tabsHtml += `<button class="tab-btn ${state.prefecture === pref ? "active" : ""}" data-pref="${pref}">${pref} (${count})</button>`;
             }
         });
         areaTabs.innerHTML = tabsHtml;
 
+        // 市区町村タブ生成（都道府県を選択している場合のみ表示）
+        if (state.prefecture !== "all") {
+            const prefFiltered = areaBaseFiltered.filter(p => getPrefecture(p.address) === state.prefecture);
+            const uniqueCities = [...new Set(prefFiltered.map(p => getCity(p.address)))].filter(Boolean).sort();
+
+            let cityHtml = `<button class="tab-btn tab-btn--sub ${state.city === "all" ? "active" : ""}" data-city="all">すべて (${prefFiltered.length})</button>`;
+            uniqueCities.forEach(city => {
+                const count = prefFiltered.filter(p => getCity(p.address) === city).length;
+                cityHtml += `<button class="tab-btn tab-btn--sub ${state.city === city ? "active" : ""}" data-city="${city}">${city} (${count})</button>`;
+            });
+            cityTabs.innerHTML = cityHtml;
+            cityTabs.style.display = "";
+        } else {
+            cityTabs.innerHTML = "";
+            cityTabs.style.display = "none";
+        }
+
+        // 駅フォーカスのチップ表示（通勤マップの「この駅の物件を見る」から来た場合のみ）
+        if (state.stationFocus) {
+            stationFocusChip.innerHTML = `駅で絞り込み中: <strong>${state.stationFocus}駅</strong> <button type="button" aria-label="駅の絞り込みを解除">✕</button>`;
+            stationFocusChip.style.display = "inline-flex";
+        } else {
+            stationFocusChip.innerHTML = "";
+            stationFocusChip.style.display = "none";
+        }
+
         // フィルタ適用後の物件
         const filtered = getFilteredProperties(true);
 
-        // ソート適用
+        // ソート適用（優先順位リストの先頭から順に比較し、同値の場合のみ次の条件に進む）
         filtered.sort((a, b) => {
-            if (state.sortBy === "walk-asc") {
-                return a.walk_min - b.walk_min;
-            } else if (state.sortBy === "commute-asc") {
-                return a.door_to_door - b.door_to_door;
-            } else if (state.sortBy === "rent-asc") {
-                return a.self_pay - b.self_pay;
-            } else if (state.sortBy === "menseki-desc") {
-                return parseAreaSize(b.menseki) - parseAreaSize(a.menseki);
-            } else if (state.sortBy === "age-asc") {
-                return parseAge(a.age_floor) - parseAge(b.age_floor);
+            for (const key of state.sortPriority) {
+                const cmp = SORT_CRITERIA[key].compare(a, b);
+                if (cmp !== 0) return cmp;
             }
             return 0;
         });
@@ -827,8 +979,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // グローバルスコープに駅フィルター関数を展開（ポップアップから呼べるようにする）
+    // エリアタブ(都道府県/市区町村)は変更せず、駅名のみで一時的に絞り込む
+    // （エリアタブを操作するとstationFocusは解除される。詳細はstate定義のコメント参照）
     window.focusOnStation = function(stationName) {
-        state.area = stationName;
+        state.stationFocus = stationName;
         // 物件カードタブをアクティブにする
         tabButtons[0].click();
         render();

@@ -36,9 +36,15 @@
             <!-- フィルタコントロールパネル -->
             <section class="filter-panel glass">
                 <div class="filter-group">
-                    <h3>エリア切り替え</h3>
+                    <h3>エリア切り替え（都道府県）</h3>
                     <div class="tabs" id="areaTabs">
                         <!-- JavaScript側で動的に生成されます -->
+                    </div>
+                    <div class="tabs tabs--sub" id="cityTabs" style="display: none;">
+                        <!-- 都道府県選択時のみ、JavaScript側で市区町村タブを動的に生成 -->
+                    </div>
+                    <div class="station-focus-chip" id="stationFocusChip" style="display: none;">
+                        <!-- 通勤マップから駅を指定した場合のみ表示 -->
                     </div>
                 </div>
 
@@ -58,15 +64,11 @@
                 </div>
 
                 <div class="sort-compare-controls">
-                    <div class="sort-box">
-                        <label for="sortSelect">並び替え:</label>
-                        <select id="sortSelect" class="custom-select">
-                            <option value="walk-asc" selected>徒歩時間が短い順</option>
-                            <option value="commute-asc">ドアドア通勤時間が短い順</option>
-                            <option value="rent-asc">自己負担額が安い順</option>
-                            <option value="menseki-desc">面積が広い順</option>
-                            <option value="age-asc">築年数が浅い順</option>
-                        </select>
+                    <div class="sort-box sort-box--priority">
+                        <label>並び替えの優先順位（ドラッグ、または▲▼ボタンで並び替え。第1条件から順に比較します）</label>
+                        <ul class="sort-priority-list" id="sortPriorityList">
+                            <!-- JavaScript側で動的に生成されます -->
+                        </ul>
                     </div>
                     <button class="compare-btn-trigger" id="openCompareBtn" disabled>
                         選択した物件を比較 (<span id="compareCount">0</span>)
