@@ -226,23 +226,39 @@ def fetch_properties(url):
         print(f"エラー: リクエストに失敗しました ({e})", file=sys.stderr)
         return None
 
-def parse_commute_info_from_row(row):
+def parse_commute_info_from_row(item):
+    """cassetteitem(物件全体)から、ekInput指定駅(大手町駅)までの所要時間・乗換回数を取得する。
+
+    【重要】このバッジ(cassetteitem_transfer)は部屋単位のtr要素(js-cassette_link)の
+    中には存在せず、物件(cassetteitem)全体につき1つだけ存在する。以前はtr要素を
+    渡していたため常にHTML要素が見つからず、フォールバック値(50分・乗換1回)を
+    全物件が例外なく返す状態になっていた(実測値ではなかった)。呼び出し側もitem単位で
+    1回だけ呼ぶよう修正すること。
+
+    実際のバッジ文言は "1)大手町駅（25分・0回）" のような形式(全角括弧、
+    「・」区切り、"乗換"という文字は含まれない)。
+    """
     commute_text = ""
-    transfer_el = row.find(class_=re.compile(r"cassetteitem_transfer"))
+    transfer_el = item.find(class_=re.compile(r"cassetteitem_transfer"))
     if transfer_el:
         commute_text = transfer_el.text.strip()
-    
-    minutes = 50
+
+    minutes = 50  # 取得できなかった場合のフォールバック(実測値ではない点に注意)
     transfers = 1
-    
-    m_min = re.search(r"(\d+)分", commute_text)
-    if m_min:
-        minutes = int(m_min.group(1))
-    
-    m_tr = re.search(r"乗換(\d+)回", commute_text)
-    if m_tr:
-        transfers = int(m_tr.group(1))
-        
+
+    m = re.search(r"(\d+)分[・･](\d+)回", commute_text)
+    if m:
+        minutes = int(m.group(1))
+        transfers = int(m.group(2))
+    else:
+        # フォーマットが想定と異なる場合の緩いフォールバック
+        m_min = re.search(r"(\d+)分", commute_text)
+        if m_min:
+            minutes = int(m_min.group(1))
+        m_tr = re.search(r"(\d+)回", commute_text)
+        if m_tr:
+            transfers = int(m_tr.group(1))
+
     return minutes, transfers
 
 def parse_suumo_html(html_content):
@@ -277,7 +293,11 @@ def parse_suumo_html(html_content):
         if col3_el:
             divs = col3_el.find_all("div")
             age_floor = " ".join([d.text.strip() for d in divs])
-            
+
+        # 大手町への通勤時間・乗換回数の抽出（物件=item単位で1つだけ存在するバッジのため、
+        # 部屋の行ループの外で1回だけ取得し、同一物件内の全部屋で使い回す）
+        commute_min, commute_transfers = parse_commute_info_from_row(item)
+
         # 部屋情報
         table = item.find("table", class_="cassetteitem_other")
         if table:
@@ -313,9 +333,6 @@ def parse_suumo_html(html_content):
                 detail_url = ""
                 if link_el and link_el.has_attr("href"):
                     detail_url = "https://suumo.jp" + link_el["href"]
-                
-                # 大手町への通勤時間・乗換回数の抽出
-                commute_min, commute_transfers = parse_commute_info_from_row(row)
                 
                 properties.append({
                     "title": title,

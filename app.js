@@ -67,12 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const areaTabs = document.getElementById("areaTabs");
     const cityTabs = document.getElementById("cityTabs");
     const stationFocusChip = document.getElementById("stationFocusChip");
-    const rentFilter = document.getElementById("rentFilter");
-    const rentValue = document.getElementById("rentValue");
-    const commuteFilter = document.getElementById("commuteFilter");
-    const commuteValue = document.getElementById("commuteValue");
-    const areaSizeFilter = document.getElementById("areaSizeFilter");
-    const areaSizeValue = document.getElementById("areaSizeValue");
     const sortPriorityList = document.getElementById("sortPriorityList");
     const openCompareBtn = document.getElementById("openCompareBtn");
     const compareCount = document.getElementById("compareCount");
@@ -96,9 +90,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // 通勤マップの「この駅の物件を見る」から遷移した際の一時的な駅名絞り込み。
         // エリアタブ(都道府県/市区町村)とは独立していて、タブ操作やチップの✕で解除される。
         stationFocus: null,
-        maxRent: 18.0,
-        maxCommute: 60,
-        minArea: 80,
         // 並び替えの優先順位（先頭ほど優先度が高い。第1条件が同値の場合のみ第2条件で比較…と続く）
         sortPriority: ['walk-asc', 'commute-asc', 'age-asc', 'rent-asc', 'menseki-desc'],
         // スプレッドシート専用状態
@@ -170,30 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
             updateMapData();
             renderSheetTable();
         }
-    });
-
-    rentFilter.addEventListener("input", (e) => {
-        state.maxRent = parseFloat(e.target.value);
-        rentValue.textContent = state.maxRent.toFixed(1);
-        render();
-        updateMapData();
-        renderSheetTable();
-    });
-
-    commuteFilter.addEventListener("input", (e) => {
-        state.maxCommute = parseInt(e.target.value);
-        commuteValue.textContent = state.maxCommute;
-        render();
-        updateMapData();
-        renderSheetTable();
-    });
-
-    areaSizeFilter.addEventListener("input", (e) => {
-        state.minArea = parseInt(e.target.value);
-        areaSizeValue.textContent = state.minArea;
-        render();
-        updateMapData();
-        renderSheetTable();
     });
 
     // 並び替え優先順位リストの描画（順位バッジ・▲▼の活性状態を含めて再構築する）
@@ -360,28 +327,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return "color-default";
     }
 
-    // フィルタに合致する物件リストを抽出
+    // フィルタに合致する物件リストを抽出（エリア絞り込みのみ）。
+    // 家賃・通勤時間・専有面積は property_search.py によるスクレイピング時点で
+    // 既に条件（自己負担額5.2万円以下・ドアドア60分以下・80m²以上等）を満たす
+    // ものだけが properties.js に収録されているため、アプリ側では絞り込まない。
     function getFilteredProperties(includeAreaFilter = true) {
+        if (!includeAreaFilter) return properties;
         return properties.filter(item => {
-            // エリアフィルタ（都道府県 → 市区町村の順に絞り込み）
-            if (includeAreaFilter) {
-                if (state.prefecture !== "all" && getPrefecture(item.address) !== state.prefecture) return false;
-                if (state.city !== "all" && getCity(item.address) !== state.city) return false;
-                // 通勤マップの「この駅の物件を見る」由来の一時的な駅名絞り込み
-                if (state.stationFocus && item.station !== state.stationFocus) return false;
-            }
-
-            // 家賃
-            const totalRent = parseTotalRent(item.rent, item.admin, item.parking_fee || 0);
-            if (totalRent > state.maxRent) return false;
-            
-            // 通勤時間
-            if (item.door_to_door > state.maxCommute) return false;
-            
-            // 専有面積
-            const size = parseAreaSize(item.menseki);
-            if (size < state.minArea) return false;
-            
+            if (state.prefecture !== "all" && getPrefecture(item.address) !== state.prefecture) return false;
+            if (state.city !== "all" && getCity(item.address) !== state.city) return false;
+            // 通勤マップの「この駅の物件を見る」由来の一時的な駅名絞り込み
+            if (state.stationFocus && item.station !== state.stationFocus) return false;
             return true;
         });
     }
