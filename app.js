@@ -568,44 +568,49 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // 各路線ごとに折れ線を描画
+        // rail_lines.js (国土数値情報 由来の実際の路線ジオメトリ、build_rail_lines.pyで生成) に
+        // 該当路線のデータがあればそちらを描画し、無い場合のみ大手町からの直線で代用する。
         Object.values(lineGroups).forEach(lg => {
-            // 大手町から近い順（直線距離順）にソートして一本化する
-            const sortedStations = [...lg.stations];
-            sortedStations.sort((a, b) => {
-                const distA = getDistanceSq(OTEMACHI_COORDS, [a.lat, a.lng]);
-                const distB = getDistanceSq(OTEMACHI_COORDS, [b.lat, b.lng]);
-                return distA - distB;
-            });
-
-            // 折れ線の座標配列を作成 (大手町を起点とし、順番に結ぶ)
-            const polylinePoints = [OTEMACHI_COORDS];
-            sortedStations.forEach(st => {
-                polylinePoints.push([st.lat, st.lng]);
-            });
-
             // 路線全体の平均乗換回数を調べる
-            const totalTransfers = sortedStations.reduce((sum, st) => sum + st.avgTransfers, 0);
-            const avgTransfers = totalTransfers / sortedStations.length;
-            
+            const totalTransfers = lg.stations.reduce((sum, st) => sum + st.avgTransfers, 0);
+            const avgTransfers = totalTransfers / lg.stations.length;
+
             // 乗換0回なら実線（青）、1回なら破線（オレンジ）
-            const polylineColor = avgTransfers >= 0.5 ? '#ff9f0a' : '#3b82f6';
-            const polylineDash = avgTransfers >= 0.5 ? '5, 10' : '';
+            const lineColor = avgTransfers >= 0.5 ? '#ff9f0a' : '#3b82f6';
+            const lineDash = avgTransfers >= 0.5 ? '5, 10' : '';
+            const tooltipBase = `${lg.name} (${avgTransfers >= 0.5 ? '乗換あり' : '直通'})`;
 
-            const polyline = L.polyline(polylinePoints, {
-                color: polylineColor,
-                weight: 3,
-                opacity: 0.8,
-                dashArray: polylineDash
-            }).addTo(map);
+            const realGeometry = (typeof railLinesData !== 'undefined') ? railLinesData[lg.name] : null;
+            let layer;
 
-            // 路線名のポップアップ/ツールチップを設定
-            polyline.bindTooltip(`${lg.name} (${avgTransfers >= 0.5 ? '乗換あり' : '直通'})`, {
-                permanent: false,
-                sticky: true,
-                direction: 'top'
-            });
+            if (realGeometry) {
+                // 実際の路線ジオメトリを描画
+                layer = L.geoJSON(
+                    { type: 'Feature', properties: {}, geometry: realGeometry },
+                    { style: { color: lineColor, weight: 3, opacity: 0.8, dashArray: lineDash } }
+                ).addTo(map);
+                layer.eachLayer(l => l.bindTooltip(tooltipBase, { permanent: false, sticky: true, direction: 'top' }));
+            } else {
+                // 実データが無い路線は、大手町から近い順（直線距離順）にソートして結んだ直線(概算)で代用する
+                const sortedStations = [...lg.stations];
+                sortedStations.sort((a, b) => {
+                    const distA = getDistanceSq(OTEMACHI_COORDS, [a.lat, a.lng]);
+                    const distB = getDistanceSq(OTEMACHI_COORDS, [b.lat, b.lng]);
+                    return distA - distB;
+                });
+                const polylinePoints = [OTEMACHI_COORDS];
+                sortedStations.forEach(st => polylinePoints.push([st.lat, st.lng]));
 
-            mapPolylines.push(polyline);
+                layer = L.polyline(polylinePoints, {
+                    color: lineColor,
+                    weight: 3,
+                    opacity: 0.8,
+                    dashArray: lineDash
+                }).addTo(map);
+                layer.bindTooltip(`${tooltipBase}・概算`, { permanent: false, sticky: true, direction: 'top' });
+            }
+
+            mapPolylines.push(layer);
         });
     }
 

@@ -9,10 +9,14 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 ## 1. ディレクトリ構造
 
 * `skills/property_search/property_search.py` : 物件検索・データ抽出・詳細スクレイピングの本体スクリプト。
+* `skills/property_search/build_rail_lines.py` : 国土数値情報「鉄道データ(N02)」から関東圏の実路線ジオメトリを抽出し、`rail_lines.js` を生成するスクリプト（詳細は `鉄道路線データ_実装引継ぎ.md` を参照）。
+* `skills/property_search/鉄道路線データ_実装引継ぎ.md` : 通勤アクセスマップを実路線データで描画するための、ローカル実行担当（AIエージェント）向け引継ぎ書。
 * `skills/property_search/SKILL.md` : この説明書（本ドキュメント）。
 * `properties.js` : 同期保存される物件データJSON。
+* `rail_lines.js` : 通勤アクセスマップ用の実路線ジオメトリ（`build_rail_lines.py`が生成。未生成時は空オブジェクトのプレースホルダー。`app.js`は路線名一致時のみ使用し、無ければ従来の直線描画にフォールバックする）。
+* `geocoding_cache.json` : 駅の緯度経度キャッシュ。
 * `物件検索結果.md` : 検索結果および前回差分のレポート。
-* `物件比較アプリ/` : ローカルWebアプリ関連ファイル（`index.html`, `style.css`, `app.js`, `properties.js`）。
+* `物件比較アプリ/` : ローカルWebアプリ関連ファイル（`index.html`, `style.css`, `app.js`, `properties.js`, `rail_lines.js`）。
 
 ---
 
@@ -53,7 +57,7 @@ py skills/property_search/property_search.py --output 物件検索結果.md
 
 ```powershell
 # 変更されたデータおよびアプリの主要ファイルをステージング
-git add index.html style.css app.js properties.js 物件検索結果.md geocoding_cache.json
+git add index.html style.css app.js properties.js 物件検索結果.md geocoding_cache.json rail_lines.js
 
 # コミットを作成
 git commit -m "Update properties data and application"
@@ -87,3 +91,6 @@ git push origin main
     - `5.0万円超`：赤色
 - **駐車場距離バッジ**:
   - 駐車場が敷地外かつ距離100m以上離れている場合、カードのエリア名の横に `（駐車場 ◯◯m先）` という警告バッジを表示します。
+- **大手町通勤アクセスマップ（実路線描画）**:
+  - 「アクセスマップ」タブでは、大手町駅を起点に各物件の最寄り駅・路線を地図上にプロットします。
+  - 路線ごとの線は、`rail_lines.js`（国土数値情報由来の実ジオメトリ、`build_rail_lines.py`で生成）に該当路線のデータがあればそれを描画し、無い場合のみ大手町からの直線（概算）で代用します。
