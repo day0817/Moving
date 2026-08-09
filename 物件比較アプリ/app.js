@@ -9,6 +9,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // 大手町駅の座標
     const OTEMACHI_COORDS = [35.6848, 139.7661];
 
+    // 大手町駅・東京駅に「乗換なしで直通」する路線とその表示色。
+    // 判定基準: その路線(または直通運転する系統)が東京駅または大手町駅のホームに
+    // 実際に停車するか。それ以外の路線(私鉄各線・地下鉄接続のみの路線等)は、
+    // 大手町駅(地下鉄駅)に到達するために必ずどこかで地下鉄等への乗換が発生するため、
+    // 「乗換あり」として一律グレー表示にする。
+    //   - ＪＲ京浜東北線: 東京駅に常時停車
+    //   - ＪＲ宇都宮線・ＪＲ高崎線: 上野東京ライン経由で東京駅に直通(2015年3月開業)
+    //   - ＪＲ常磐線: 上野東京ライン経由で東京駅・品川方面に直通する系統がある
+    //   - ＪＲ総武線快速: 東京駅地下ホームに停車
+    //   - ＪＲ内房線・ＪＲ外房線: 総武線快速との直通運転で東京駅まで乗り入れる系統がある
+    // 色は色覚多様性を考慮したカテゴリカルパレット(dataviz skillの検証済みパレット、
+    // 隣接ペアのCVD/正常色覚の分離度を検証済み)から選定。
+    const DIRECT_LINE_COLORS = {
+        'ＪＲ京浜東北線': '#3987e5',
+        'ＪＲ宇都宮線': '#d95926',
+        'ＪＲ高崎線': '#199e70',
+        'ＪＲ常磐線': '#c98500',
+        'ＪＲ総武線快速': '#d55181',
+        'ＪＲ内房線': '#008300',
+        'ＪＲ外房線': '#9085e9',
+    };
+    const TRANSFER_LINE_COLOR = '#9ca3af'; // 乗換が必要な路線は一律グレー
+
     // 要素取得
     const bukkenGrid = document.getElementById("bukkenGrid");
     const areaTabs = document.getElementById("areaTabs");
@@ -471,6 +494,28 @@ document.addEventListener("DOMContentLoaded", () => {
             fillOpacity: 1,
             weight: 3
         }).addTo(map).bindPopup('<strong>大手町駅 (起点)</strong>');
+
+        renderMapLegend();
+    }
+
+    // 路線色の凡例をDIRECT_LINE_COLORSから動的に描画する（フィルタ状態に依らず固定表示）
+    function renderMapLegend() {
+        const legendEl = document.getElementById('mapLegend');
+        if (!legendEl) return;
+
+        const directItems = Object.entries(DIRECT_LINE_COLORS).map(([name, color]) => `
+            <div class="legend-item">
+                <span class="legend-line" style="background-color: ${color};"></span>${name}
+            </div>
+        `).join('');
+
+        const transferItem = `
+            <div class="legend-item">
+                <span class="legend-line" style="background: repeating-linear-gradient(90deg, ${TRANSFER_LINE_COLOR}, ${TRANSFER_LINE_COLOR} 4px, transparent 4px, transparent 8px);"></span>乗換が必要な路線
+            </div>
+        `;
+
+        legendEl.innerHTML = directItems + transferItem;
     }
 
     // 2点間の直線距離（簡易ユークリッド距離）を計算する関数 (ソート用)
@@ -560,8 +605,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!lineGroups[st.line]) {
                 lineGroups[st.line] = {
                     name: st.line,
-                    stations: [],
-                    avgTransfers: 0
+                    stations: []
                 };
             }
             lineGroups[st.line].stations.push(st);
@@ -571,14 +615,12 @@ document.addEventListener("DOMContentLoaded", () => {
         // rail_lines.js (国土数値情報 由来の実際の路線ジオメトリ、build_rail_lines.pyで生成) に
         // 該当路線のデータがあればそちらを描画し、無い場合のみ大手町からの直線で代用する。
         Object.values(lineGroups).forEach(lg => {
-            // 路線全体の平均乗換回数を調べる
-            const totalTransfers = lg.stations.reduce((sum, st) => sum + st.avgTransfers, 0);
-            const avgTransfers = totalTransfers / lg.stations.length;
-
-            // 乗換0回なら実線（青）、1回なら破線（オレンジ）
-            const lineColor = avgTransfers >= 0.5 ? '#ff9f0a' : '#3b82f6';
-            const lineDash = avgTransfers >= 0.5 ? '5, 10' : '';
-            const tooltipBase = `${lg.name} (${avgTransfers >= 0.5 ? '乗換あり' : '直通'})`;
+            // 大手町・東京駅に直通する路線か否かで色分けする（DIRECT_LINE_COLORS参照）。
+            // 直通路線は路線ごとの識別色で実線、乗換が必要な路線は一律グレーの破線。
+            const isDirect = Object.prototype.hasOwnProperty.call(DIRECT_LINE_COLORS, lg.name);
+            const lineColor = isDirect ? DIRECT_LINE_COLORS[lg.name] : TRANSFER_LINE_COLOR;
+            const lineDash = isDirect ? '' : '5, 10';
+            const tooltipBase = `${lg.name} (${isDirect ? '大手町・東京駅に直通' : '乗換あり'})`;
 
             const realGeometry = (typeof railLinesData !== 'undefined') ? railLinesData[lg.name] : null;
             let layer;

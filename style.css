@@ -724,7 +724,8 @@ header {
 
 .map-legend {
     display: flex;
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.5rem;
     margin-top: 1.25rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
@@ -743,14 +744,6 @@ header {
     width: 28px;
     height: 3px;
     border-radius: 2px;
-}
-
-.legend-line.direct {
-    background-color: var(--accent);
-}
-
-.legend-line.transfer {
-    background: repeating-linear-gradient(90deg, #fb923c, #fb923c 4px, transparent 4px, transparent 8px);
 }
 
 /* Leaflet ポップアップとコントロールのダーク調カスタマイズ */

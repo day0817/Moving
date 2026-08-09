@@ -85,15 +85,12 @@
             <section class="map-panel glass">
                 <div class="map-header">
                     <h3>大手町通勤アクセスマップ</h3>
-                    <p>大手町駅を中心に、各物件の最寄り駅および通勤ルート（常時表示）を可視化します。円の大きさは駅ごとの物件数に対応しています。</p>
+                    <p>大手町駅を中心に、各物件の最寄り駅および通勤ルート（常時表示）を可視化します。円の大きさは駅ごとの物件数に対応しています。大手町・東京駅に乗換なしで直通する路線は路線ごとに色分けし、乗換が必要な路線は一律グレーで表示しています。</p>
                 </div>
                 <div class="map-wrapper">
                     <div id="map"></div>
                 </div>
-                <div class="map-legend">
-                    <div class="legend-item"><span class="legend-line direct"></span>直通ルート (乗換0回)</div>
-                    <div class="legend-item"><span class="legend-line transfer"></span>乗換1回ルート</div>
-                </div>
+                <div class="map-legend" id="mapLegend"></div>
             </section>
         </div>
 
