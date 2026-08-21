@@ -22,7 +22,8 @@ const bukkenData = [
     "door_to_door": 38,
     "transfers": 1,
     "lat": 35.7423294,
-    "lng": 139.8834675
+    "lng": 139.8834675,
+    "is_new": true
   },
   {
     "station": "堀切菖蒲園",
@@ -47,7 +48,8 @@ const bukkenData = [
     "door_to_door": 33,
     "transfers": 1,
     "lat": 35.7469202,
-    "lng": 139.8263877
+    "lng": 139.8263877,
+    "is_new": false
   },
   {
     "station": "矢野口",
@@ -72,7 +74,8 @@ const bukkenData = [
     "door_to_door": 57,
     "transfers": 1,
     "lat": 35.6416368,
-    "lng": 139.5205706
+    "lng": 139.5205706,
+    "is_new": false
   },
   {
     "station": "東伏見",
@@ -97,7 +100,8 @@ const bukkenData = [
     "door_to_door": 56,
     "transfers": 1,
     "lat": 35.7287024,
-    "lng": 139.5642364
+    "lng": 139.5642364,
+    "is_new": false
   },
   {
     "station": "保谷",
@@ -122,7 +126,8 @@ const bukkenData = [
     "door_to_door": 54,
     "transfers": 1,
     "lat": 35.7483016,
-    "lng": 139.5673646
+    "lng": 139.5673646,
+    "is_new": false
   },
   {
     "station": "柴又",
@@ -147,7 +152,8 @@ const bukkenData = [
     "door_to_door": 33,
     "transfers": 1,
     "lat": 35.7563461,
-    "lng": 139.8752164
+    "lng": 139.8752164,
+    "is_new": false
   },
   {
     "station": "はるひ野",
@@ -172,7 +178,8 @@ const bukkenData = [
     "door_to_door": 55,
     "transfers": 0,
     "lat": 35.6183663,
-    "lng": 139.4644254
+    "lng": 139.4644254,
+    "is_new": false
   },
   {
     "station": "黒川",
@@ -197,7 +204,8 @@ const bukkenData = [
     "door_to_door": 54,
     "transfers": 0,
     "lat": null,
-    "lng": null
+    "lng": null,
+    "is_new": true
   },
   {
     "station": "黒川",
@@ -222,7 +230,8 @@ const bukkenData = [
     "door_to_door": 55,
     "transfers": 0,
     "lat": null,
-    "lng": null
+    "lng": null,
+    "is_new": false
   },
   {
     "station": "登戸",
@@ -247,7 +256,8 @@ const bukkenData = [
     "door_to_door": 40,
     "transfers": 0,
     "lat": 35.6211127,
-    "lng": 139.5695457
+    "lng": 139.5695457,
+    "is_new": false
   },
   {
     "station": "子安",
@@ -272,7 +282,8 @@ const bukkenData = [
     "door_to_door": 44,
     "transfers": 1,
     "lat": 35.4846582,
-    "lng": 139.645378
+    "lng": 139.645378,
+    "is_new": false
   },
   {
     "station": "登戸",
@@ -297,7 +308,8 @@ const bukkenData = [
     "door_to_door": 40,
     "transfers": 0,
     "lat": 35.6211127,
-    "lng": 139.5695457
+    "lng": 139.5695457,
+    "is_new": false
   },
   {
     "station": "青葉台",
@@ -322,7 +334,8 @@ const bukkenData = [
     "door_to_door": 50,
     "transfers": 0,
     "lat": 35.5439187,
-    "lng": 139.5168227
+    "lng": 139.5168227,
+    "is_new": false
   },
   {
     "station": "青葉台",
@@ -347,7 +360,8 @@ const bukkenData = [
     "door_to_door": 50,
     "transfers": 0,
     "lat": 35.5439187,
-    "lng": 139.5168227
+    "lng": 139.5168227,
+    "is_new": false
   },
   {
     "station": "青葉台",
@@ -372,7 +386,8 @@ const bukkenData = [
     "door_to_door": 50,
     "transfers": 0,
     "lat": 35.5439187,
-    "lng": 139.5168227
+    "lng": 139.5168227,
+    "is_new": false
   },
   {
     "station": "五月台",
@@ -397,7 +412,8 @@ const bukkenData = [
     "door_to_door": 53,
     "transfers": 0,
     "lat": 35.600175,
-    "lng": 139.4936136
+    "lng": 139.4936136,
+    "is_new": false
   },
   {
     "station": "三ツ沢下町",
@@ -422,7 +438,8 @@ const bukkenData = [
     "door_to_door": 41,
     "transfers": 0,
     "lat": 35.4765085,
-    "lng": 139.6160911
+    "lng": 139.6160911,
+    "is_new": false
   },
   {
     "station": "三ツ沢下町",
@@ -447,7 +464,8 @@ const bukkenData = [
     "door_to_door": 39,
     "transfers": 0,
     "lat": 35.4765085,
-    "lng": 139.6160911
+    "lng": 139.6160911,
+    "is_new": false
   },
   {
     "station": "鷺沼",
@@ -472,7 +490,8 @@ const bukkenData = [
     "door_to_door": 45,
     "transfers": 0,
     "lat": 35.5788126,
-    "lng": 139.5745288
+    "lng": 139.5745288,
+    "is_new": false
   },
   {
     "station": "朝霞",
@@ -497,7 +516,8 @@ const bukkenData = [
     "door_to_door": 45,
     "transfers": 1,
     "lat": 35.79703,
-    "lng": 139.6002238
+    "lng": 139.6002238,
+    "is_new": false
   },
   {
     "station": "志木",
@@ -522,7 +542,8 @@ const bukkenData = [
     "door_to_door": 54,
     "transfers": 1,
     "lat": 35.8222228,
-    "lng": 139.5751727
+    "lng": 139.5751727,
+    "is_new": false
   },
   {
     "station": "鳩ヶ谷",
@@ -547,7 +568,8 @@ const bukkenData = [
     "door_to_door": 47,
     "transfers": 1,
     "lat": 35.8314948,
-    "lng": 139.7366118
+    "lng": 139.7366118,
+    "is_new": false
   },
   {
     "station": "朝霞",
@@ -572,7 +594,8 @@ const bukkenData = [
     "door_to_door": 47,
     "transfers": 1,
     "lat": 35.79703,
-    "lng": 139.6002238
+    "lng": 139.6002238,
+    "is_new": false
   },
   {
     "station": "蕨",
@@ -597,7 +620,8 @@ const bukkenData = [
     "door_to_door": 43,
     "transfers": 1,
     "lat": 35.8281232,
-    "lng": 139.6903799
+    "lng": 139.6903799,
+    "is_new": true
   },
   {
     "station": "新井宿",
@@ -622,7 +646,8 @@ const bukkenData = [
     "door_to_door": 48,
     "transfers": 1,
     "lat": 35.8429473,
-    "lng": 139.738258
+    "lng": 139.738258,
+    "is_new": false
   },
   {
     "station": "東大宮",
@@ -647,7 +672,8 @@ const bukkenData = [
     "door_to_door": 51,
     "transfers": 0,
     "lat": 35.9489783,
-    "lng": 139.6410128
+    "lng": 139.6410128,
+    "is_new": false
   },
   {
     "station": "戸塚安行",
@@ -672,7 +698,8 @@ const bukkenData = [
     "door_to_door": 55,
     "transfers": 1,
     "lat": 35.8583006,
-    "lng": 139.753734
+    "lng": 139.753734,
+    "is_new": false
   },
   {
     "station": "東大宮",
@@ -697,7 +724,8 @@ const bukkenData = [
     "door_to_door": 53,
     "transfers": 0,
     "lat": 35.9489783,
-    "lng": 139.6410128
+    "lng": 139.6410128,
+    "is_new": false
   },
   {
     "station": "上尾",
@@ -722,7 +750,8 @@ const bukkenData = [
     "door_to_door": 59,
     "transfers": 0,
     "lat": 35.9733274,
-    "lng": 139.5884718
+    "lng": 139.5884718,
+    "is_new": true
   },
   {
     "station": "上尾",
@@ -747,7 +776,8 @@ const bukkenData = [
     "door_to_door": 57,
     "transfers": 0,
     "lat": 35.9733274,
-    "lng": 139.5884718
+    "lng": 139.5884718,
+    "is_new": false
   },
   {
     "station": "戸塚安行",
@@ -772,7 +802,8 @@ const bukkenData = [
     "door_to_door": 50,
     "transfers": 1,
     "lat": 35.8583006,
-    "lng": 139.753734
+    "lng": 139.753734,
+    "is_new": false
   },
   {
     "station": "新田",
@@ -797,7 +828,8 @@ const bukkenData = [
     "door_to_door": 52,
     "transfers": 1,
     "lat": 35.7435349,
-    "lng": 140.2985861
+    "lng": 140.2985861,
+    "is_new": false
   },
   {
     "station": "南与野",
@@ -822,7 +854,8 @@ const bukkenData = [
     "door_to_door": 47,
     "transfers": 1,
     "lat": 35.8678858,
-    "lng": 139.6310388
+    "lng": 139.6310388,
+    "is_new": false
   },
   {
     "station": "東大宮",
@@ -847,7 +880,8 @@ const bukkenData = [
     "door_to_door": 55,
     "transfers": 0,
     "lat": 35.9489783,
-    "lng": 139.6410128
+    "lng": 139.6410128,
+    "is_new": false
   },
   {
     "station": "東川口",
@@ -872,7 +906,8 @@ const bukkenData = [
     "door_to_door": 53,
     "transfers": 1,
     "lat": 35.8766407,
-    "lng": 139.7436147
+    "lng": 139.7436147,
+    "is_new": false
   },
   {
     "station": "北浦和",
@@ -897,7 +932,8 @@ const bukkenData = [
     "door_to_door": 41,
     "transfers": 0,
     "lat": 35.8721554,
-    "lng": 139.6461059
+    "lng": 139.6461059,
+    "is_new": false
   },
   {
     "station": "松戸新田",
@@ -922,7 +958,8 @@ const bukkenData = [
     "door_to_door": 48,
     "transfers": 1,
     "lat": 35.7906265,
-    "lng": 139.9226166
+    "lng": 139.9226166,
+    "is_new": true
   },
   {
     "station": "松戸新田",
@@ -947,7 +984,8 @@ const bukkenData = [
     "door_to_door": 48,
     "transfers": 1,
     "lat": 35.7906265,
-    "lng": 139.9226166
+    "lng": 139.9226166,
+    "is_new": false
   },
   {
     "station": "松戸新田",
@@ -972,7 +1010,8 @@ const bukkenData = [
     "door_to_door": 48,
     "transfers": 1,
     "lat": 35.7906265,
-    "lng": 139.9226166
+    "lng": 139.9226166,
+    "is_new": false
   },
   {
     "station": "上本郷",
@@ -997,7 +1036,8 @@ const bukkenData = [
     "door_to_door": 42,
     "transfers": 0,
     "lat": 35.7896751,
-    "lng": 139.9162363
+    "lng": 139.9162363,
+    "is_new": false
   },
   {
     "station": "船橋日大前",
@@ -1022,7 +1062,8 @@ const bukkenData = [
     "door_to_door": 43,
     "transfers": 0,
     "lat": 35.7268419,
-    "lng": 140.0588171
+    "lng": 140.0588171,
+    "is_new": false
   },
   {
     "station": "船橋日大前",
@@ -1047,7 +1088,8 @@ const bukkenData = [
     "door_to_door": 43,
     "transfers": 0,
     "lat": 35.7268419,
-    "lng": 140.0588171
+    "lng": 140.0588171,
+    "is_new": false
   },
   {
     "station": "鬼越",
@@ -1072,7 +1114,8 @@ const bukkenData = [
     "door_to_door": 37,
     "transfers": 1,
     "lat": 35.7199923,
-    "lng": 139.9372936
+    "lng": 139.9372936,
+    "is_new": false
   },
   {
     "station": "塚田",
@@ -1097,7 +1140,8 @@ const bukkenData = [
     "door_to_door": 33,
     "transfers": 0,
     "lat": 35.4112513,
-    "lng": 139.511435
+    "lng": 139.511435,
+    "is_new": false
   },
   {
     "station": "船橋法典",
@@ -1122,7 +1166,8 @@ const bukkenData = [
     "door_to_door": 37,
     "transfers": 1,
     "lat": 35.730413,
-    "lng": 139.9666136
+    "lng": 139.9666136,
+    "is_new": true
   },
   {
     "station": "北小金",
@@ -1147,7 +1192,8 @@ const bukkenData = [
     "door_to_door": 48,
     "transfers": 1,
     "lat": 35.8330516,
-    "lng": 139.9315725
+    "lng": 139.9315725,
+    "is_new": false
   },
   {
     "station": "新検見川",
@@ -1172,7 +1218,8 @@ const bukkenData = [
     "door_to_door": 54,
     "transfers": 1,
     "lat": 35.6518043,
-    "lng": 140.0729624
+    "lng": 140.0729624,
+    "is_new": true
   },
   {
     "station": "滝不動",
@@ -1197,7 +1244,8 @@ const bukkenData = [
     "door_to_door": 44,
     "transfers": 0,
     "lat": 35.7377176,
-    "lng": 140.0259856
+    "lng": 140.0259856,
+    "is_new": false
   },
   {
     "station": "滝不動",
@@ -1222,7 +1270,8 @@ const bukkenData = [
     "door_to_door": 59,
     "transfers": 1,
     "lat": 35.7377176,
-    "lng": 140.0259856
+    "lng": 140.0259856,
+    "is_new": false
   },
   {
     "station": "滝不動",
@@ -1247,7 +1296,8 @@ const bukkenData = [
     "door_to_door": 58,
     "transfers": 1,
     "lat": 35.7377176,
-    "lng": 140.0259856
+    "lng": 140.0259856,
+    "is_new": false
   },
   {
     "station": "京成幕張",
@@ -1272,7 +1322,8 @@ const bukkenData = [
     "door_to_door": 49,
     "transfers": 1,
     "lat": 35.6609357,
-    "lng": 140.0556706
+    "lng": 140.0556706,
+    "is_new": false
   },
   {
     "station": "八千代中央",
@@ -1297,7 +1348,8 @@ const bukkenData = [
     "door_to_door": 53,
     "transfers": 0,
     "lat": 35.7278521,
-    "lng": 140.1034097
+    "lng": 140.1034097,
+    "is_new": true
   },
   {
     "station": "東葉勝田台",
@@ -1322,7 +1374,8 @@ const bukkenData = [
     "door_to_door": 49,
     "transfers": 0,
     "lat": 35.7159497,
-    "lng": 140.1260561
+    "lng": 140.1260561,
+    "is_new": false
   },
   {
     "station": "我孫子",
@@ -1347,7 +1400,8 @@ const bukkenData = [
     "door_to_door": 55,
     "transfers": 0,
     "lat": 35.8719403,
-    "lng": 140.0110481
+    "lng": 140.0110481,
+    "is_new": false
   },
   {
     "station": "北小金",
@@ -1372,7 +1426,8 @@ const bukkenData = [
     "door_to_door": 48,
     "transfers": 1,
     "lat": 35.8330516,
-    "lng": 139.9315725
+    "lng": 139.9315725,
+    "is_new": false
   },
   {
     "station": "八千代中央",
@@ -1397,7 +1452,8 @@ const bukkenData = [
     "door_to_door": 52,
     "transfers": 0,
     "lat": 35.7278521,
-    "lng": 140.1034097
+    "lng": 140.1034097,
+    "is_new": false
   },
   {
     "station": "南柏",
@@ -1422,7 +1478,8 @@ const bukkenData = [
     "door_to_door": 54,
     "transfers": 1,
     "lat": 35.8446937,
-    "lng": 139.9540904
+    "lng": 139.9540904,
+    "is_new": false
   },
   {
     "station": "稲毛",
@@ -1447,7 +1504,8 @@ const bukkenData = [
     "door_to_door": 50,
     "transfers": 0,
     "lat": 35.6369851,
-    "lng": 140.092676
+    "lng": 140.092676,
+    "is_new": false
   },
   {
     "station": "新検見川",
@@ -1472,7 +1530,8 @@ const bukkenData = [
     "door_to_door": 54,
     "transfers": 1,
     "lat": 35.6518043,
-    "lng": 140.0729624
+    "lng": 140.0729624,
+    "is_new": false
   },
   {
     "station": "新検見川",
@@ -1497,7 +1556,8 @@ const bukkenData = [
     "door_to_door": 54,
     "transfers": 1,
     "lat": 35.6518043,
-    "lng": 140.0729624
+    "lng": 140.0729624,
+    "is_new": false
   },
   {
     "station": "我孫子",
@@ -1522,7 +1582,8 @@ const bukkenData = [
     "door_to_door": 56,
     "transfers": 0,
     "lat": 35.8719403,
-    "lng": 140.0110481
+    "lng": 140.0110481,
+    "is_new": false
   },
   {
     "station": "八千代中央",
@@ -1547,7 +1608,8 @@ const bukkenData = [
     "door_to_door": 53,
     "transfers": 0,
     "lat": 35.7278521,
-    "lng": 140.1034097
+    "lng": 140.1034097,
+    "is_new": false
   },
   {
     "station": "検見川",
@@ -1572,7 +1634,8 @@ const bukkenData = [
     "door_to_door": 51,
     "transfers": 1,
     "lat": 35.6526048,
-    "lng": 140.0662833
+    "lng": 140.0662833,
+    "is_new": false
   },
   {
     "station": "飯山満",
@@ -1597,7 +1660,8 @@ const bukkenData = [
     "door_to_door": 38,
     "transfers": 0,
     "lat": 35.7143387,
-    "lng": 140.0220555
+    "lng": 140.0220555,
+    "is_new": false
   },
   {
     "station": "滝不動",
@@ -1622,7 +1686,8 @@ const bukkenData = [
     "door_to_door": 54,
     "transfers": 1,
     "lat": 35.7377176,
-    "lng": 140.0259856
+    "lng": 140.0259856,
+    "is_new": false
   },
   {
     "station": "南柏",
@@ -1647,7 +1712,8 @@ const bukkenData = [
     "door_to_door": 52,
     "transfers": 0,
     "lat": 35.8446937,
-    "lng": 139.9540904
+    "lng": 139.9540904,
+    "is_new": true
   },
   {
     "station": "上本郷",
@@ -1672,7 +1738,8 @@ const bukkenData = [
     "door_to_door": 37,
     "transfers": 0,
     "lat": 35.7896751,
-    "lng": 139.9162363
+    "lng": 139.9162363,
+    "is_new": false
   },
   {
     "station": "塚田",
@@ -1697,7 +1764,8 @@ const bukkenData = [
     "door_to_door": 52,
     "transfers": 1,
     "lat": 35.4112513,
-    "lng": 139.511435
+    "lng": 139.511435,
+    "is_new": false
   },
   {
     "station": "新検見川",
@@ -1722,7 +1790,8 @@ const bukkenData = [
     "door_to_door": 50,
     "transfers": 1,
     "lat": 35.6518043,
-    "lng": 140.0729624
+    "lng": 140.0729624,
+    "is_new": false
   },
   {
     "station": "南流山",
@@ -1747,7 +1816,8 @@ const bukkenData = [
     "door_to_door": 50,
     "transfers": 1,
     "lat": 35.8389226,
-    "lng": 139.904336
+    "lng": 139.904336,
+    "is_new": false
   },
   {
     "station": "本千葉",
@@ -1772,6 +1842,7 @@ const bukkenData = [
     "door_to_door": 58,
     "transfers": 0,
     "lat": 35.6011214,
-    "lng": 140.1210196
+    "lng": 140.1210196,
+    "is_new": false
   }
 ];

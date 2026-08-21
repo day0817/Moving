@@ -8,11 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Leaflet.js (Map Library) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,119 +18,48 @@
         </div>
     </header>
 
-    <!-- タブナビゲーション -->
-    <nav class="app-tabs-nav container">
-        <button class="nav-tab-btn active" data-target="properties-section">物件カード一覧</button>
-        <button class="nav-tab-btn" data-target="map-section">通勤マップ</button>
-        <button class="nav-tab-btn" data-target="sheet-section">物件一覧 (シート)</button>
-    </nav>
-
     <main class="container">
-        <!-- 1. 物件一覧セクション -->
-        <div id="properties-section" class="tab-content active">
-            <!-- フィルタコントロールパネル -->
-            <section class="filter-panel glass">
-                <div class="filter-group">
+        <!-- フィルタコントロールパネル -->
+        <section class="filter-panel glass">
+            <div class="filter-header-row">
+                <div class="filter-group-header">
                     <h3>エリア切り替え（都道府県）</h3>
-                    <div class="tabs" id="areaTabs">
+                </div>
+                <div class="new-filter-control">
+                    <label class="new-filter-label" for="onlyNewCheck" id="onlyNewFilterBtn">
+                        <input type="checkbox" id="onlyNewCheck">
+                        <span class="new-badge-pill">NEW</span>
+                        <span class="toggle-text">新規追加のみ表示 (<span id="newBukkenCount">0</span>)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="tabs" id="areaTabs">
+                    <!-- JavaScript側で動的に生成されます -->
+                </div>
+                <div class="tabs tabs--sub" id="cityTabs" style="display: none;">
+                    <!-- 都道府県選択時のみ、JavaScript側で市区町村タブを動的に生成 -->
+                </div>
+            </div>
+
+            <div class="sort-compare-controls">
+                <div class="sort-box sort-box--priority">
+                    <label>並び替えの優先順位（ドラッグ、または▲▼ボタンで並び替え。第1条件から順に比較します）</label>
+                    <ul class="sort-priority-list" id="sortPriorityList">
                         <!-- JavaScript側で動的に生成されます -->
-                    </div>
-                    <div class="tabs tabs--sub" id="cityTabs" style="display: none;">
-                        <!-- 都道府県選択時のみ、JavaScript側で市区町村タブを動的に生成 -->
-                    </div>
-                    <div class="station-focus-chip" id="stationFocusChip" style="display: none;">
-                        <!-- 通勤マップから駅を指定した場合のみ表示 -->
-                    </div>
+                    </ul>
                 </div>
+                <button class="compare-btn-trigger" id="openCompareBtn" disabled>
+                    選択した物件を比較 (<span id="compareCount">0</span>)
+                </button>
+            </div>
+        </section>
 
-                <div class="sort-compare-controls">
-                    <div class="sort-box sort-box--priority">
-                        <label>並び替えの優先順位（ドラッグ、または▲▼ボタンで並び替え。第1条件から順に比較します）</label>
-                        <ul class="sort-priority-list" id="sortPriorityList">
-                            <!-- JavaScript側で動的に生成されます -->
-                        </ul>
-                    </div>
-                    <button class="compare-btn-trigger" id="openCompareBtn" disabled>
-                        選択した物件を比較 (<span id="compareCount">0</span>)
-                    </button>
-                </div>
-            </section>
-
-            <!-- 物件カードグリッド -->
-            <section class="bukken-grid" id="bukkenGrid">
-                <!-- 動的にJSで生成 -->
-            </section>
-        </div>
-
-        <!-- 2. 通勤マップセクション -->
-        <div id="map-section" class="tab-content">
-            <section class="map-panel glass">
-                <div class="map-header">
-                    <h3>大手町通勤アクセスマップ</h3>
-                    <p>大手町駅を中心に、各物件の最寄り駅および通勤ルート（常時表示）を可視化します。円の大きさは駅ごとの物件数に対応しています。大手町・東京駅に乗換なしで直通する路線は路線ごとに色分けし、乗換が必要な路線は一律グレーで表示しています。</p>
-                </div>
-                <div class="map-wrapper">
-                    <div id="map"></div>
-                </div>
-                <div class="map-legend" id="mapLegend"></div>
-            </section>
-        </div>
-
-        <!-- 3. 物件一覧 (シート) セクション -->
-        <div id="sheet-section" class="tab-content">
-            <section class="sheet-panel glass">
-                <div class="sheet-header">
-                    <h3>物件スプレッドシート一覧</h3>
-                    <p>全ての抽出物件を表形式で表示します。ヘッダーをクリックすることで、各列ごとに昇順・降順ソートが可能です。専用の検索窓やしきい値フィルタを用いて絞り込みが行えます。</p>
-                </div>
-                
-                <!-- スプレッドシート専用フィルタコントロール -->
-                <div class="sheet-filters">
-                    <div class="search-box">
-                        <input type="text" id="sheetSearchInput" placeholder="物件名、駅名、路線名、住所で検索...">
-                    </div>
-                    <div class="sheet-filter-group">
-                        <div class="filter-item">
-                            <label for="sheetWalkFilter">徒歩上限:</label>
-                            <select id="sheetWalkFilter" class="custom-select">
-                                <option value="all" selected>すべて</option>
-                                <option value="5">5分以内</option>
-                                <option value="10">10分以内</option>
-                                <option value="12">12分以内</option>
-                                <option value="15">15分以内</option>
-                            </select>
-                        </div>
-                        <div class="filter-item">
-                            <label for="sheetAgeFilter">築年数上限:</label>
-                            <select id="sheetAgeFilter" class="custom-select">
-                                <option value="all" selected>すべて</option>
-                                <option value="0">新築のみ</option>
-                                <option value="5">5年以内</option>
-                                <option value="10">10年以内</option>
-                                <option value="20">20年以内</option>
-                                <option value="30">30年以内</option>
-                            </select>
-                        </div>
-                        <div class="filter-item">
-                            <label for="sheetSelfPayFilter">自己負担上限:</label>
-                            <select id="sheetSelfPayFilter" class="custom-select">
-                                <option value="all" selected>すべて</option>
-                                <option value="3.2">3.2万円以下</option>
-                                <option value="4.0">4.0万円以下</option>
-                                <option value="5.0">5.0万円以下</option>
-                                <option value="6.0">6.0万円以下</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sheet-table-container">
-                    <table class="sheet-table" id="sheetTable">
-                        <!-- JSで動的に生成 -->
-                    </table>
-                </div>
-            </section>
-        </div>
+        <!-- 物件カードグリッド -->
+        <section class="bukken-grid" id="bukkenGrid">
+            <!-- 動的にJSで生成 -->
+        </section>
     </main>
 
     <!-- 比較モーダル -->
@@ -151,9 +75,8 @@
         </div>
     </div>
 
-    <!-- データスクリプト、ライブラリ、およびメインスクリプト -->
+    <!-- データスクリプトおよびメインスクリプト -->
     <script src="properties.js"></script>
-    <script src="rail_lines.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

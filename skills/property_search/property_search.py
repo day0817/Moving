@@ -566,14 +566,16 @@ def main():
 
     print(f"新ルール適用・フィルタリング後の物件数: {len(json_properties)} 件", file=sys.stderr)
 
-    # 前回データとの差分判定（新規追加物件の抽出）
+    # 前回データとの差分判定（新規追加物件の抽出およびis_newフラグ設定）
     old_urls = {p.get("url") for p in old_properties if p.get("url")}
     old_keys = {(p.get("rent", "").strip(), p.get("madori", "").strip(), p.get("menseki", "").strip(), p.get("address", "").strip()) for p in old_properties}
 
     new_properties = []
     for p in json_properties:
         p_key = (p.get("rent", "").strip(), p.get("madori", "").strip(), p.get("menseki", "").strip(), p.get("address", "").strip())
-        if p.get("url") not in old_urls and p_key not in old_keys:
+        is_new = (p.get("url") not in old_urls and p_key not in old_keys)
+        p["is_new"] = is_new
+        if is_new:
             new_properties.append(p)
 
     print(f"前回からの新規追加物件数: {len(new_properties)} 件", file=sys.stderr)
