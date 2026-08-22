@@ -12,9 +12,20 @@
 </head>
 <body>
     <header>
-        <div class="header-content">
-            <h1 class="logo-text">Bukken<span>Compare</span></h1>
-            <p class="subtitle">大手町通勤のための賃貸一戸建て（80m²以上・駐車場込）比較ナビ</p>
+        <div class="header-container">
+            <div class="header-content">
+                <h1 class="logo-text">Bukken<span>Compare</span></h1>
+                <p class="subtitle">大手町通勤のための賃貸一戸建て（80m²以上・駐車場込）比較ナビ</p>
+            </div>
+            <div class="theme-switch-wrapper">
+                <button id="themeToggleBtn" class="theme-toggle-btn" title="テーマ切り替え (Solarized / Solarized Dark)" aria-label="テーマ切り替え">
+                    <span class="theme-toggle-indicator">
+                        <span class="theme-icon dark-icon">🌙</span>
+                        <span class="theme-icon light-icon">☀️</span>
+                    </span>
+                    <span class="theme-text" id="themeLabel">Solarized Dark</span>
+                </button>
+            </div>
         </div>
     </header>
 

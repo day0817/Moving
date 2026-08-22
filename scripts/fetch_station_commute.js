@@ -88,7 +88,7 @@ function parseRoute01(html) {
         trainTime = timeMatch[2] ? parseTimeToMinutes(timeMatch[2]) : totalTime;
     }
 
-    const transferMatch = route01Html.match(/<li class="transfer">乗換：<!-- -->(\d+)<!-- -->回<\/li>/);
+    const transferMatch = route01Html.match(/<li class="transfer">[\s\S]*?(\d+)\s*(?:<!-- -->)?\s*回/);
     const transfers = transferMatch ? parseInt(transferMatch[1], 10) : 0;
 
     // 2. 停車駅一覧
