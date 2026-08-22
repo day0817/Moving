@@ -566,7 +566,61 @@ def main():
 
     print(f"新ルール適用・フィルタリング後の物件数: {len(json_properties)} 件", file=sys.stderr)
 
+    # ========================================
+    # 同一物件の自動統合（重複除去）
+    # 判定キー: 自己負担額・面積・築年数/階建て・住所（市区町村＋丁目レベル）が全一致
+    # 統合方針: 物件名が短い方（簡潔な方）に寄せる
+    # ========================================
+    def normalize_address(addr):
+        """住所を「市区町村＋丁目」レベルまで正規化（番地以降を除去）"""
+        import re
+        # 「○○市○○区○○N丁目」または「○○市○○N」まで抽出
+        m = re.match(r'(.+?[都道府県].+?[市区町村].+?[0-9０-９])', addr or '')
+        return m.group(1) if m else (addr or '').strip()
+
+    def normalize_menseki(m):
+        """面積文字列を小数2桁に正規化（例: '85.5m2' → '85.50'）"""
+        import re
+        num = re.sub(r'[^0-9.]', '', m or '')
+        try:
+            return f"{float(num):.2f}"
+        except ValueError:
+            return num
+
+    def dedup_key(p):
+        return (
+            round(p.get('self_pay', 0), 1),
+            normalize_menseki(p.get('menseki', '')),
+            (p.get('age_floor', '') or '').strip(),
+            normalize_address(p.get('address', ''))
+        )
+
+    seen_keys = {}
+    deduped_properties = []
+    for p in json_properties:
+        key = dedup_key(p)
+        if key in seen_keys:
+            # 既出の物件と同一キー → 物件名が短い方に統合（URLは最初に見つかった方を保持）
+            existing_idx = seen_keys[key]
+            existing = deduped_properties[existing_idx]
+            if len(p.get('title', '')) < len(existing.get('title', '')):
+                # 今回の方が短い物件名なので既存エントリのtitleだけ置き換え
+                deduped_properties[existing_idx]['title'] = p['title']
+            print(
+                f"  [重複統合] 「{p.get('title')}」→「{deduped_properties[existing_idx]['title']}」"
+                f" (key={key})", file=sys.stderr
+            )
+        else:
+            seen_keys[key] = len(deduped_properties)
+            deduped_properties.append(p)
+
+    removed = len(json_properties) - len(deduped_properties)
+    if removed > 0:
+        print(f"  同一物件統合により {removed} 件を除去 → {len(deduped_properties)} 件", file=sys.stderr)
+    json_properties = deduped_properties
+
     # 前回データとの差分判定（新規追加物件の抽出およびis_newフラグ設定）
+
     old_urls = {p.get("url") for p in old_properties if p.get("url")}
     old_keys = {(p.get("rent", "").strip(), p.get("madori", "").strip(), p.get("menseki", "").strip(), p.get("address", "").strip()) for p in old_properties}
 
