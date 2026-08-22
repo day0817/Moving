@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const stInfo = stDb[cand.station];
             if (stInfo && stInfo.station_to_office_min) {
                 const doorToDoor = cand.walkMin + stInfo.station_to_office_min;
-                const totalWalk = cand.walkMin + (stInfo.transit_walk_min || 0) + (stInfo.arrival_walk_min || 0);
+                const totalWalk = cand.walkMin + (stInfo.arrival_walk_min || 1);
                 evaluated.push({
                     station: cand.station,
                     line: cand.line || stInfo.line || p.line,
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     transitWalkMin: transWalk,
                     stationToOfficeMin: trainM + arrWalk + transWalk,
                     doorToDoor: d2d,
-                    totalWalkMin: cand.walkMin + arrWalk + transWalk,
+                    totalWalkMin: cand.walkMin + arrWalk,
                     linesUsed: cand.line || p.line,
                     routeSummary: `${cand.station}→大手町`,
                     memo: '',
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 transitWalkMin: 4,
                 stationToOfficeMin: p.door_to_door - p.walk_min,
                 doorToDoor: p.door_to_door,
-                totalWalkMin: p.walk_min + 5,
+                totalWalkMin: p.walk_min + 1,
                 linesUsed: p.line,
                 routeSummary: `${p.station}→大手町`,
                 memo: '',
@@ -133,6 +133,13 @@ document.addEventListener("DOMContentLoaded", () => {
         p._commuteInfo = getCommuteRouteInfo(p);
     });
 
+    // 必須カットオフ条件の適用（ドアドア 59分以下 かつ 総徒歩 15分以内）
+    properties = properties.filter(p => {
+        const best = p._commuteInfo?.best;
+        if (!best) return false;
+        return (best.doorToDoor <= 59) && (best.totalWalkMin <= 15);
+    });
+
     // 並び替え条件の定義
     const SORT_CRITERIA = {
         'walk-asc': { label: '物件〜駅徒歩（短い順）', compare: (a, b) => (a._commuteInfo?.best?.propWalkMin ?? a.walk_min) - (b._commuteInfo?.best?.propWalkMin ?? b.walk_min) },
@@ -153,11 +160,46 @@ document.addEventListener("DOMContentLoaded", () => {
     const onlyNewCheck = document.getElementById("onlyNewCheck");
     const onlyNewFilterBtn = document.getElementById("onlyNewFilterBtn");
     const newBukkenCount = document.getElementById("newBukkenCount");
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    const themeLabel = document.getElementById("themeLabel");
     
     // モーダル要素
     const compareModal = document.getElementById("compareModal");
     const closeModalBtn = document.getElementById("closeModalBtn");
     const compareTable = document.getElementById("compareTable");
+
+    // ========================================================
+    // テーマ管理（Solarized / Solarized Dark）
+    // ========================================================
+    const THEME_STORAGE_KEY = "bukken_theme";
+
+    function getInitialTheme() {
+        const saved = localStorage.getItem(THEME_STORAGE_KEY);
+        if (saved === "light" || saved === "dark") return saved;
+        return "dark"; // デフォルトは Solarized Dark
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        document.body.setAttribute("data-theme", theme);
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
+        if (themeLabel) {
+            themeLabel.textContent = theme === "light" ? "Solarized Light" : "Solarized Dark";
+        }
+    }
+
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute("data-theme") || "dark";
+        const next = current === "light" ? "dark" : "light";
+        applyTheme(next);
+    }
+
+    // テーマ初期適用
+    applyTheme(getInitialTheme());
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", toggleTheme);
+    }
 
     // 現在のフィルタ・ソート状態
     const state = {
@@ -380,6 +422,10 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderCommuteVisual(p) {
         const { best, others } = p._commuteInfo;
         const popoverHtml = renderPopoverHtml(best, others);
+        const isTokyoArrival = Boolean(best.arrivalStation && best.arrivalStation.startsWith('東京'));
+        const tokyoIconHtml = isTokyoArrival
+            ? `<span class="tokyo-icon" title="到着駅: 東京駅（サンケイビルまで徒歩${best.arrivalWalkMin}分）">🗼</span>`
+            : '';
 
         return `
             <div class="commute-visual-container" tabindex="0" title="ホバーまたはタップで詳細内訳を表示">
@@ -394,12 +440,12 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span class="c-badge-val">${best.propWalkMin}分</span>
                         </div>
                         <div class="c-badge total-walk">
-                            <span class="c-badge-label">👣 総徒歩</span>
+                            <span class="c-badge-label">👣 総徒歩${tokyoIconHtml}</span>
                             <span class="c-badge-val">${best.totalWalkMin}分</span>
                         </div>
                     </div>
                     <div class="commute-badge-sub">
-                        <span>最適駅: <strong>${best.station}駅</strong> (${best.line} / 乗車${best.trainMin}分 / 乗換${best.transfers}回)</span>
+                        <span>乗車 <strong>${best.trainMin}分</strong> / 乗換 <strong>${best.transfers}回</strong></span>
                     </div>
                 </div>
                 ${popoverHtml}
@@ -463,14 +509,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         </label>
                     </div>
 
-                    <h2 class="bukken-title" title="${p.title}">${p.title}</h2>
+                    <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="bukken-title-btn" title="${p.title}">
+                        <span class="bukken-title-text">${p.title}</span>
+                        <span class="bukken-title-icon">↗</span>
+                    </a>
 
                     <div class="rent-box">
                         <div class="self-pay-row ${selfPayClass}">
                             自己負担: <strong>${p.self_pay.toFixed(2)}</strong> 万円/月
-                        </div>
-                        <div class="rent-total-row">
-                            家賃: <strong>${p.rent}</strong> (管理費: ${p.admin || '-'})
                         </div>
                     </div>
 
@@ -489,12 +535,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div class="location-info">
                         <div><strong>住所:</strong> ${p.address}</div>
-                    </div>
-
-                    <div class="card-footer">
-                        <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="detail-btn">
-                            SUUMOで詳細を見る &rarr;
-                        </a>
                     </div>
                 </div>
             `;
@@ -657,11 +697,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const commuteRow = selectedProperties.map(p => {
             const best = p._commuteInfo?.best || {};
             const colorClass = getCommuteColorClass(best.doorToDoor || p.door_to_door);
+            const isTokyo = Boolean(best.arrivalStation && best.arrivalStation.startsWith('東京'));
+            const tokyoIcon = isTokyo ? ' <span class="tokyo-icon" title="到着駅: 東京駅（サンケイビルまで徒歩' + best.arrivalWalkMin + '分）">🗼</span>' : '';
             return `
                 <td class="commute-val ${colorClass}">
                     <strong>計 ${best.doorToDoor || p.door_to_door}分</strong><br>
-                    <span style="font-size: 0.78rem;">(${best.station || p.station}経由: 徒歩${best.propWalkMin || p.walk_min}分 + 乗車${best.trainMin || p.train_min}分, 乗換${best.transfers ?? p.transfers}回)</span><br>
-                    <span style="font-size: 0.74rem; color: #0284c7;">総徒歩: ${best.totalWalkMin || (p.walk_min + 5)}分</span>
+                    <span style="font-size: 0.78rem;">(乗車${best.trainMin || p.train_min}分, 乗換${best.transfers ?? p.transfers}回)</span><br>
+                    <span style="font-size: 0.74rem; color: var(--color-cyan);">総徒歩: ${best.totalWalkMin || (p.walk_min + 1)}分${tokyoIcon}</span>
                 </td>
             `;
         }).join('');
