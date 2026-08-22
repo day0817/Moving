@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const stInfo = stDb[cand.station];
             if (stInfo && stInfo.station_to_office_min) {
                 const doorToDoor = cand.walkMin + stInfo.station_to_office_min;
-                const totalWalk = cand.walkMin + (stInfo.transit_walk_min || 0) + (stInfo.arrival_walk_min || 0);
+                const totalWalk = cand.walkMin + (stInfo.arrival_walk_min || 1);
                 evaluated.push({
                     station: cand.station,
                     line: cand.line || stInfo.line || p.line,
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     transitWalkMin: transWalk,
                     stationToOfficeMin: trainM + arrWalk + transWalk,
                     doorToDoor: d2d,
-                    totalWalkMin: cand.walkMin + arrWalk + transWalk,
+                    totalWalkMin: cand.walkMin + arrWalk,
                     linesUsed: cand.line || p.line,
                     routeSummary: `${cand.station}→大手町`,
                     memo: '',
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 transitWalkMin: 4,
                 stationToOfficeMin: p.door_to_door - p.walk_min,
                 doorToDoor: p.door_to_door,
-                totalWalkMin: p.walk_min + 5,
+                totalWalkMin: p.walk_min + 1,
                 linesUsed: p.line,
                 routeSummary: `${p.station}→大手町`,
                 memo: '',
@@ -463,7 +463,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         </label>
                     </div>
 
-                    <h2 class="bukken-title" title="${p.title}">${p.title}</h2>
+                    <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="bukken-title-btn" title="${p.title}">
+                        <span class="bukken-title-text">${p.title}</span>
+                        <span class="bukken-title-icon">↗</span>
+                    </a>
 
                     <div class="rent-box">
                         <div class="self-pay-row ${selfPayClass}">
@@ -489,12 +492,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div class="location-info">
                         <div><strong>住所:</strong> ${p.address}</div>
-                    </div>
-
-                    <div class="card-footer">
-                        <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="detail-btn">
-                            SUUMOで詳細を見る &rarr;
-                        </a>
                     </div>
                 </div>
             `;
@@ -661,7 +658,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td class="commute-val ${colorClass}">
                     <strong>計 ${best.doorToDoor || p.door_to_door}分</strong><br>
                     <span style="font-size: 0.78rem;">(${best.station || p.station}経由: 徒歩${best.propWalkMin || p.walk_min}分 + 乗車${best.trainMin || p.train_min}分, 乗換${best.transfers ?? p.transfers}回)</span><br>
-                    <span style="font-size: 0.74rem; color: #0284c7;">総徒歩: ${best.totalWalkMin || (p.walk_min + 5)}分</span>
+                    <span style="font-size: 0.74rem; color: #0284c7;">総徒歩: ${best.totalWalkMin || (p.walk_min + 1)}分</span>
                 </td>
             `;
         }).join('');

@@ -435,14 +435,56 @@ header {
     accent-color: var(--accent);
 }
 
-.bukken-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
+.bukken-title-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.6rem 0.85rem;
+    margin-bottom: 0.85rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm, 8px);
     color: var(--text-primary);
+    text-decoration: none;
+    font-size: 1.08rem;
+    font-weight: 600;
+    line-height: 1.35;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.bukken-title-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+}
+
+.bukken-title-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.bukken-title-text {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1;
+}
+
+.bukken-title-icon {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    transition: transform 0.2s ease, color 0.2s ease;
+    display: inline-block;
+}
+
+.bukken-title-btn:hover .bukken-title-icon {
+    color: var(--text-primary);
+    transform: translate(2px, -2px);
 }
 
 .rent-box {
@@ -882,7 +924,7 @@ header {
 .location-info {
     font-size: 0.82rem;
     color: var(--text-secondary);
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.25rem;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
