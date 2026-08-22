@@ -21,10 +21,123 @@ document.addEventListener("DOMContentLoaded", () => {
         return m ? m[1] : null;
     }
 
+    // 物件の station_walk から最寄り駅一覧をパースする
+    function parseStationWalks(stationWalkStr) {
+        if (!stationWalkStr) return [];
+        const segments = stationWalkStr.split(/\s*\/\s*/);
+        const res = [];
+        segments.forEach(seg => {
+            const match = seg.match(/(?:([^/]+)\/)?([^/駅]+)駅\s*歩(\d+)分/);
+            if (match) {
+                res.push({
+                    line: match[1] ? match[1].trim() : '',
+                    station: match[2].trim(),
+                    walkMin: parseInt(match[3], 10)
+                });
+            }
+        });
+        return res;
+    }
+
+    // 駅DB（stationCommuteData）を用いて物件の最適ルートおよび各駅候補を算出
+    function getCommuteRouteInfo(p) {
+        const candidates = parseStationWalks(p.station_walk);
+        const stDb = typeof stationCommuteData !== 'undefined' ? stationCommuteData : {};
+
+        const evaluated = [];
+        candidates.forEach(cand => {
+            const stInfo = stDb[cand.station];
+            if (stInfo && stInfo.station_to_office_min) {
+                const doorToDoor = cand.walkMin + stInfo.station_to_office_min;
+                const totalWalk = cand.walkMin + (stInfo.transit_walk_min || 0) + (stInfo.arrival_walk_min || 0);
+                evaluated.push({
+                    station: cand.station,
+                    line: cand.line || stInfo.line || p.line,
+                    propWalkMin: cand.walkMin,
+                    trainMin: stInfo.train_min,
+                    transfers: stInfo.transfers,
+                    arrivalStation: stInfo.arrival_station || '大手町(東京都)',
+                    arrivalWalkMin: stInfo.arrival_walk_min || 1,
+                    transitWalkMin: stInfo.transit_walk_min || 0,
+                    stationToOfficeMin: stInfo.station_to_office_min,
+                    doorToDoor: doorToDoor,
+                    totalWalkMin: totalWalk,
+                    linesUsed: stInfo.lines_used || cand.line || p.line,
+                    routeSummary: stInfo.route_summary || `${cand.station}→大手町`,
+                    memo: stInfo.memo,
+                    isDb: true
+                });
+            } else {
+                // DB未登録時は既存のプロパティ値で補完
+                const isPrimary = (cand.station === p.station);
+                const trainM = isPrimary ? p.train_min : (p.train_min || 30);
+                const transf = isPrimary ? p.transfers : (p.transfers || 1);
+                const arrWalk = 1;
+                const transWalk = 4;
+                const d2d = cand.walkMin + trainM + arrWalk + transWalk;
+                evaluated.push({
+                    station: cand.station,
+                    line: cand.line || p.line,
+                    propWalkMin: cand.walkMin,
+                    trainMin: trainM,
+                    transfers: transf,
+                    arrivalStation: '大手町(東京都)',
+                    arrivalWalkMin: arrWalk,
+                    transitWalkMin: transWalk,
+                    stationToOfficeMin: trainM + arrWalk + transWalk,
+                    doorToDoor: d2d,
+                    totalWalkMin: cand.walkMin + arrWalk + transWalk,
+                    linesUsed: cand.line || p.line,
+                    routeSummary: `${cand.station}→大手町`,
+                    memo: '',
+                    isDb: false
+                });
+            }
+        });
+
+        if (evaluated.length === 0) {
+            evaluated.push({
+                station: p.station,
+                line: p.line,
+                propWalkMin: p.walk_min,
+                trainMin: p.train_min,
+                transfers: p.transfers,
+                arrivalStation: '大手町(東京都)',
+                arrivalWalkMin: 1,
+                transitWalkMin: 4,
+                stationToOfficeMin: p.door_to_door - p.walk_min,
+                doorToDoor: p.door_to_door,
+                totalWalkMin: p.walk_min + 5,
+                linesUsed: p.line,
+                routeSummary: `${p.station}→大手町`,
+                memo: '',
+                isDb: false
+            });
+        }
+
+        // 最短ドアドア時間のルートを選出（同点なら乗換回数少ない方、総徒歩短い方）
+        evaluated.sort((a, b) => {
+            if (a.doorToDoor !== b.doorToDoor) return a.doorToDoor - b.doorToDoor;
+            if (a.transfers !== b.transfers) return a.transfers - b.transfers;
+            return a.totalWalkMin - b.totalWalkMin;
+        });
+
+        const best = evaluated[0];
+        const others = evaluated.slice(1);
+
+        return { best, others, all: evaluated };
+    }
+
+    // 全物件にあらかじめ通勤情報をアタッチ
+    properties.forEach(p => {
+        p._commuteInfo = getCommuteRouteInfo(p);
+    });
+
     // 並び替え条件の定義
     const SORT_CRITERIA = {
-        'walk-asc': { label: '徒歩時間（短い順）', compare: (a, b) => a.walk_min - b.walk_min },
-        'commute-asc': { label: 'ドアドア時間（短い順）', compare: (a, b) => a.door_to_door - b.door_to_door },
+        'walk-asc': { label: '物件〜駅徒歩（短い順）', compare: (a, b) => (a._commuteInfo?.best?.propWalkMin ?? a.walk_min) - (b._commuteInfo?.best?.propWalkMin ?? b.walk_min) },
+        'total-walk-asc': { label: '総徒歩時間（短い順）', compare: (a, b) => (a._commuteInfo?.best?.totalWalkMin ?? a.walk_min) - (b._commuteInfo?.best?.totalWalkMin ?? b.walk_min) },
+        'commute-asc': { label: 'ドアドア時間（短い順）', compare: (a, b) => (a._commuteInfo?.best?.doorToDoor ?? a.door_to_door) - (b._commuteInfo?.best?.doorToDoor ?? b.door_to_door) },
         'age-asc': { label: '築年数（浅い順）', compare: (a, b) => parseAge(a.age_floor) - parseAge(b.age_floor) },
         'rent-asc': { label: '自己負担額（低い順）', compare: (a, b) => a.self_pay - b.self_pay },
         'menseki-desc': { label: '専有面積（広い順）', compare: (a, b) => parseAreaSize(b.menseki) - parseAreaSize(a.menseki) },
@@ -51,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
         prefecture: "all",
         city: "all",
         onlyNew: false,
-        sortPriority: ['walk-asc', 'commute-asc', 'age-asc', 'rent-asc', 'menseki-desc'],
+        sortPriority: ['walk-asc', 'commute-asc', 'total-walk-asc', 'age-asc', 'rent-asc', 'menseki-desc'],
     };
 
     // ヘルパー関数: 築年数の数値をパース
@@ -133,10 +246,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderAreaTabs() {
         if (!areaTabs) return;
 
-        // 全体の候補対象（NEWのみ表示状態を反映）
         const baseProps = state.onlyNew ? properties.filter(p => p.is_new) : properties;
 
-        // 都道府県一覧
         const prefCounts = {};
         baseProps.forEach(p => {
             const pref = getPrefecture(p.address);
@@ -145,7 +256,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // 都道府県タブHTML
         let html = `
             <button class="tab-btn ${state.prefecture === 'all' ? 'active' : ''}" data-pref="all">
                 すべて (${baseProps.length})
@@ -164,8 +274,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         areaTabs.innerHTML = html;
-
-        // 市区町村タブの描画
         renderCityTabs(baseProps);
     }
 
@@ -180,8 +288,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         cityTabs.style.display = 'flex';
-
-        // 選択中都道府県内の物件
         const prefProps = baseProps.filter(p => getPrefecture(p.address) === state.prefecture);
 
         const cityCounts = {};
@@ -210,6 +316,97 @@ document.addEventListener("DOMContentLoaded", () => {
         cityTabs.innerHTML = html;
     }
 
+    // ポップオーバーHTMLの生成（上段: ステップタイムライン案B ＋ 下段: 詳細内訳案A）
+    function renderPopoverHtml(best, others) {
+        const arrStationShort = (best.arrivalStation || '大手町').replace(/\(.*\)/, '');
+
+        return `
+            <div class="commute-popover glass">
+                <div class="popover-header">
+                    <span class="popover-title">🚆 最適通勤ルート詳細</span>
+                    <span class="popover-badge">最速ルート</span>
+                </div>
+
+                <!-- 上段: ステップタイムライン (案B) -->
+                <div class="popover-timeline-box">
+                    <div class="popover-flow">
+                        <div class="popover-node">🏠 家</div>
+                        <div class="popover-leg walk">
+                            <span class="popover-leg-label">歩${best.propWalkMin}分</span>
+                        </div>
+                        <div class="popover-node">🚉 ${best.station}</div>
+                        <div class="popover-leg train">
+                            <span class="popover-leg-label">電車${best.trainMin}分 (乗換${best.transfers})</span>
+                        </div>
+                        <div class="popover-node office">🚉 ${arrStationShort}</div>
+                        <div class="popover-leg walk">
+                            <span class="popover-leg-label">歩${best.arrivalWalkMin}分</span>
+                        </div>
+                        <div class="popover-node office">🏢 会社</div>
+                    </div>
+                </div>
+
+                <!-- 下段: 詳細内訳 (案A) -->
+                <div class="popover-section">
+                    <div class="popover-section-label">■ ${best.station}駅ルート詳細 (${best.line})</div>
+                    <ul class="popover-breakdown-list">
+                        <li><span>① 物件〜${best.station}駅 徒歩</span><strong>${best.propWalkMin} 分</strong></li>
+                        <li><span>② 電車乗車 (${best.linesUsed || best.line})</span><strong>${best.trainMin} 分</strong></li>
+                        <li><span>③ 乗換・構内移動・待ち (乗換${best.transfers}回)</span><strong>${best.transitWalkMin} 分</strong></li>
+                        <li><span>④ ${best.arrivalStation}〜サンケイビル 徒歩</span><strong>${best.arrivalWalkMin} 分</strong></li>
+                        <li class="total-row">
+                            <span>合計ドアドア / 総徒歩</span>
+                            <span style="color:var(--primary-blue,#2E4FB5);">${best.doorToDoor} 分 / ${best.totalWalkMin} 分</span>
+                        </li>
+                    </ul>
+                </div>
+
+                ${others && others.length > 0 ? `
+                    <div class="popover-section" style="border-top: 1px solid var(--border-color); padding-top: 0.45rem;">
+                        <div class="popover-section-label">■ 他の利用可能駅ルート比較</div>
+                        ${others.map(o => `
+                            <div class="popover-other-route-item">
+                                <span><strong>${o.station}駅</strong> (歩${o.propWalkMin}分 + 電車${o.trainMin}分)</span>
+                                <span>計 <strong>${o.doorToDoor}分</strong> (総徒歩${o.totalWalkMin}分/乗換${o.transfers}回)</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    // 通勤ビジュアル部分のHTML生成（通常: 案C 3連バッジ ＋ ホバー: ポップオーバー）
+    function renderCommuteVisual(p) {
+        const { best, others } = p._commuteInfo;
+        const popoverHtml = renderPopoverHtml(best, others);
+
+        return `
+            <div class="commute-visual-container" tabindex="0" title="ホバーまたはタップで詳細内訳を表示">
+                <div class="commute-badges-box">
+                    <div class="commute-badge-row">
+                        <div class="c-badge primary">
+                            <span class="c-badge-label">🚪 ドアドア</span>
+                            <span class="c-badge-val">${best.doorToDoor}分</span>
+                        </div>
+                        <div class="c-badge walk">
+                            <span class="c-badge-label">🚶 物件〜駅</span>
+                            <span class="c-badge-val">${best.propWalkMin}分</span>
+                        </div>
+                        <div class="c-badge total-walk">
+                            <span class="c-badge-label">👣 総徒歩</span>
+                            <span class="c-badge-val">${best.totalWalkMin}分</span>
+                        </div>
+                    </div>
+                    <div class="commute-badge-sub">
+                        <span>最適駅: <strong>${best.station}駅</strong> (${best.line} / 乗車${best.trainMin}分 / 乗換${best.transfers}回)</span>
+                    </div>
+                </div>
+                ${popoverHtml}
+            </div>
+        `;
+    }
+
     // 物件カード一覧の描画
     function renderProperties() {
         const filtered = getFilteredProperties();
@@ -231,11 +428,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         bukkenGrid.innerHTML = sorted.map(p => {
             const isSelected = selectedProperties.some(item => item.url === p.url);
-            const colorClass = getCommuteColorClass(p.door_to_door);
             const selfPayClass = getSelfPayColorClass(p.self_pay);
+            const best = p._commuteInfo?.best || {};
 
-            // 駐車場警告バッジ（100m以上離れている場合）
-            const parkingBadge = (p.parking_dist && p.parking_dist >= 100)
+            // 駐車場代が有料の場合のみ強調バッジ表示
+            const isPaidParking = (p.parking_fee && p.parking_fee > 0) || 
+                (p.parking_text && !p.parking_text.includes('無料') && !p.parking_text.includes('付') && p.parking_text !== '-');
+            const parkingFeeBadge = isPaidParking
+                ? `<span class="parking-badge fee-warning">駐車場 ${p.parking_fee > 0 ? (p.parking_fee + '万円') : '有料'}</span>`
+                : '';
+
+            // 駐車場が100m以上離れている場合の警告バッジ
+            const parkingDistBadge = (p.parking_dist && p.parking_dist >= 100)
                 ? `<span class="parking-badge warning">駐車場 ${p.parking_dist}m先</span>`
                 : '';
 
@@ -244,15 +448,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 ? `<span class="card-new-badge">NEW</span>`
                 : '';
 
-            const progressPct = Math.min(100, (p.door_to_door / 60) * 100);
-
             return `
                 <div class="bukken-card glass" data-url="${p.url}">
                     <div class="card-header">
                         <div class="header-badges">
                             ${newBadge}
-                            <span class="station-badge">${p.station}駅 (${p.line})</span>
-                            ${parkingBadge}
+                            <span class="station-badge">${best.station || p.station}駅 (${best.line || p.line})</span>
+                            ${parkingFeeBadge}
+                            ${parkingDistBadge}
                         </div>
                         <label class="compare-checkbox-label">
                             <input type="checkbox" class="compare-check" ${isSelected ? 'checked' : ''} data-url="${p.url}">
@@ -269,24 +472,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="rent-total-row">
                             家賃: <strong>${p.rent}</strong> (管理費: ${p.admin || '-'})
                         </div>
-                        <div class="rent-breakdown">
-                            駐車場代: ${p.parking_fee > 0 ? (p.parking_fee + '万円') : (p.parking_text || '-')} / 敷金: ${p.deposit} / 礼金: ${p.gratuity}
-                        </div>
                     </div>
 
-                    <div class="commute-visual">
-                        <div class="commute-header">
-                            <span class="commute-total ${colorClass}">
-                                徒歩${p.walk_min}分 → 乗車${p.train_min}分 (計${p.door_to_door}分)
-                            </span>
-                            <span class="commute-breakdown">
-                                乗換: ${p.transfers}回
-                            </span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar ${colorClass}" style="width: ${progressPct}%;"></div>
-                        </div>
-                    </div>
+                    ${renderCommuteVisual(p)}
 
                     <div class="room-details">
                         <div>
@@ -301,7 +489,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div class="location-info">
                         <div><strong>住所:</strong> ${p.address}</div>
-                        <div><strong>立地:</strong> ${p.station_walk}</div>
                     </div>
 
                     <div class="card-footer">
@@ -422,7 +609,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
-            // ▲▼ ボタンイベント
             item.querySelectorAll(".priority-arrow-btn").forEach(btn => {
                 btn.addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -442,15 +628,18 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderCompareTable() {
         if (!compareTable || selectedProperties.length === 0) return;
 
-        const headers = selectedProperties.map(p => `
-            <th>
-                <div style="margin-bottom: 0.3rem;">
-                    ${p.is_new ? '<span class="card-new-badge" style="margin-right: 4px;">NEW</span>' : ''}
-                    <strong>${p.station}駅</strong>
-                </div>
-                <div style="font-size: 0.85rem; font-weight: normal; max-width: 220px; word-break: break-all;">${p.title}</div>
-            </th>
-        `).join('');
+        const headers = selectedProperties.map(p => {
+            const best = p._commuteInfo?.best || {};
+            return `
+                <th>
+                    <div style="margin-bottom: 0.3rem;">
+                        ${p.is_new ? '<span class="card-new-badge" style="margin-right: 4px;">NEW</span>' : ''}
+                        <strong>${best.station || p.station}駅</strong>
+                    </div>
+                    <div style="font-size: 0.85rem; font-weight: normal; max-width: 220px; word-break: break-all;">${p.title}</div>
+                </th>
+            `;
+        }).join('');
 
         const selfPayRow = selectedProperties.map(p => {
             const selfPayClass = getSelfPayColorClass(p.self_pay);
@@ -466,11 +655,13 @@ document.addEventListener("DOMContentLoaded", () => {
         `).join('');
 
         const commuteRow = selectedProperties.map(p => {
-            const colorClass = getCommuteColorClass(p.door_to_door);
+            const best = p._commuteInfo?.best || {};
+            const colorClass = getCommuteColorClass(best.doorToDoor || p.door_to_door);
             return `
                 <td class="commute-val ${colorClass}">
-                    <strong>計 ${p.door_to_door}分</strong><br>
-                    <span style="font-size: 0.78rem;">(徒歩${p.walk_min}分 + 乗車${p.train_min}分, 乗換${p.transfers}回)</span>
+                    <strong>計 ${best.doorToDoor || p.door_to_door}分</strong><br>
+                    <span style="font-size: 0.78rem;">(${best.station || p.station}経由: 徒歩${best.propWalkMin || p.walk_min}分 + 乗車${best.trainMin || p.train_min}分, 乗換${best.transfers ?? p.transfers}回)</span><br>
+                    <span style="font-size: 0.74rem; color: #0284c7;">総徒歩: ${best.totalWalkMin || (p.walk_min + 5)}分</span>
                 </td>
             `;
         }).join('');
@@ -548,7 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const pref = btn.getAttribute("data-pref");
             if (pref) {
                 state.prefecture = pref;
-                state.city = "all"; // 都道府県変更時は市区町村リセット
+                state.city = "all";
                 renderProperties();
             }
         });
@@ -609,6 +800,47 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Escape" && compareModal && compareModal.classList.contains("active")) {
             compareModal.classList.remove("active");
         }
+    });
+
+    // 5. ポップオーバーの画面端はみ出し防止・動的位置調整
+    function adjustPopoverPosition(container) {
+        if (!container) return;
+        const popover = container.querySelector('.commute-popover');
+        if (!popover) return;
+
+        const rect = container.getBoundingClientRect();
+        const popoverWidth = Math.min(520, window.innerWidth - 32);
+        const viewportWidth = window.innerWidth;
+
+        // 親コンテナ中央揃えを基準とした left オフセット
+        let leftOffset = (rect.width - popoverWidth) / 2;
+
+        // 画面左端チェック（余白16px確保）
+        if (rect.left + leftOffset < 16) {
+            leftOffset = 16 - rect.left;
+        }
+        // 画面右端チェック（余白16px確保）
+        else if (rect.left + leftOffset + popoverWidth > viewportWidth - 16) {
+            leftOffset = (viewportWidth - 16) - (rect.left + popoverWidth);
+        }
+
+        popover.style.left = `${leftOffset}px`;
+        popover.style.transform = 'none';
+
+        // 吹き出し矢印をコンテナの中央に合わせる（端から最低20px内側）
+        const arrowCenter = (rect.width / 2) - leftOffset;
+        const clampedArrow = Math.max(20, Math.min(popoverWidth - 20, arrowCenter));
+        popover.style.setProperty('--arrow-left', `${clampedArrow}px`);
+    }
+
+    document.addEventListener('mouseover', (e) => {
+        const container = e.target.closest('.commute-visual-container');
+        if (container) adjustPopoverPosition(container);
+    });
+
+    document.addEventListener('focusin', (e) => {
+        const container = e.target.closest('.commute-visual-container');
+        if (container) adjustPopoverPosition(container);
     });
 
     // 初期化実行
