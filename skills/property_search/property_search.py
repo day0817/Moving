@@ -131,6 +131,129 @@ def parse_age_num(age_floor_str):
         return int(match.group(1))
     return 99 # 不明な場合は安全のため築古扱い
 
+def load_station_commute_db(csv_path="station_commute.csv"):
+    """station_commute.csv から駅別通勤DBを読み込む"""
+    import csv
+    db = {}
+    if not os.path.exists(csv_path):
+        return db
+    try:
+        with open(csv_path, "r", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                st = row.get("station_name", "").strip()
+                if not st:
+                    continue
+                try:
+                    db[st] = {
+                        "primary_line": row.get("primary_line", ""),
+                        "train_min": int(row.get("train_min", 0)),
+                        "transfers": int(row.get("transfers", 0)),
+                        "arrival_station": row.get("arrival_station", "大手町(東京都)"),
+                        "arrival_walk_min": int(row.get("arrival_walk_min", 1)),
+                        "transit_walk_min": int(row.get("transit_walk_min", 0)),
+                        "station_to_office_min": int(row.get("station_to_office_min", 0)),
+                        "lines_used": row.get("lines_used", ""),
+                        "route_summary": row.get("route_summary", ""),
+                        "memo": row.get("memo", "")
+                    }
+                except ValueError:
+                    continue
+    except Exception as e:
+        print(f"通勤DBの読み込みに失敗: {e}", file=sys.stderr)
+    return db
+
+def parse_station_walk_candidates(station_walk_str):
+    """station_walk 文字列から全最寄り駅候補 [(line, station, walk_min)] を抽出"""
+    if not station_walk_str:
+        return []
+    segments = re.split(r"\s*/\s*", station_walk_str)
+    res = []
+    for seg in segments:
+        m = re.search(r"(?:([^/]+)/)?([^/駅]+)駅\s*歩(\d+)分", seg)
+        if m:
+            l = m.group(1).strip() if m.group(1) else ""
+            s = m.group(2).strip()
+            w = int(m.group(3))
+            res.append((l, s, w))
+    return res
+
+def evaluate_best_commute(p, station_db):
+    """物件の最寄り駅候補から最短ドアドアルートを評価"""
+    candidates = parse_station_walk_candidates(p.get("station_walk", ""))
+    evaluated = []
+    for cand_line, cand_st, cand_walk in candidates:
+        if cand_st in station_db and station_db[cand_st]["station_to_office_min"] > 0:
+            st_info = station_db[cand_st]
+            d2d = cand_walk + st_info["station_to_office_min"]
+            total_walk = cand_walk + st_info["arrival_walk_min"]
+            evaluated.append({
+                "station": cand_st,
+                "line": cand_line or st_info["primary_line"] or p.get("line", ""),
+                "prop_walk_min": cand_walk,
+                "train_min": st_info["train_min"],
+                "transfers": st_info["transfers"],
+                "arrival_station": st_info["arrival_station"],
+                "arrival_walk_min": st_info["arrival_walk_min"],
+                "transit_walk_min": st_info["transit_walk_min"],
+                "station_to_office_min": st_info["station_to_office_min"],
+                "door_to_door": d2d,
+                "total_walk_min": total_walk,
+                "lines_used": st_info["lines_used"] or cand_line or p.get("line", ""),
+                "route_summary": st_info["route_summary"] or f"{cand_st}→大手町",
+                "is_db": True
+            })
+        else:
+            is_primary = (cand_st == p.get("station"))
+            train_m = p.get("train_min", 30) if is_primary else 30
+            transf = p.get("transfers", 1) if is_primary else 1
+            arr_walk = 1
+            trans_walk = 4
+            d2d = cand_walk + train_m + arr_walk + trans_walk
+            total_walk = cand_walk + arr_walk
+            evaluated.append({
+                "station": cand_st,
+                "line": cand_line or p.get("line", ""),
+                "prop_walk_min": cand_walk,
+                "train_min": train_m,
+                "transfers": transf,
+                "arrival_station": "大手町(東京都)",
+                "arrival_walk_min": arr_walk,
+                "transit_walk_min": trans_walk,
+                "station_to_office_min": train_m + arr_walk + trans_walk,
+                "door_to_door": d2d,
+                "total_walk_min": total_walk,
+                "lines_used": cand_line or p.get("line", ""),
+                "route_summary": f"{cand_st}→大手町",
+                "is_db": False
+            })
+
+    if not evaluated:
+        st = p.get("station", "不明")
+        w = p.get("walk_min", 10)
+        tm = p.get("train_min", 30)
+        tr = p.get("transfers", 1)
+        evaluated.append({
+            "station": st,
+            "line": p.get("line", "不明"),
+            "prop_walk_min": w,
+            "train_min": tm,
+            "transfers": tr,
+            "arrival_station": "大手町(東京都)",
+            "arrival_walk_min": 1,
+            "transit_walk_min": 4,
+            "station_to_office_min": tm + 5,
+            "door_to_door": w + tm + 5,
+            "total_walk_min": w + 1,
+            "lines_used": p.get("line", ""),
+            "route_summary": f"{st}→大手町",
+            "is_db": False
+        })
+
+    # 最短ドアドア順でソート（同点なら乗換回数、総徒歩）
+    evaluated.sort(key=lambda x: (x["door_to_door"], x["transfers"], x["total_walk_min"]))
+    return evaluated[0]
+
 def calculate_self_pay(rent_str, admin_str, parking_fee=0.0):
     rent_match = re.search(r"([\d.]+)", rent_str)
     rent = float(rent_match.group(1)) if rent_match else 0.0
@@ -395,6 +518,8 @@ def main():
     args = parser.parse_args()
     
     geocoding_cache = load_geocoding_cache()
+    dir_name = os.path.dirname(args.output) or "."
+    station_commute_db = load_station_commute_db(os.path.join(dir_name, "station_commute.csv"))
     all_properties = []
     
     print("物件情報を各都県から検索中...", file=sys.stderr)
@@ -530,20 +655,31 @@ def main():
             print(f"完了 ({p_text})", file=sys.stderr)
             
         s_pay = calculate_self_pay(p['rent'], p['admin'], p_fee)
-        
-        # ドアドア通勤時間の計算 (SUUMOの通勤検索結果の時間を優先的に使用)
-        commute_min = p.get("commute_min", 50)
-        commute_transfers = p.get("commute_transfers", 1)
-        door_to_door = commute_min + walk_min
-        
-        # 3. 自己負担5.2万円以下
-        # 4. ドアドア通勤時間60分以下
-        if s_pay > 5.2 or door_to_door > 60:
+        if s_pay > 5.2:
             continue
-            
-        json_properties.append({
+
+        # 駅通勤DB（station_commute.csv）による正確な通勤ルート・所要時間の再計算
+        commute_best = evaluate_best_commute({
             "station": station_name,
             "line": line_name,
+            "station_walk": p["station_walk"],
+            "walk_min": walk_min,
+            "train_min": p.get("commute_min", 50),
+            "transfers": p.get("commute_transfers", 1),
+            "door_to_door": p.get("commute_min", 50) + walk_min
+        }, station_commute_db)
+
+        # 必須カットオフ条件の適用：ドアドア通勤時間59分以下 かつ 総徒歩時間15分以内
+        if commute_best["door_to_door"] > 59 or commute_best["total_walk_min"] > 15:
+            continue
+
+        # 最適ルートの駅座標を解決
+        best_station = commute_best["station"]
+        coords = get_station_coords(best_station, geocoding_cache) if best_station != "不明" else None
+
+        json_properties.append({
+            "station": commute_best["station"],
+            "line": commute_best["line"],
             "title": p['title'],
             "rent": p['rent'],
             "admin": p['admin'],
@@ -559,15 +695,20 @@ def main():
             "address": p['address'],
             "age_floor": p['age_floor'],
             "url": p['url'],
-            "walk_min": walk_min,
-            "train_min": commute_min,
-            "door_to_door": door_to_door,
-            "transfers": commute_transfers,
+            "walk_min": commute_best["prop_walk_min"],
+            "train_min": commute_best["train_min"],
+            "door_to_door": commute_best["door_to_door"],
+            "total_walk_min": commute_best["total_walk_min"],
+            "transfers": commute_best["transfers"],
+            "arrival_station": commute_best["arrival_station"],
+            "arrival_walk_min": commute_best["arrival_walk_min"],
+            "lines_used": commute_best["lines_used"],
+            "route_summary": commute_best["route_summary"],
             "lat": coords["lat"] if coords else None,
             "lng": coords["lng"] if coords else None
         })
 
-    print(f"新ルール適用・フィルタリング後の物件数: {len(json_properties)} 件", file=sys.stderr)
+    print(f"新ルールおよびドアドア再計算・カットオフ適用後の物件数: {len(json_properties)} 件", file=sys.stderr)
 
     # ========================================
     # 同一物件の自動統合（重複除去）
