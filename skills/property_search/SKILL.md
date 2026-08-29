@@ -15,6 +15,7 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 * `station_commute.js` / `物件比較アプリ/station_commute.js` : 駅別通勤時間データベース。
 * `station_commute.csv` / `物件比較アプリ/station_commute.csv` : 駅別通勤データCSV。
 * `物件検索結果.md` : 検索結果および前回差分（🆕 新規追加物件）のレポート。
+* `物件数推移.md` : 更新日ごとの駅別物件数推移とエリア供給分析レポート。
 * `物件比較アプリ/` : Webアプリ関連ファイル（`index.html`, `style.css`, `app.js`, `properties.js`, `station_commute.js`）。
 
 ---
@@ -28,7 +29,7 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 $env:PYTHONIOENCODING="utf-8"
 py skills/property_search/property_search.py --output 物件検索結果.md
 ```
-- 駐車場料金・距離の詳細取得、安全マージ、新規物件の差分判定が自動実行され、`properties.js` および `物件検索結果.md` が更新されます。
+- 駐車場料金・距離の詳細取得、安全マージ、新規物件の差分判定、および `物件数推移.md` への駅別件数記録が自動実行され、`properties.js`、`物件検索結果.md`、`物件数推移.md` が更新されます。
 
 ### ステップ2: 新駅の通勤時間・乗換回数の自動取得とDB同期
 ```powershell
@@ -44,8 +45,8 @@ node scripts/fetch_station_commute.js
 
 ### ステップ4: Gitコミット＆GitHub Pagesへの自動反映
 ```powershell
-git add properties.js station_commute.js station_commute.csv 物件検索結果.md 物件比較アプリ/properties.js 物件比較アプリ/station_commute.js 物件比較アプリ/station_commute.csv
-git commit -m "feat(data): 週次物件データの更新と新規物件の差分反映"
+git add properties.js station_commute.js station_commute.csv 物件検索結果.md 物件数推移.md 物件比較アプリ/properties.js 物件比較アプリ/station_commute.js 物件比較アプリ/station_commute.csv
+git commit -m "feat(data): 週次物件データおよび物件数推移の更新"
 git push origin main
 ```
 - リモートへのプッシュ完了後、GitHub Pages（https://day0817.github.io/Moving/ ）に数分で自動反映されます。

@@ -523,6 +523,9 @@ def main():
             print(f"  [{idx+1}/{len(unique_properties)}] 駐車場情報を取得中: {p['title']} ({p['url']})... ", end="", flush=True, file=sys.stderr)
             time.sleep(random.uniform(2.5, 4.0)) # ウェイト
             detail_html = fetch_properties(p["url"])
+            if detail_html == "BLOCKED" or not detail_html or "掲載を終了" in detail_html or "お探しの物件" in detail_html or "該当するページが見つかりません" in detail_html:
+                print("スキップ（掲載終了または詳細取得不可）", file=sys.stderr)
+                continue
             p_fee, p_dist, p_text = parse_parking_info(detail_html)
             print(f"完了 ({p_text})", file=sys.stderr)
             
@@ -695,6 +698,104 @@ def main():
         print(f"properties.js を書き出しました ({root_js_path})。", file=sys.stderr)
     except Exception as e:
         print(f"properties.js の書き出しに失敗: {e}", file=sys.stderr)
+
+    # 物件数推移レポート（物件数推移.md）の自動更新
+    trend_md_path = os.path.join(dir_name, "物件数推移.md")
+    update_station_trend_report(json_properties, trend_md_path, len(new_properties))
+
+
+def update_station_trend_report(json_properties, trend_md_path="物件数推移.md", new_properties_count=0):
+    """物件数推移.md に当日の駅別物件数を自動追記・更新する"""
+    import datetime
+    today_str = datetime.date.today().strftime("%Y-%m-%d")
+
+    if not os.path.exists(trend_md_path):
+        return
+
+    try:
+        with open(trend_md_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 集計: (line, station) -> count
+        counts = {}
+        for p in json_properties:
+            l = p.get("line", "不明")
+            s = p.get("station", "不明")
+            counts[(l, s)] = counts.get((l, s), 0) + 1
+
+        # 1. 更新履歴サマリー表の更新
+        summary_row = f"| **{today_str}** | **{len(json_properties)}件** | **{len(counts)}駅** | {new_properties_count}件 | 定期スクレイピング更新 |"
+        if f"**{today_str}**" in content:
+            content = re.sub(rf"\|\s*\*\*{re.escape(today_str)}\*\*.*?\n", summary_row + "\n", content)
+        else:
+            match = re.search(r"(\|\s*更新日\s*\|\s*総物件数\s*\|.*?\n\|[\s:-]+\|\n)", content)
+            if match:
+                content = content[:match.end()] + summary_row + "\n" + content[match.end():]
+
+        # 2. マトリクス表の更新
+        match_table = re.search(r"(## 2\. 路線・駅別 物件数推移マトリクス\s*\n\s*)(\| 路線名 \| 駅名 \|[^\n]+\n\|[^\n]+\n)([\s\S]*?)(\n---|\n##|\Z)", content)
+        if match_table:
+            header_prefix = match_table.group(1)
+            header_lines = match_table.group(2).splitlines()
+            body_text = match_table.group(3)
+            tail = match_table.group(4)
+
+            headers = [h.strip() for h in header_lines[0].split("|")[1:-1]]
+            date_cols = headers[2:]
+            if today_str not in date_cols:
+                date_cols.append(today_str)
+
+            # 既存bodyのパース
+            existing_matrix = {}
+            for line in body_text.strip().splitlines():
+                parts = [p.strip() for p in line.split("|")[1:-1]]
+                if len(parts) >= 2:
+                    l = re.sub(r"^\*\*(.*?)\*\*$", r"\1", parts[0])
+                    s = parts[1]
+                    existing_matrix[(l, s)] = {}
+                    for i, d in enumerate(headers[2:]):
+                        if i < len(parts[2:]):
+                            existing_matrix[(l, s)][d] = parts[2 + i]
+
+            # 今回の集計を反映
+            all_keys = set(existing_matrix.keys()).union(counts.keys())
+            for key in all_keys:
+                if key not in existing_matrix:
+                    existing_matrix[key] = {}
+                c = counts.get(key, 0)
+                existing_matrix[key][today_str] = str(c) if c > 0 else "-"
+
+            for key in existing_matrix:
+                for d in date_cols:
+                    if d not in existing_matrix[key]:
+                        existing_matrix[key][d] = "-"
+
+            # ソート: 最新日付の件数(数値降順) -> 路線名 -> 駅名
+            def sort_key(item):
+                (l, s), date_dict = item
+                val_str = date_dict.get(today_str, "-")
+                val = int(val_str) if val_str.isdigit() else 0
+                return (-val, l, s)
+
+            sorted_matrix = sorted(existing_matrix.items(), key=sort_key)
+
+            new_header_0 = "| 路線名 | 駅名 | " + " | ".join(date_cols) + " |"
+            new_header_1 = "| :--- | :--- | " + " | ".join([":---:" for _ in date_cols]) + " |"
+
+            new_body_lines = []
+            for (l, s), date_dict in sorted_matrix:
+                cols_str = " | ".join([date_dict.get(d, "-") for d in date_cols])
+                new_body_lines.append(f"| **{l}** | {s} | {cols_str} |")
+
+            new_table_content = f"{header_prefix}{new_header_0}\n{new_header_1}\n" + "\n".join(new_body_lines) + f"\n{tail}"
+            content = content[:match_table.start()] + new_table_content + content[match_table.end():]
+
+        with open(trend_md_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"物件数推移レポートを更新しました ({trend_md_path})。", file=sys.stderr)
+    except Exception as e:
+        print(f"物件数推移レポートの更新に失敗: {e}", file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()
