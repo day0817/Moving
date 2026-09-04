@@ -1,0 +1,19 @@
+{
+  "name": "引越先物件 比較・検討ナビゲート",
+  "short_name": "BukkenCompare",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#073642",
+  "background_color": "#002b36",
+  "display": "standalone"
+}

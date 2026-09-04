@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient (Solarized Dark Teal to Navy) -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a4656"/>
+      <stop offset="50%" stop-color="#073642"/>
+      <stop offset="100%" stop-color="#00212b"/>
+    </linearGradient>
+
+    <!-- Roof Gradient (Solarized Cyan to Blue) -->
+    <linearGradient id="roofGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2aa198"/>
+      <stop offset="60%" stop-color="#268bd2"/>
+      <stop offset="100%" stop-color="#1b6ca8"/>
+    </linearGradient>
+
+    <!-- House Wall Gradient -->
+    <linearGradient id="wallGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fdf6e3"/>
+      <stop offset="100%" stop-color="#eee8d5"/>
+    </linearGradient>
+
+    <!-- Badge Gradient (Solarized Orange to Warm Amber) -->
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dc322f"/>
+      <stop offset="40%" stop-color="#cb4b16"/>
+      <stop offset="100%" stop-color="#b58900"/>
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="houseShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#00141a" flood-opacity="0.65"/>
+    </filter>
+
+    <filter id="badgeShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#00141a" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect x="20" y="20" width="472" height="472" rx="112" fill="url(#bgGrad)" stroke="#2aa198" stroke-width="6" stroke-opacity="0.45"/>
+  <rect x="32" y="32" width="448" height="448" rx="100" fill="none" stroke="#268bd2" stroke-width="2" stroke-opacity="0.25"/>
+
+  <!-- Main House Group -->
+  <g filter="url(#houseShadow)">
+    <!-- Chimney -->
+    <rect x="324" y="126" width="40" height="74" rx="6" fill="#cb4b16"/>
+    <rect x="318" y="124" width="52" height="10" rx="3" fill="#b58900"/>
+
+    <!-- Roof Main Body -->
+    <path d="M 96 228 L 256 102 L 416 228 C 424 234 420 244 410 244 L 102 244 C 92 244 88 234 96 228 Z" fill="url(#roofGrad)"/>
+    <!-- Roof Overhang / Eaves Under-shadow -->
+    <path d="M 102 240 L 410 240 L 406 244 L 106 244 Z" fill="#00212b" opacity="0.3"/>
+    <!-- Roof Top Ridge Highlight -->
+    <path d="M 112 226 L 256 112 L 400 226" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.35" stroke-linecap="round"/>
+
+    <!-- House Wall -->
+    <rect x="134" y="244" width="244" height="162" rx="16" fill="url(#wallGrad)"/>
+
+    <!-- Windows (Upper Floor / Attic Look) -->
+    <!-- Left Window -->
+    <rect x="168" y="272" width="46" height="46" rx="8" fill="#073642"/>
+    <rect x="172" y="276" width="17" height="17" rx="3" fill="#2aa198" opacity="0.9"/>
+    <rect x="193" y="276" width="17" height="17" rx="3" fill="#2aa198" opacity="0.9"/>
+    <rect x="172" y="297" width="17" height="17" rx="3" fill="#2aa198" opacity="0.9"/>
+    <rect x="193" y="297" width="17" height="17" rx="3" fill="#2aa198" opacity="0.9"/>
+
+    <!-- Right Window -->
+    <rect x="298" y="272" width="46" height="46" rx="8" fill="#073642"/>
+    <rect x="302" y="276" width="17" height="17" rx="3" fill="#2aa198" opacity="0.9"/>
+    <rect x="323" y="276" width="17" height="17" rx="3" fill="#2aa198" opacity="0.9"/>
+    <rect x="302" y="297" width="17" height="17" rx="3" fill="#2aa198" opacity="0.9"/>
+    <rect x="323" y="297" width="17" height="17" rx="3" fill="#2aa198" opacity="0.9"/>
+
+    <!-- Entrance Door (Centered) -->
+    <path d="M 230 334 C 230 326 236 320 244 320 L 268 320 C 276 320 282 326 282 334 L 282 406 L 230 406 Z" fill="#268bd2"/>
+    <!-- Door Arch Window -->
+    <path d="M 238 334 C 238 328 242 324 248 324 L 264 324 C 270 324 274 328 274 334 L 274 346 L 238 346 Z" fill="#fdf6e3" opacity="0.8"/>
+    <!-- Doorknob -->
+    <circle cx="272" cy="372" r="3.5" fill="#fdf6e3"/>
+  </g>
+
+  <!-- Comparison Analytics Badge (Floating Bottom-Right) -->
+  <g filter="url(#badgeShadow)">
+    <circle cx="380" cy="376" r="66" fill="#002b36" stroke="#2aa198" stroke-width="4.5"/>
+    <circle cx="380" cy="376" r="56" fill="url(#badgeGrad)"/>
+    <!-- Badge Highlight -->
+    <ellipse cx="380" cy="344" rx="36" ry="16" fill="#ffffff" opacity="0.18"/>
+    
+    <!-- 3 Modern Compare / Analytics Bars -->
+    <rect x="350" y="364" width="13" height="34" rx="5.5" fill="#fdf6e3"/>
+    <rect x="373.5" y="342" width="13" height="56" rx="5.5" fill="#fdf6e3"/>
+    <rect x="397" y="354" width="13" height="44" rx="5.5" fill="#fdf6e3"/>
+  </g>
+</svg>
