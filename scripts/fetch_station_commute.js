@@ -2,8 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const CSV_PATH = path.join(__dirname, '..', 'station_commute.csv');
-const APP_CSV_PATH = path.join(__dirname, '..', '物件比較アプリ', 'station_commute.csv');
+const CSV_PATH = path.join(__dirname, '..', 'data', 'station_commute.csv');
 
 // 直近月曜日の日付 (YYYY, MM, DD)
 function getNextMonday() {
@@ -261,9 +260,6 @@ async function run(options = {}) {
 
                 // 逐次保存
                 saveCsv(CSV_PATH, headers, data);
-                if (fs.existsSync(path.dirname(APP_CSV_PATH))) {
-                    saveCsv(APP_CSV_PATH, headers, data);
-                }
             } else {
                 console.warn(`  -> Failed to parse route01 for ${stName}`);
             }

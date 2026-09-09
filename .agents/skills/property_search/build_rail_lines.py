@@ -25,7 +25,7 @@ KSJ配布zip内の「UTF-8」フォルダのShapefileであっても、.cpg(エ�
 
     # 2. 列名を指定して本実行（--line-col / --operator-col は1.の結果を見て指定）
     #    出力は properties.js と同じ形式(<script src>読み込み用のJSファイル)で
-    #    rail_lines.js (ルート / 物件比較アプリ の両方) に書き出される
+    #    リポジトリルートの rail_lines.js に書き出される
     python .agents/skills/property_search/build_rail_lines.py --input path/to/N02.shp \\
         --line-col N02_003 --operator-col N02_004
 
@@ -43,7 +43,7 @@ import unicodedata
 # 関東地方をやや広めに囲む範囲 (property_search.py の KANTO_BOUNDS と同一)
 KANTO_BOUNDS = {"min_lat": 34.5, "max_lat": 37.2, "min_lng": 138.3, "max_lng": 141.2}
 
-PROPERTIES_JS_PATHS = ["properties.js", os.path.join("物件比較アプリ", "properties.js")]
+PROPERTIES_JS_PATHS = ["properties.js"]
 
 # 事業者名の表記ゆれを吸収するための簡易エイリアス表。
 # KSJ側の「会社名」列の値 (またはその一部) に前方一致/包含で使う。
@@ -145,8 +145,8 @@ def main():
     parser.add_argument("--simplify-tolerance", type=float, default=0.0003, help="ジオメトリ簡略化の許容誤差(度)。既定0.0003(約30m)")
     parser.add_argument(
         "--output", type=str, nargs="+",
-        default=["rail_lines.js", os.path.join("物件比較アプリ", "rail_lines.js")],
-        help="出力先ファイルパス(複数指定可。既定でルートと物件比較アプリの両方に書き出す)。"
+        default=["rail_lines.js"],
+        help="出力先ファイルパス(複数指定可。既定でリポジトリルートの rail_lines.js に書き出す)。"
              "properties.jsと同様、<script src>読み込み用のJSファイルとして書き出す"
     )
     args = parser.parse_args()

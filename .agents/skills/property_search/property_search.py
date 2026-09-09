@@ -42,7 +42,13 @@ STATIC_STATION_COORDS = {
     "大宮": {"lat": 35.9063, "lng": 139.6233},
 }
 
-CACHE_FILE_PATH = "geocoding_cache.json"
+# 入出力パス（本スクリプトはリポジトリルートを作業ディレクトリとして実行される前提）
+# 目的: データ/ドキュメント/Webアプリ配信ファイルを役割ごとのディレクトリに分離して管理する。
+CACHE_FILE_PATH = "data/geocoding_cache.json"          # ジオコーディング結果キャッシュ
+STATION_COMMUTE_CSV_PATH = "data/station_commute.csv"  # 駅別通勤DB（CSV, スクレイパの入出力）
+PROPERTIES_JS_PATH = "properties.js"                   # Webアプリ（GitHub Pages）が読み込む物件データ
+TREND_REPORT_PATH = "doc/物件数推移.md"                # 物件数推移レポート
+DEFAULT_SEARCH_RESULT_PATH = "doc/物件検索結果.md"     # 検索結果レポートの既定出力先
 
 def load_geocoding_cache():
     if os.path.exists(CACHE_FILE_PATH):
@@ -131,7 +137,7 @@ def parse_age_num(age_floor_str):
         return int(match.group(1))
     return 99 # 不明な場合は安全のため築古扱い
 
-def load_station_commute_db(csv_path="station_commute.csv"):
+def load_station_commute_db(csv_path=STATION_COMMUTE_CSV_PATH):
     """station_commute.csv から駅別通勤DBを読み込む"""
     import csv
     db = {}
@@ -513,13 +519,12 @@ def main():
     parser.add_argument("--max-rent", type=float, default=18.0, help="家賃上限（万円）、管理費込み。デフォルト18.0")
     parser.add_argument("--min-area", type=int, default=80, help="最小専有面積（m2）。デフォルト80")
     parser.add_argument("--max-walk", type=int, default=15, help="駅徒歩上限（分）。デフォルト15")
-    parser.add_argument("--output", type=str, default="物件検索結果.md", help="出力先のMarkdownファイルパス")
-    
+    parser.add_argument("--output", type=str, default=DEFAULT_SEARCH_RESULT_PATH, help="出力先のMarkdownファイルパス")
+
     args = parser.parse_args()
-    
+
     geocoding_cache = load_geocoding_cache()
-    dir_name = os.path.dirname(args.output) or "."
-    station_commute_db = load_station_commute_db(os.path.join(dir_name, "station_commute.csv"))
+    station_commute_db = load_station_commute_db(STATION_COMMUTE_CSV_PATH)
     all_properties = []
     
     print("物件情報を各都県から検索中...", file=sys.stderr)
@@ -586,9 +591,7 @@ def main():
     print(f"重複排除後のユニーク物件数: {len(unique_properties)} 件", file=sys.stderr)
     
     # 既存データの読み込み (駐車場情報のキャッシュ引き継ぎ用)
-    dir_name = os.path.dirname(args.output) or "."
-    existing_js_path = os.path.join(dir_name, "物件比較アプリ", "properties.js")
-    old_properties = load_existing_properties(existing_js_path)
+    old_properties = load_existing_properties(PROPERTIES_JS_PATH)
     
     # 2. 駐車場情報の取得とキャッシュ再利用、最寄り駅の路線名と駅名、および新フィルタリングルールの適用
     json_properties = []
@@ -818,34 +821,26 @@ def main():
     md_content = "\n".join(md_lines)
     
     # ファイル書き出し
+    os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(md_content)
     print(f"\n結果を {args.output} に書き出しました。", file=sys.stderr)
-    
-    # properties.js の書き出し
+
+    # Webアプリ（GitHub Pages）が読み込む properties.js の書き出し
     js_content = f"const bukkenData = {json.dumps(json_properties, ensure_ascii=False, indent=2)};"
-    
+
     try:
-        with open(existing_js_path, "w", encoding="utf-8") as f:
+        with open(PROPERTIES_JS_PATH, "w", encoding="utf-8") as f:
             f.write(js_content)
-        print(f"properties.js を書き出しました ({existing_js_path})。", file=sys.stderr)
+        print(f"properties.js を書き出しました ({PROPERTIES_JS_PATH})。", file=sys.stderr)
     except Exception as e:
         print(f"properties.js の書き出しに失敗: {e}", file=sys.stderr)
 
-    root_js_path = os.path.join(dir_name, "properties.js")
-    try:
-        with open(root_js_path, "w", encoding="utf-8") as f:
-            f.write(js_content)
-        print(f"properties.js を書き出しました ({root_js_path})。", file=sys.stderr)
-    except Exception as e:
-        print(f"properties.js の書き出しに失敗: {e}", file=sys.stderr)
-
-    # 物件数推移レポート（物件数推移.md）の自動更新
-    trend_md_path = os.path.join(dir_name, "物件数推移.md")
-    update_station_trend_report(json_properties, trend_md_path, len(new_properties))
+    # 物件数推移レポート（doc/物件数推移.md）の自動更新
+    update_station_trend_report(json_properties, TREND_REPORT_PATH, len(new_properties))
 
 
-def update_station_trend_report(json_properties, trend_md_path="物件数推移.md", new_properties_count=0):
+def update_station_trend_report(json_properties, trend_md_path=TREND_REPORT_PATH, new_properties_count=0):
     """物件数推移.md に当日の駅別物件数を自動追記・更新する"""
     import datetime
     today_str = datetime.date.today().strftime("%Y-%m-%d")

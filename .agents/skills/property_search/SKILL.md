@@ -8,15 +8,27 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 
 ## 1. ディレクトリ構造
 
+すべてのスクリプトは**リポジトリルートを作業ディレクトリ**として実行する前提です。役割ごとに以下のディレクトリへ分離しています。
+
+**スクリプト**
 * `.agents/skills/property_search/property_search.py` : SUUMO物件検索・データ抽出・駐車場詳細スクレイピングの本体スクリプト。
 * `scripts/fetch_station_commute.js` : Yahoo!路線情報から各駅〜東京サンケイビル（直近月曜8:45着）の正確な乗車時間・乗換回数・到着駅・徒歩時間を自動取得・DB更新するスクリプト。
 * `.agents/skills/property_search/build_rail_lines.py` : 国土数値情報「鉄道データ(N02)」から関東圏の実路線ジオメトリを抽出し、`rail_lines.js` を生成するスクリプト。
-* `properties.js` / `物件比較アプリ/properties.js` : 抽出された物件データ一覧。
-* `station_commute.js` / `物件比較アプリ/station_commute.js` : 駅別通勤時間データベース。
-* `station_commute.csv` / `物件比較アプリ/station_commute.csv` : 駅別通勤データCSV。
-* `物件検索結果.md` : 検索結果および前回差分（🆕 新規追加物件）のレポート。
-* `物件数推移.md` : 更新日ごとの駅別物件数推移とエリア供給分析レポート。
-* `物件比較アプリ/` : Webアプリ関連ファイル（`index.html`, `style.css`, `app.js`, `properties.js`, `station_commute.js`）。
+
+**データ (`data/`)**
+* `data/station_commute.csv` : 駅別通勤データCSV（`fetch_station_commute.js` の入出力）。
+* `data/geocoding_cache.json` : 駅座標のジオコーディング結果キャッシュ。
+
+**ドキュメント (`doc/`)**
+* `doc/物件検索結果.md` : 検索結果および前回差分（🆕 新規追加物件）のレポート。
+* `doc/物件数推移.md` : 更新日ごとの駅別物件数推移とエリア供給分析レポート。
+
+**Webアプリ配信ファイル（リポジトリルート直下 = GitHub Pages 公開対象）**
+* `index.html` / `style.css` / `app.js` : 物件比較WebアプリのUI。
+* `properties.js` : 抽出された物件データ一覧（`property_search.py` が生成）。
+* `station_commute.js` : 駅別通勤時間データベース（Webアプリ用）。
+* `rail_lines.js` : 通勤アクセスマップ用の実路線ジオメトリ（`build_rail_lines.py` が生成）。
+* `Image/` : favicon・アプリアイコン類。`site.webmanifest` はルート直下。
 
 ---
 
@@ -27,15 +39,17 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 ### ステップ1: SUUMOからの最新物件スクレイピング
 ```powershell
 $env:PYTHONIOENCODING="utf-8"
-py .agents/skills/property_search/property_search.py --output 物件検索結果.md
+py .agents/skills/property_search/property_search.py
 ```
-- 駐車場料金・距離の詳細取得、安全マージ、新規物件の差分判定、および `物件数推移.md` への駅別件数記録が自動実行され、`properties.js`、`物件検索結果.md`、`物件数推移.md` が更新されます。
+- 出力先は既定で `doc/物件検索結果.md`（`--output` で変更可）。
+- 駐車場料金・距離の詳細取得、安全マージ、新規物件の差分判定、および `doc/物件数推移.md` への駅別件数記録が自動実行され、`properties.js`、`doc/物件検索結果.md`、`doc/物件数推移.md` が更新されます。
 
 ### ステップ2: 新駅の通勤時間・乗換回数の自動取得とDB同期
 ```powershell
 node scripts/fetch_station_commute.js
 ```
-- 新たに検出された駅について、Yahoo!路線情報から「乗車時間」「乗換回数」「到着駅（大手町/東京）」「出口〜サンケイビルの実徒歩時間」を取得し、`station_commute.js` / `station_commute.csv` を自動更新します。
+- 新たに検出された駅について、Yahoo!路線情報から「乗車時間」「乗換回数」「到着駅（大手町/東京）」「出口〜サンケイビルの実徒歩時間」を取得し、`data/station_commute.csv` を自動更新します。
+- Webアプリ用の `station_commute.js` は `data/station_commute.csv` を基に更新します（現状は手動反映）。
 
 ### ステップ3: 必須カットオフ条件の確認
 - Webアプリ（`app.js`）により、以下の**必須カットオフ条件**が自動適用されます：
@@ -45,7 +59,7 @@ node scripts/fetch_station_commute.js
 
 ### ステップ4: Gitコミット＆GitHub Pagesへの自動反映
 ```powershell
-git add properties.js station_commute.js station_commute.csv 物件検索結果.md 物件数推移.md 物件比較アプリ/properties.js 物件比較アプリ/station_commute.js 物件比較アプリ/station_commute.csv
+git add properties.js station_commute.js rail_lines.js data/station_commute.csv data/geocoding_cache.json doc/物件検索結果.md doc/物件数推移.md
 git commit -m "feat(data): 週次物件データおよび物件数推移の更新"
 git push origin main
 ```
