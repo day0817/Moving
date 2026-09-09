@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 .env
-.agents/skills/property_search/ksj_data/
 .claude/
 .gemini/
 

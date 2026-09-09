@@ -8,9 +8,9 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 
 ## 1. ディレクトリ構造
 
-* `skills/property_search/property_search.py` : SUUMO物件検索・データ抽出・駐車場詳細スクレイピングの本体スクリプト。
+* `.agents/skills/property_search/property_search.py` : SUUMO物件検索・データ抽出・駐車場詳細スクレイピングの本体スクリプト。
 * `scripts/fetch_station_commute.js` : Yahoo!路線情報から各駅〜東京サンケイビル（直近月曜8:45着）の正確な乗車時間・乗換回数・到着駅・徒歩時間を自動取得・DB更新するスクリプト。
-* `skills/property_search/build_rail_lines.py` : 国土数値情報「鉄道データ(N02)」から関東圏の実路線ジオメトリを抽出し、`rail_lines.js` を生成するスクリプト。
+* `.agents/skills/property_search/build_rail_lines.py` : 国土数値情報「鉄道データ(N02)」から関東圏の実路線ジオメトリを抽出し、`rail_lines.js` を生成するスクリプト。
 * `properties.js` / `物件比較アプリ/properties.js` : 抽出された物件データ一覧。
 * `station_commute.js` / `物件比較アプリ/station_commute.js` : 駅別通勤時間データベース。
 * `station_commute.csv` / `物件比較アプリ/station_commute.csv` : 駅別通勤データCSV。
@@ -27,7 +27,7 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 ### ステップ1: SUUMOからの最新物件スクレイピング
 ```powershell
 $env:PYTHONIOENCODING="utf-8"
-py skills/property_search/property_search.py --output 物件検索結果.md
+py .agents/skills/property_search/property_search.py --output 物件検索結果.md
 ```
 - 駐車場料金・距離の詳細取得、安全マージ、新規物件の差分判定、および `物件数推移.md` への駅別件数記録が自動実行され、`properties.js`、`物件検索結果.md`、`物件数推移.md` が更新されます。
 

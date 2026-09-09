@@ -21,12 +21,12 @@ KSJ配布zip内の「UTF-8」フォルダのShapefileであっても、.cpg(エ�
 【使い方】
     # 1. まず属性列の構造を確認する（路線名・事業者名の列名を特定するため。
     #    N02データのバージョンによって列名が異なる可能性があるので必須の確認ステップ）
-    python skills/property_search/build_rail_lines.py --input path/to/N02.shp --inspect
+    python .agents/skills/property_search/build_rail_lines.py --input path/to/N02.shp --inspect
 
     # 2. 列名を指定して本実行（--line-col / --operator-col は1.の結果を見て指定）
     #    出力は properties.js と同じ形式(<script src>読み込み用のJSファイル)で
     #    rail_lines.js (ルート / 物件比較アプリ の両方) に書き出される
-    python skills/property_search/build_rail_lines.py --input path/to/N02.shp \\
+    python .agents/skills/property_search/build_rail_lines.py --input path/to/N02.shp \\
         --line-col N02_003 --operator-col N02_004
 
     # マッチしなかった路線がある場合は、標準エラー出力にレポートされるので、
