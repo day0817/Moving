@@ -3,6 +3,8 @@ const path = require('path');
 const https = require('https');
 
 const CSV_PATH = path.join(__dirname, '..', 'data', 'station_commute.csv');
+// Webアプリ（GitHub Pages）が <script src> で読み込む駅別通勤DB。CSVから機械生成する。
+const JS_PATH = path.join(__dirname, '..', 'station_commute.js');
 
 // 直近月曜日の日付 (YYYY, MM, DD)
 function getNextMonday() {
@@ -212,6 +214,56 @@ function saveCsv(filePath, headers, data) {
     fs.writeFileSync(filePath, content, 'utf8');
 }
 
+// station_commute.csv の1行を、Webアプリが期待する駅DBエントリ形式へ変換する。
+// 数値列は整数化し、未取得（空文字）の場合は 0 を入れる。memo（"出口:XXX"）からは出口情報のみ取り出す。
+function csvRowToCommuteEntry(row) {
+    const toInt = (v) => {
+        const n = parseInt(String(v ?? '').trim(), 10);
+        return Number.isFinite(n) ? n : 0;
+    };
+    const memo = String(row.memo ?? '').trim();
+    const exitPrefix = '出口:';
+    const exitInfo = memo.startsWith(exitPrefix) ? memo.slice(exitPrefix.length) : '';
+    return {
+        line: row.primary_line || '',
+        train_min: toInt(row.train_min),
+        station_to_office_min: toInt(row.station_to_office_min),
+        transfers: toInt(row.transfers),
+        arrival_station: row.arrival_station || '',
+        arrival_walk_min: toInt(row.arrival_walk_min),
+        transit_walk_min: toInt(row.transit_walk_min),
+        route_summary: row.route_summary || '',
+        lines_used: row.lines_used || '',
+        exit_info: exitInfo
+    };
+}
+
+// data/station_commute.csv から station_commute.js（const stationCommuteData = {...}）を生成する。
+// 通勤時間が未取得の駅（station_to_office_min が空）は Webアプリのフォールバック計算に委ねるため除外する。
+function buildStationCommuteJs(csvPath = CSV_PATH, jsPath = JS_PATH) {
+    const loaded = loadCsv(csvPath);
+    const rows = Array.isArray(loaded) ? [] : (loaded.data || []);
+    const db = {};
+    let skipped = 0;
+    rows.forEach((row) => {
+        const name = String(row.station_name ?? '').trim();
+        if (!name) return;
+        if (!String(row.station_to_office_min ?? '').trim()) {
+            skipped++;
+            return;
+        }
+        db[name] = csvRowToCommuteEntry(row);
+    });
+
+    const content =
+        '// 駅別通勤時間データベース (data/station_commute.csv から自動生成 / 手動編集不可)\n' +
+        'const stationCommuteData = ' + JSON.stringify(db, null, 4) + ';\n\n' +
+        "if (typeof module !== 'undefined') {\n    module.exports = stationCommuteData;\n}\n";
+    fs.writeFileSync(jsPath, content, 'utf8');
+    console.log(`Generated ${jsPath} (${Object.keys(db).length} stations${skipped ? `, ${skipped} skipped: no commute time` : ''}).`);
+    return db;
+}
+
 // メイン実行関数
 async function run(options = {}) {
     const maxFetch = options.limit || 999;
@@ -258,8 +310,9 @@ async function run(options = {}) {
                 console.log(`  -> OK: 所要${parsed.totalTime}分(乗車${parsed.trainTime}分), 乗換${parsed.transfers}回, 到着:${parsed.arrivalStation}, 路線:${parsed.linesUsed}`);
                 fetchedCount++;
 
-                // 逐次保存
+                // 逐次保存（CSV + Webアプリ用JSを都度同期）
                 saveCsv(CSV_PATH, headers, data);
+                buildStationCommuteJs();
             } else {
                 console.warn(`  -> Failed to parse route01 for ${stName}`);
             }
@@ -272,7 +325,9 @@ async function run(options = {}) {
         await new Promise(res => setTimeout(res, delayMs));
     }
 
-    console.log(`Done! Fetched ${fetchedCount} stations. CSV updated.`);
+    // 取得有無に関わらず、最新CSVから station_commute.js を再生成して整合させる
+    buildStationCommuteJs();
+    console.log(`Done! Fetched ${fetchedCount} stations. CSV / station_commute.js updated.`);
 }
 
 // コマンドライン引数処理
@@ -283,7 +338,12 @@ const delayArg = args.find(a => a.startsWith('--delay='));
 const delayMs = delayArg ? parseInt(delayArg.split('=')[1], 10) : 3000;
 
 if (require.main === module) {
-    run({ limit, delayMs });
+    if (args.includes('--build-js-only')) {
+        // スクレイピングをせず、既存CSVから station_commute.js だけを再生成する
+        buildStationCommuteJs();
+    } else {
+        run({ limit, delayMs });
+    }
 }
 
-module.exports = { run, fetchTransitHtml, parseRoute01, loadCsv, saveCsv };
+module.exports = { run, fetchTransitHtml, parseRoute01, loadCsv, saveCsv, buildStationCommuteJs };

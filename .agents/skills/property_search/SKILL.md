@@ -12,7 +12,7 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 
 **スクリプト**
 * `.agents/skills/property_search/property_search.py` : SUUMO物件検索・データ抽出・駐車場詳細スクレイピングの本体スクリプト。
-* `scripts/fetch_station_commute.js` : Yahoo!路線情報から各駅〜東京サンケイビル（直近月曜8:45着）の正確な乗車時間・乗換回数・到着駅・徒歩時間を自動取得・DB更新するスクリプト。
+* `scripts/fetch_station_commute.js` : Yahoo!路線情報から各駅〜東京サンケイビル（直近月曜8:45着）の正確な乗車時間・乗換回数・到着駅・徒歩時間を自動取得して `data/station_commute.csv` を更新し、そこから Webアプリ用 `station_commute.js` を再生成するスクリプト。
 * `.agents/skills/property_search/build_rail_lines.py` : 国土数値情報「鉄道データ(N02)」から関東圏の実路線ジオメトリを抽出し、`rail_lines.js` を生成するスクリプト。
 
 **データ (`data/`)**
@@ -26,7 +26,7 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 **Webアプリ配信ファイル（リポジトリルート直下 = GitHub Pages 公開対象）**
 * `index.html` / `style.css` / `app.js` : 物件比較WebアプリのUI。
 * `properties.js` : 抽出された物件データ一覧（`property_search.py` が生成）。
-* `station_commute.js` : 駅別通勤時間データベース（Webアプリ用）。
+* `station_commute.js` : 駅別通勤時間データベース（Webアプリ用）。`data/station_commute.csv` から機械生成するため直接編集しない。
 * `rail_lines.js` : 通勤アクセスマップ用の実路線ジオメトリ（`build_rail_lines.py` が生成）。
 * `Image/` : favicon・アプリアイコン類。`site.webmanifest` はルート直下。
 
@@ -48,14 +48,22 @@ py .agents/skills/property_search/property_search.py
 ```powershell
 node scripts/fetch_station_commute.js
 ```
-- 新たに検出された駅について、Yahoo!路線情報から「乗車時間」「乗換回数」「到着駅（大手町/東京）」「出口〜サンケイビルの実徒歩時間」を取得し、`data/station_commute.csv` を自動更新します。
-- Webアプリ用の `station_commute.js` は `data/station_commute.csv` を基に更新します（現状は手動反映）。
+- 新たに検出された駅について、Yahoo!路線情報から「乗車時間」「乗換回数」「到着駅（大手町/東京）」「出口〜サンケイビルの実徒歩時間」を取得し、`data/station_commute.csv` を更新します。
+- 続けて、`data/station_commute.csv` から Webアプリ用の `station_commute.js`（`const stationCommuteData`）を**自動再生成**します（逐次保存の都度＋実行終了時）。手動編集は不要です。
+- スクレイピングせず JS だけ作り直したいときは `node scripts/fetch_station_commute.js --build-js-only`。
 
 ### ステップ3: 必須カットオフ条件の確認
-- Webアプリ（`app.js`）により、以下の**必須カットオフ条件**が自動適用されます：
+- `property_search.py` が抽出・掲載判定する条件（`.agents/skills/property_search/property_search.py` 冒頭の定数）：
+  - **自己負担額**: **5.0万円以下**（`MAX_SELF_PAY`）
+    - 借上げ社宅の自己負担上限 **`COMPANY_SUBSIDY_CAP = 17.0`万**（〜17万は家賃2割負担、超過分は全額）。
+    - **駐車場代は補助対象外**のため全額を自己負担へ加算。管理費は家賃に含む。
+  - **駅徒歩10分以下 / 築30年以下 / 専有面積80m²以上**
+- Webアプリ（`app.js`）側の**必須カットオフ条件**：
   - **ドアドア通勤時間**: **59分以下** (`doorToDoor <= 59`)
   - **総徒歩時間**: **15分以内** (`totalWalkMin <= 15` / 物件〜駅 ＋ 到着駅〜オフィス)
-- 自己負担額（18万円以下 / 自己負担5.2万円以下）
+
+> 社内制度の改定（自己負担2割の上限額 16万→17万）で自己負担額の計算が変わっています。
+> 制度が再度変わった場合は `property_search.py` の `COMPANY_SUBSIDY_CAP` / `MAX_SELF_PAY` を更新してください。
 
 ### ステップ4: Gitコミット＆GitHub Pagesへの自動反映
 ```powershell

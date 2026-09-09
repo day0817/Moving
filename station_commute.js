@@ -1,4 +1,4 @@
-// 駅別通勤時間データベース (自動生成)
+// 駅別通勤時間データベース (data/station_commute.csv から自動生成 / 手動編集不可)
 const stationCommuteData = {
     "お花茶屋": {
         "line": "",
@@ -25,7 +25,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "はるひ野": {
-        "line": "",
+        "line": "小田急多摩線",
         "train_min": 51,
         "station_to_office_min": 60,
         "transfers": 2,
@@ -73,7 +73,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "三ツ沢下町": {
-        "line": "",
+        "line": "ブルーライン",
         "train_min": 32,
         "station_to_office_min": 57,
         "transfers": 1,
@@ -97,7 +97,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "上尾": {
-        "line": "",
+        "line": "ＪＲ高崎線",
         "train_min": 46,
         "station_to_office_min": 59,
         "transfers": 0,
@@ -109,7 +109,7 @@ const stationCommuteData = {
         "exit_info": "丸の内中央口"
     },
     "上本郷": {
-        "line": "",
+        "line": "京成松戸線",
         "train_min": 37,
         "station_to_office_min": 49,
         "transfers": 1,
@@ -145,7 +145,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "五月台": {
-        "line": "",
+        "line": "小田急多摩線",
         "train_min": 45,
         "station_to_office_min": 59,
         "transfers": 2,
@@ -181,7 +181,7 @@ const stationCommuteData = {
         "exit_info": "1(丸ノ内線)"
     },
     "京成小岩": {
-        "line": "",
+        "line": "京成本線",
         "train_min": 29,
         "station_to_office_min": 45,
         "transfers": 2,
@@ -193,7 +193,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "京成幕張": {
-        "line": "",
+        "line": "京成千葉線",
         "train_min": 38,
         "station_to_office_min": 65,
         "transfers": 3,
@@ -253,7 +253,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "保谷": {
-        "line": "",
+        "line": "西武池袋線",
         "train_min": 39,
         "station_to_office_min": 55,
         "transfers": 2,
@@ -265,7 +265,7 @@ const stationCommuteData = {
         "exit_info": "A1"
     },
     "八千代中央": {
-        "line": "",
+        "line": "東葉高速鉄道",
         "train_min": 59,
         "station_to_office_min": 69,
         "transfers": 0,
@@ -301,7 +301,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "北小金": {
-        "line": "",
+        "line": "ＪＲ常磐線",
         "train_min": 44,
         "station_to_office_min": 49,
         "transfers": 0,
@@ -361,7 +361,7 @@ const stationCommuteData = {
         "exit_info": "1(丸ノ内線)"
     },
     "南与野": {
-        "line": "",
+        "line": "ＪＲ埼京線",
         "train_min": 40,
         "station_to_office_min": 56,
         "transfers": 2,
@@ -373,7 +373,7 @@ const stationCommuteData = {
         "exit_info": "A1"
     },
     "南柏": {
-        "line": "",
+        "line": "ＪＲ常磐線",
         "train_min": 47,
         "station_to_office_min": 52,
         "transfers": 0,
@@ -385,7 +385,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "南流山": {
-        "line": "",
+        "line": "つくばエクスプレス",
         "train_min": 35,
         "station_to_office_min": 49,
         "transfers": 1,
@@ -469,7 +469,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "堀切菖蒲園": {
-        "line": "",
+        "line": "京成本線",
         "train_min": 25,
         "station_to_office_min": 37,
         "transfers": 1,
@@ -481,7 +481,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "塚田": {
-        "line": "",
+        "line": "東武野田線",
         "train_min": 32,
         "station_to_office_min": 56,
         "transfers": 1,
@@ -541,7 +541,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "子安": {
-        "line": "",
+        "line": "京急本線",
         "train_min": 32,
         "station_to_office_min": 61,
         "transfers": 2,
@@ -613,7 +613,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "志木": {
-        "line": "",
+        "line": "東武東上線",
         "train_min": 44,
         "station_to_office_min": 57,
         "transfers": 1,
@@ -625,7 +625,7 @@ const stationCommuteData = {
         "exit_info": "A1"
     },
     "我孫子": {
-        "line": "",
+        "line": "ＪＲ常磐線",
         "train_min": 41,
         "station_to_office_min": 54,
         "transfers": 0,
@@ -637,7 +637,7 @@ const stationCommuteData = {
         "exit_info": "丸の内中央口"
     },
     "戸塚安行": {
-        "line": "",
+        "line": "埼玉高速鉄道",
         "train_min": 41,
         "station_to_office_min": 56,
         "transfers": 1,
@@ -709,7 +709,7 @@ const stationCommuteData = {
         "exit_info": "丸の内中央口"
     },
     "新検見川": {
-        "line": "",
+        "line": "ＪＲ総武線",
         "train_min": 41,
         "station_to_office_min": 61,
         "transfers": 2,
@@ -721,7 +721,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "新田": {
-        "line": "",
+        "line": "東武伊勢崎線",
         "train_min": 36,
         "station_to_office_min": 50,
         "transfers": 2,
@@ -745,7 +745,7 @@ const stationCommuteData = {
         "exit_info": "1(丸ノ内線)"
     },
     "朝霞": {
-        "line": "",
+        "line": "東武東上線",
         "train_min": 37,
         "station_to_office_min": 50,
         "transfers": 1,
@@ -781,7 +781,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "本千葉": {
-        "line": "",
+        "line": "ＪＲ内房線",
         "train_min": 48,
         "station_to_office_min": 63,
         "transfers": 0,
@@ -805,7 +805,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "東伏見": {
-        "line": "",
+        "line": "西武新宿線",
         "train_min": 34,
         "station_to_office_min": 52,
         "transfers": 1,
@@ -817,7 +817,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "東大宮": {
-        "line": "",
+        "line": "ＪＲ宇都宮線",
         "train_min": 44,
         "station_to_office_min": 57,
         "transfers": 0,
@@ -853,7 +853,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "東葉勝田台": {
-        "line": "",
+        "line": "東葉高速鉄道",
         "train_min": 63,
         "station_to_office_min": 73,
         "transfers": 0,
@@ -877,7 +877,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "松戸新田": {
-        "line": "",
+        "line": "京成松戸線",
         "train_min": 39,
         "station_to_office_min": 51,
         "transfers": 1,
@@ -913,7 +913,7 @@ const stationCommuteData = {
         "exit_info": "A1"
     },
     "柴又": {
-        "line": "",
+        "line": "京成金町線",
         "train_min": 33,
         "station_to_office_min": 46,
         "transfers": 1,
@@ -997,7 +997,7 @@ const stationCommuteData = {
         "exit_info": "丸の内中央口"
     },
     "滝不動": {
-        "line": "",
+        "line": "京成松戸線",
         "train_min": 45,
         "station_to_office_min": 70,
         "transfers": 2,
@@ -1033,7 +1033,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "登戸": {
-        "line": "",
+        "line": "小田急線",
         "train_min": 33,
         "station_to_office_min": 39,
         "transfers": 1,
@@ -1045,7 +1045,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "矢野口": {
-        "line": "",
+        "line": "ＪＲ南武線",
         "train_min": 40,
         "station_to_office_min": 54,
         "transfers": 2,
@@ -1057,7 +1057,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "稲毛": {
-        "line": "",
+        "line": "ＪＲ総武線快速",
         "train_min": 39,
         "station_to_office_min": 54,
         "transfers": 0,
@@ -1069,7 +1069,7 @@ const stationCommuteData = {
         "exit_info": "1(丸ノ内線)"
     },
     "船橋日大前": {
-        "line": "",
+        "line": "東葉高速鉄道",
         "train_min": 54,
         "station_to_office_min": 64,
         "transfers": 0,
@@ -1081,7 +1081,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "船橋法典": {
-        "line": "",
+        "line": "ＪＲ武蔵野線",
         "train_min": 35,
         "station_to_office_min": 56,
         "transfers": 1,
@@ -1117,7 +1117,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "蕨": {
-        "line": "",
+        "line": "ＪＲ京浜東北線",
         "train_min": 36,
         "station_to_office_min": 47,
         "transfers": 1,
@@ -1201,7 +1201,7 @@ const stationCommuteData = {
         "exit_info": ""
     },
     "青葉台": {
-        "line": "",
+        "line": "東急田園都市線",
         "train_min": 56,
         "station_to_office_min": 61,
         "transfers": 0,
@@ -1213,7 +1213,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "飯山満": {
-        "line": "",
+        "line": "東葉高速鉄道",
         "train_min": 48,
         "station_to_office_min": 58,
         "transfers": 0,
@@ -1237,7 +1237,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "鬼越": {
-        "line": "",
+        "line": "京成本線",
         "train_min": 37,
         "station_to_office_min": 53,
         "transfers": 2,
@@ -1261,7 +1261,7 @@ const stationCommuteData = {
         "exit_info": "E1(メトロスクエア)"
     },
     "鳩ヶ谷": {
-        "line": "",
+        "line": "埼玉高速鉄道",
         "train_min": 35,
         "station_to_office_min": 50,
         "transfers": 1,
@@ -1273,7 +1273,7 @@ const stationCommuteData = {
         "exit_info": "A1"
     },
     "鷺沼": {
-        "line": "",
+        "line": "東急田園都市線",
         "train_min": 46,
         "station_to_office_min": 51,
         "transfers": 0,

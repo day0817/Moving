@@ -260,21 +260,30 @@ def evaluate_best_commute(p, station_db):
     evaluated.sort(key=lambda x: (x["door_to_door"], x["transfers"], x["total_walk_min"]))
     return evaluated[0]
 
+# 借上げ社宅制度の自己負担上限額（万円）。この額までは家賃（管理費込み）の2割負担、
+# 超過分は全額自己負担。2026年9月の制度改定で 16.0万 → 17.0万 に引き上げ。
+# 駐車場代は補助対象外のため、算出額へ全額加算する（管理費は家賃に含む）。
+COMPANY_SUBSIDY_CAP = 17.0
+
+# 物件比較アプリに掲載する自己負担額（万円/月, 駐車場代込み）の上限。
+# 制度改定に合わせて 5.2万 → 5.0万 に変更。
+MAX_SELF_PAY = 5.0
+
 def calculate_self_pay(rent_str, admin_str, parking_fee=0.0):
     rent_match = re.search(r"([\d.]+)", rent_str)
     rent = float(rent_match.group(1)) if rent_match else 0.0
-    
+
     admin = 0.0
     if admin_str and admin_str != "-":
         admin_match = re.search(r"(\d+)", admin_str)
         admin = float(admin_match.group(1)) / 10000.0 if admin_match else 0.0
-        
+
     house_total = rent + admin
-    if house_total <= 16.0:
+    if house_total <= COMPANY_SUBSIDY_CAP:
         house_self_pay = house_total * 0.2
     else:
-        house_self_pay = 3.2 + (house_total - 16.0)
-        
+        house_self_pay = COMPANY_SUBSIDY_CAP * 0.2 + (house_total - COMPANY_SUBSIDY_CAP)
+
     return house_self_pay + parking_fee
 
 def parse_parking_info(detail_html):
@@ -309,7 +318,7 @@ def parse_parking_info(detail_html):
                     
     return parking_fee, parking_dist, parking_text
 
-def build_suumo_url(pref_code, max_rent=18.0, min_area=80, max_walk=15):
+def build_suumo_url(pref_code, max_rent=19.0, min_area=80, max_walk=15):
     base_url = "https://suumo.jp/jj/chintai/ichiran/FR301FC001/"
     params = {
         "ar": "030",            # 関東
@@ -516,7 +525,9 @@ def load_existing_properties(js_path):
 
 def main():
     parser = argparse.ArgumentParser(description="大手町起点通勤時間指定SUUMO一括物件検索スクリプト")
-    parser.add_argument("--max-rent", type=float, default=18.0, help="家賃上限（万円）、管理費込み。デフォルト18.0")
+    parser.add_argument("--max-rent", type=float, default=19.0,
+                        help="SUUMO検索時の家賃上限（万円, 管理費込み・駐車場別）。自己負担5.0万以下の物件を"
+                             "取りこぼさないよう既定19.0（最終的な採否は calculate_self_pay で判定）")
     parser.add_argument("--min-area", type=int, default=80, help="最小専有面積（m2）。デフォルト80")
     parser.add_argument("--max-walk", type=int, default=15, help="駅徒歩上限（分）。デフォルト15")
     parser.add_argument("--output", type=str, default=DEFAULT_SEARCH_RESULT_PATH, help="出力先のMarkdownファイルパス")
@@ -658,7 +669,7 @@ def main():
             print(f"完了 ({p_text})", file=sys.stderr)
             
         s_pay = calculate_self_pay(p['rent'], p['admin'], p_fee)
-        if s_pay > 5.2:
+        if s_pay > MAX_SELF_PAY:
             continue
 
         # 駅通勤DB（station_commute.csv）による正確な通勤ルート・所要時間の再計算
@@ -784,8 +795,8 @@ def main():
     # 結果のMarkdown生成
     md_lines = []
     md_lines.append("# 物件検索結果一覧\n")
-    md_lines.append(f"検索条件：管理費・駐車場込み {args.max_rent}万円以下 / 面積 {args.min_area}m²以上 / 一戸建て / 大手町まで50分・乗換1回以下\n")
-    md_lines.append("※絞り込みルール：自己負担額5.2万円以下 / ドアドア通勤時間60分以下 / 駅徒歩10分以下 / 築30年以下\n")
+    md_lines.append(f"検索条件：家賃（管理費込み・駐車場代別） {args.max_rent}万円以下 / 面積 {args.min_area}m²以上 / 一戸建て / 大手町まで50分・乗換1回以下\n")
+    md_lines.append(f"※絞り込みルール：自己負担額{MAX_SELF_PAY}万円以下（社宅上限{COMPANY_SUBSIDY_CAP}万・超過分は全額／駐車場代全額加算） / ドアドア通勤59分以下 / 総徒歩15分以内 / 駅徒歩10分以下 / 築30年以下\n")
     
     # 1. 新規追加物件セクション
     md_lines.append(f"## 🆕 新たに追加された物件 (前回からの差分: {len(new_properties)}件)\n")
