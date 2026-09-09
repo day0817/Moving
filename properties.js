@@ -121,7 +121,7 @@ const bukkenData = [
     "route_summary": "西新井→北千住→大手町(東京都)",
     "lat": 35.7760626,
     "lng": 139.789634,
-    "is_new": false
+    "is_new": true
   },
   {
     "station": "柴又",
@@ -586,6 +586,6 @@ const bukkenData = [
     "route_summary": "稲毛→東京",
     "lat": 35.6369851,
     "lng": 140.092676,
-    "is_new": false
+    "is_new": true
   }
 ];

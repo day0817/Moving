@@ -510,18 +510,38 @@ def parse_max_pages(html_content):
                 pages.append(int(m2.group(0)))
     return max(pages)
 
+def _parse_bukken_data(content):
+    match = re.search(r"const\s+bukkenData\s*=\s*(.*);", content, re.DOTALL)
+    if match:
+        return json.loads(match.group(1).strip())
+    return []
+
 def load_existing_properties(js_path):
     if not os.path.exists(js_path):
         return []
     try:
         with open(js_path, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-        match = re.search(r"const\s+bukkenData\s*=\s*(.*);", content, re.DOTALL)
-        if match:
-            return json.loads(match.group(1).strip())
+            return _parse_bukken_data(f.read().strip())
     except Exception as e:
         print(f"既存データのロードに失敗: {e}", file=sys.stderr)
     return []
+
+def load_committed_properties(js_path):
+    """直近コミット（HEAD）の properties.js を読む。is_new 判定の基準に使う。
+    スクレイパを未コミットのまま複数回回しても「前回公開分との差分」が壊れないようにするため。
+    git 管理外・git 不在時は作業ファイルにフォールバックする。"""
+    import subprocess
+    try:
+        out = subprocess.run(
+            ["git", "show", f"HEAD:{js_path}"],
+            capture_output=True, text=True, encoding="utf-8",
+            cwd=os.path.dirname(os.path.abspath(js_path)) or ".",
+        )
+        if out.returncode == 0 and out.stdout.strip():
+            return _parse_bukken_data(out.stdout.strip())
+    except Exception as e:
+        print(f"HEAD版 properties.js の取得に失敗（作業ファイルで代替）: {e}", file=sys.stderr)
+    return load_existing_properties(js_path)
 
 def main():
     parser = argparse.ArgumentParser(description="大手町起点通勤時間指定SUUMO一括物件検索スクリプト")
@@ -778,9 +798,10 @@ def main():
     json_properties = deduped_properties
 
     # 前回データとの差分判定（新規追加物件の抽出およびis_newフラグ設定）
-
-    old_urls = {p.get("url") for p in old_properties if p.get("url")}
-    old_keys = {(p.get("rent", "").strip(), p.get("madori", "").strip(), p.get("menseki", "").strip(), p.get("address", "").strip()) for p in old_properties}
+    # 基準は「直近コミット（＝前回公開分）」。未コミットで複数回実行しても差分が消えないようにする。
+    baseline_properties = load_committed_properties(PROPERTIES_JS_PATH)
+    old_urls = {p.get("url") for p in baseline_properties if p.get("url")}
+    old_keys = {(p.get("rent", "").strip(), p.get("madori", "").strip(), p.get("menseki", "").strip(), p.get("address", "").strip()) for p in baseline_properties}
 
     new_properties = []
     for p in json_properties:
