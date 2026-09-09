@@ -875,7 +875,8 @@ def update_station_trend_report(json_properties, trend_md_path=TREND_REPORT_PATH
         if f"**{today_str}**" in content:
             content = re.sub(rf"\|\s*\*\*{re.escape(today_str)}\*\*.*?\n", summary_row + "\n", content)
         else:
-            match = re.search(r"(\|\s*更新日\s*\|\s*総物件数\s*\|.*?\n\|[\s:-|]+\n)", content)
+            # 区切り行 `| :--- | :---: | ... |` にマッチ。ハイフンは範囲指定と誤解されないよう文字クラス末尾に置く
+            match = re.search(r"(\|\s*更新日\s*\|\s*総物件数\s*\|.*?\n\|[\s:|-]+\n)", content)
             if match:
                 content = content[:match.end()] + summary_row + "\n" + content[match.end():]
 

@@ -12,7 +12,7 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 
 **スクリプト**
 * `.agents/skills/property_search/property_search.py` : SUUMO物件検索・データ抽出・駐車場詳細スクレイピングの本体スクリプト。
-* `scripts/fetch_station_commute.js` : Yahoo!路線情報から各駅〜東京サンケイビル（直近月曜8:45着）の正確な乗車時間・乗換回数・到着駅・徒歩時間を自動取得して `data/station_commute.csv` を更新し、そこから Webアプリ用 `station_commute.js` を再生成するスクリプト。
+* `scripts/fetch_station_commute.js` : `properties.js` の最寄り駅で未登録のものをCSVへ追加し、Yahoo!路線情報から各駅〜東京サンケイビル（直近月曜8:45着）の正確な乗車時間・乗換回数・到着駅・徒歩時間を取得して `data/station_commute.csv` を更新、そこから Webアプリ用 `station_commute.js` を再生成するスクリプト。
 * `.agents/skills/property_search/build_rail_lines.py` : 国土数値情報「鉄道データ(N02)」から関東圏の実路線ジオメトリを抽出し、`rail_lines.js` を生成するスクリプト。
 
 **データ (`data/`)**
@@ -48,9 +48,12 @@ py .agents/skills/property_search/property_search.py
 ```powershell
 node scripts/fetch_station_commute.js
 ```
-- 新たに検出された駅について、Yahoo!路線情報から「乗車時間」「乗換回数」「到着駅（大手町/東京）」「出口〜サンケイビルの実徒歩時間」を取得し、`data/station_commute.csv` を更新します。
-- 続けて、`data/station_commute.csv` から Webアプリ用の `station_commute.js`（`const stationCommuteData`）を**自動再生成**します（逐次保存の都度＋実行終了時）。手動編集は不要です。
+1. `properties.js` の各物件の最寄り駅（徒歩12分以内）のうち `data/station_commute.csv` に無い駅を、空行としてCSVへ自動追加します。
+2. 通勤データが空の駅について、Yahoo!路線情報から「乗車時間」「乗換回数」「到着駅（大手町/東京）」「出口〜サンケイビルの実徒歩時間」を取得し、`data/station_commute.csv` を更新します。
+3. `data/station_commute.csv` から Webアプリ用の `station_commute.js`（`const stationCommuteData`）を**自動再生成**します（逐次保存の都度＋実行終了時）。手動編集は不要です。
 - スクレイピングせず JS だけ作り直したいときは `node scripts/fetch_station_commute.js --build-js-only`。
+- 新駅が追加された場合は、正確なドアドア時間で再判定するため**ステップ1をもう一度実行**します（駐車場情報はキャッシュ済みのため高速）。
+- **同名異駅に注意**：Yahoo!検索が意図と違う駅を選ぶ場合（例:「平和台」→東京メトロ有楽町線 vs 流鉄流山線）は、`fetch_station_commute.js` の `STATION_QUERY_OVERRIDES` に `'駅名': '駅名(都道府県)'` を追加し、CSVの当該行の値を空にして再実行します。
 
 ### ステップ3: 必須カットオフ条件の確認
 - `property_search.py` が抽出・掲載判定する条件（`.agents/skills/property_search/property_search.py` 冒頭の定数）：
@@ -66,8 +69,9 @@ node scripts/fetch_station_commute.js
 > 制度が再度変わった場合は `property_search.py` の `COMPANY_SUBSIDY_CAP` / `MAX_SELF_PAY` を更新してください。
 
 ### ステップ4: Gitコミット＆GitHub Pagesへの自動反映
+まず `index.html` の 4 か所のキャッシュバスター `?v=YYYYMMDD` を当日日付へ更新（ブラウザに新データを再取得させるため必須）。
 ```powershell
-git add properties.js station_commute.js rail_lines.js data/station_commute.csv data/geocoding_cache.json doc/物件検索結果.md doc/物件数推移.md
+git add index.html properties.js station_commute.js rail_lines.js data/station_commute.csv data/geocoding_cache.json doc/物件検索結果.md doc/物件数推移.md
 git commit -m "feat(data): 週次物件データおよび物件数推移の更新"
 git push origin main
 ```

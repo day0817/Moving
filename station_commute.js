@@ -1295,6 +1295,114 @@ const stationCommuteData = {
         "route_summary": "黒川(神奈川県)→栗平→代々木上原→大手町(東京都)",
         "lines_used": "小田急多摩線,小田急多摩線通勤急行,東京メトロ千代田線",
         "exit_info": "E1(メトロスクエア)"
+    },
+    "西新井": {
+        "line": "",
+        "train_min": 25,
+        "station_to_office_min": 39,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 13,
+        "route_summary": "西新井→北千住→大手町(東京都)",
+        "lines_used": "東武スカイツリーライン急行,東京メトロ千代田線",
+        "exit_info": "E1(メトロスクエア)"
+    },
+    "保土ケ谷": {
+        "line": "",
+        "train_min": 37,
+        "station_to_office_min": 51,
+        "transfers": 0,
+        "arrival_station": "東京",
+        "arrival_walk_min": 10,
+        "transit_walk_min": 4,
+        "route_summary": "保土ケ谷→東京",
+        "lines_used": "ＪＲ横須賀線",
+        "exit_info": "丸の内中央口"
+    },
+    "井土ヶ谷": {
+        "line": "",
+        "train_min": 42,
+        "station_to_office_min": 65,
+        "transfers": 1,
+        "arrival_station": "東京",
+        "arrival_walk_min": 10,
+        "transit_walk_min": 13,
+        "route_summary": "井土ケ谷→横浜→東京",
+        "lines_used": "京急本線,ＪＲ東海道本線(上野東京ライン)",
+        "exit_info": "丸の内中央口"
+    },
+    "見沼代親水公園": {
+        "line": "",
+        "train_min": 33,
+        "station_to_office_min": 48,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 14,
+        "route_summary": "見沼代親水公園→西日暮里(舎人ライナー)→西日暮里→大手町(東京都)",
+        "lines_used": "日暮里・舎人ライナー,東京メトロ千代田線",
+        "exit_info": "E1(メトロスクエア)"
+    },
+    "川口元郷": {
+        "line": "",
+        "train_min": 30,
+        "station_to_office_min": 45,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 2,
+        "transit_walk_min": 13,
+        "route_summary": "川口元郷→後楽園→大手町(東京都)",
+        "lines_used": "埼玉高速鉄道,東京メトロ丸ノ内線",
+        "exit_info": "A1"
+    },
+    "下総中山": {
+        "line": "",
+        "train_min": 27,
+        "station_to_office_min": 44,
+        "transfers": 2,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 16,
+        "route_summary": "下総中山→市川→東京→大手町(東京都)",
+        "lines_used": "ＪＲ総武線,ＪＲ総武線快速,東京メトロ丸ノ内線",
+        "exit_info": "E1(メトロスクエア)"
+    },
+    "新津田沼": {
+        "line": "",
+        "train_min": 32,
+        "station_to_office_min": 53,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 20,
+        "route_summary": "新津田沼→津田沼→東京→大手町(東京都)",
+        "lines_used": "ＪＲ総武線快速,東京メトロ丸ノ内線",
+        "exit_info": "E1(メトロスクエア)"
+    },
+    "津田沼": {
+        "line": "",
+        "train_min": 32,
+        "station_to_office_min": 45,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 12,
+        "route_summary": "津田沼→東京→大手町(東京都)",
+        "lines_used": "ＪＲ総武線快速,東京メトロ丸ノ内線",
+        "exit_info": "E1(メトロスクエア)"
+    },
+    "平和台": {
+        "line": "",
+        "train_min": 51,
+        "station_to_office_min": 61,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 9,
+        "route_summary": "平和台(千葉県)→馬橋→大手町(東京都)",
+        "lines_used": "流鉄流山線,ＪＲ常磐線",
+        "exit_info": "E1(メトロスクエア)"
     }
 };
 

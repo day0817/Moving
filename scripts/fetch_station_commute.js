@@ -5,6 +5,11 @@ const https = require('https');
 const CSV_PATH = path.join(__dirname, '..', 'data', 'station_commute.csv');
 // Webアプリ（GitHub Pages）が <script src> で読み込む駅別通勤DB。CSVから機械生成する。
 const JS_PATH = path.join(__dirname, '..', 'station_commute.js');
+// 掲載物件データ。ここに含まれる駅で station_commute.csv に無いものを新規取得対象として追加する。
+const PROPERTIES_JS_PATH = path.join(__dirname, '..', 'properties.js');
+// properties.js の各物件の最寄り駅のうち、これ以下の徒歩分の駅を通勤DBの取得対象に含める
+// （総徒歩15分カットオフ上、物件から遠い駅が最短ルートになる余地は小さいため）
+const CANDIDATE_STATION_MAX_WALK = 12;
 
 // 直近月曜日の日付 (YYYY, MM, DD)
 function getNextMonday() {
@@ -21,11 +26,18 @@ function getNextMonday() {
     return { y, m, d };
 }
 
+// 同名異駅の対策。CSVの駅名（キー）はそのまま、Yahoo!検索時のみ別表記に置き換える。
+// 例: 「平和台」は既定で東京メトロ有楽町線（練馬区）が選ばれるが、候補物件のあるのは流鉄流山線（流山市）。
+const STATION_QUERY_OVERRIDES = {
+    '平和台': '平和台(千葉県)'
+};
+
 // Yahoo!路線情報を取得
 function fetchTransitHtml(stationName) {
     return new Promise((resolve, reject) => {
         const { y, m, d } = getNextMonday();
-        const url = `https://transit.yahoo.co.jp/search/result?from=${encodeURIComponent(stationName)}&to=${encodeURIComponent('東京サンケイビル')}&type=4&ticket=ic&expkind=1&y=${y}&m=${m}&d=${d}&hh=08&m1=4&m2=5`;
+        const query = STATION_QUERY_OVERRIDES[stationName] || stationName;
+        const url = `https://transit.yahoo.co.jp/search/result?from=${encodeURIComponent(query)}&to=${encodeURIComponent('東京サンケイビル')}&type=4&ticket=ic&expkind=1&y=${y}&m=${m}&d=${d}&hh=08&m1=4&m2=5`;
 
         const options = {
             headers: {
@@ -264,10 +276,58 @@ function buildStationCommuteJs(csvPath = CSV_PATH, jsPath = JS_PATH) {
     return db;
 }
 
+// properties.js から最寄り駅名（路線/◯◯駅 歩N分）を抽出する。app.js の parseStationWalks と同じ規則。
+function extractStationsFromProperties(propsJsPath = PROPERTIES_JS_PATH) {
+    if (!fs.existsSync(propsJsPath)) return [];
+    const raw = fs.readFileSync(propsJsPath, 'utf8');
+    const m = raw.match(/const\s+bukkenData\s*=\s*(\[[\s\S]*\]);?\s*$/);
+    let list;
+    try {
+        list = JSON.parse(m ? m[1] : raw);
+    } catch (e) {
+        console.warn(`properties.js のパースに失敗（新規駅の自動追加をスキップ）: ${e.message}`);
+        return [];
+    }
+    const stations = new Set();
+    for (const p of list) {
+        if (p && p.station) stations.add(String(p.station).trim());
+        const sw = String(p && p.station_walk || '');
+        for (const seg of sw.split(/\s*\/\s*/)) {
+            const mm = seg.match(/(?:[^/]+\/)?([^/駅]+)駅\s*歩(\d+)分/);
+            if (mm && parseInt(mm[2], 10) <= CANDIDATE_STATION_MAX_WALK) {
+                stations.add(mm[1].trim());
+            }
+        }
+    }
+    return [...stations].filter(Boolean);
+}
+
+// properties.js に登場するがCSVに無い駅を、空行としてCSVへ追記する。追記した駅名の配列を返す。
+function addMissingStationsToCsv(csvPath = CSV_PATH, propsJsPath = PROPERTIES_JS_PATH) {
+    const loaded = loadCsv(csvPath);
+    if (Array.isArray(loaded)) return [];
+    const { headers, data } = loaded;
+    const known = new Set(data.map(r => r.station_name));
+    const missing = extractStationsFromProperties(propsJsPath).filter(s => !known.has(s));
+    if (missing.length === 0) return [];
+    for (const name of missing) {
+        const row = {};
+        headers.forEach(h => { row[h] = ''; });
+        row.station_name = name;
+        data.push(row);
+    }
+    saveCsv(csvPath, headers, data);
+    console.log(`properties.js から新規駅 ${missing.length} 件をCSVへ追加: ${missing.join(', ')}`);
+    return missing;
+}
+
 // メイン実行関数
 async function run(options = {}) {
     const maxFetch = options.limit || 999;
     const delayMs = options.delayMs || 3000; // 3秒ウェイト（ブロック対策）
+
+    // properties.js に登場する未登録の駅をCSVへ追加してから取得する
+    addMissingStationsToCsv();
 
     console.log(`Loading CSV from: ${CSV_PATH}`);
     const { headers, data } = loadCsv(CSV_PATH);
@@ -346,4 +406,7 @@ if (require.main === module) {
     }
 }
 
-module.exports = { run, fetchTransitHtml, parseRoute01, loadCsv, saveCsv, buildStationCommuteJs };
+module.exports = {
+    run, fetchTransitHtml, parseRoute01, loadCsv, saveCsv,
+    buildStationCommuteJs, addMissingStationsToCsv, extractStationsFromProperties
+};
