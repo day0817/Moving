@@ -23,12 +23,18 @@
 │   └── geocoding_cache.json          駅座標キャッシュ
 ├── doc/                              調査・検討ドキュメント（→ doc/README.md）
 ├── scripts/
-│   └── fetch_station_commute.js      Yahoo!路線情報から通勤データを取得
+│   ├── fetch_station_commute.js      Yahoo!路線情報から通勤データを取得
+│   ├── run_weekly_update.ps1         週次データ一括自動更新バッチ（ステップ1〜5）
+│   └── register_task.ps1             タスクスケジューラ登録スクリプト（毎週金曜20:30）
 └── .agents/skills/property_search/   物件検索・データ更新スキル（→ SKILL.md）
 ```
 
 ## データ更新
 
-手順は [.agents/skills/property_search/SKILL.md](.agents/skills/property_search/SKILL.md) を参照。
-概略は「①`property_search.py` で SUUMO を再集計 → ②`fetch_station_commute.js` で新駅の通勤時間を取得
-→ ③コミット & push で GitHub Pages に反映」。
+- **定期自動更新**:
+  - Windowsタスクスケジューラ（`Moving_Weekly_Property_Update`）により、**毎週金曜日 20:30** に自動実行され、最新物件取得・通勤データ同期・GitHub Pages への反映まで完了します。
+- **手動全自動更新**:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/run_weekly_update.ps1"`
+- **詳細手順**:
+  - [.agents/skills/property_search/SKILL.md](.agents/skills/property_search/SKILL.md) を参照。
+

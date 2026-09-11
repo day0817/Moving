@@ -14,6 +14,8 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 * `.agents/skills/property_search/property_search.py` : SUUMO物件検索・データ抽出・駐車場詳細スクレイピングの本体スクリプト。
 * `scripts/fetch_station_commute.js` : `properties.js` の最寄り駅で未登録のものをCSVへ追加し、Yahoo!路線情報から各駅〜東京サンケイビル（直近月曜8:45着）の正確な乗車時間・乗換回数・到着駅・徒歩時間を取得して `data/station_commute.csv` を更新、そこから Webアプリ用 `station_commute.js` を再生成するスクリプト。
 * `.agents/skills/property_search/build_rail_lines.py` : 国土数値情報「鉄道データ(N02)」から関東圏の実路線ジオメトリを抽出し、`rail_lines.js` を生成するスクリプト。
+* `scripts/run_weekly_update.ps1` : ステップ1〜ステップ5（スクレイピング、通勤同期、キャッシュバスター更新、Gitプッシュ）を一括全自動実行する週次更新バッチ。
+* `scripts/register_task.ps1` : Windowsタスクスケジューラに「毎週金曜日 20:30」の定期実行タスク（`Moving_Weekly_Property_Update`）を登録するスクリプト。
 
 **データ (`data/`)**
 * `data/station_commute.csv` : 駅別通勤データCSV（`fetch_station_commute.js` の入出力）。
@@ -32,9 +34,22 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 
 ---
 
-## 2. 定期再集計・更新ワークフロー（チャットからの実行手順）
+## 2. 定期再集計・更新ワークフロー
 
-ユーザーから「物件を最新化して」「今週分の物件を再集計して」と依頼された際は、以下のステップを順次実行します。
+### A. 全自動更新（推奨）
+ステップ1〜5の一連のフロー（スクレイピング、通勤同期、新駅再計算、キャッシュバスター更新、Gitプッシュ）を1コマンドで一括実行できます。
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/run_weekly_update.ps1"
+```
+
+> **Windowsタスクスケジューラ定期実行**:
+> 毎週金曜日 20:30 にタスク `Moving_Weekly_Property_Update` により上記バッチが自動起動します。
+> （タスク再登録・設定変更は `powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/register_task.ps1"`）
+
+---
+
+### B. 個別ステップ手動実行手順
+個別に調整や確認を行いながら実行する場合は、以下のステップを順次実行します。
 
 ### ステップ1: SUUMOからの最新物件スクレイピング
 ```powershell
