@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260909">
+    <link rel="stylesheet" href="style.css?v=20260918">
 </head>
 <body>
     <header>
@@ -26,14 +26,24 @@
                 <h1 class="logo-text">Bukken<span>Compare</span></h1>
                 <p class="subtitle">大手町通勤のための賃貸一戸建て（80m²以上・駐車場込）比較ナビ</p>
             </div>
-            <div class="theme-switch-wrapper">
-                <button id="themeToggleBtn" class="theme-toggle-btn" title="テーマ切り替え (Solarized / Solarized Dark)" aria-label="テーマ切り替え">
-                    <span class="theme-toggle-indicator">
-                        <span class="theme-icon dark-icon">🌙</span>
-                        <span class="theme-icon light-icon">☀️</span>
-                    </span>
-                    <span class="theme-text" id="themeLabel">Solarized Dark</span>
-                </button>
+            <div class="header-right">
+                <div class="last-updated-badge" title="物件データの最終更新日">
+                    <svg class="updated-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span class="updated-label">最終更新:</span>
+                    <time id="lastUpdated" datetime="2026-09-18">2026/09/18</time>
+                </div>
+                <div class="theme-switch-wrapper">
+                    <button id="themeToggleBtn" class="theme-toggle-btn" title="テーマ切り替え (Solarized / Solarized Dark)" aria-label="テーマ切り替え">
+                        <span class="theme-toggle-indicator">
+                            <span class="theme-icon dark-icon">🌙</span>
+                            <span class="theme-icon light-icon">☀️</span>
+                        </span>
+                        <span class="theme-text" id="themeLabel">Solarized Dark</span>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -96,8 +106,8 @@
     </div>
 
     <!-- データスクリプトおよびメインスクリプト -->
-    <script src="station_commute.js?v=20260909"></script>
-    <script src="properties.js?v=20260909"></script>
-    <script src="app.js?v=20260909"></script>
+    <script src="station_commute.js?v=20260918"></script>
+    <script src="properties.js?v=20260918"></script>
+    <script src="app.js?v=20260918"></script>
 </body>
 </html>

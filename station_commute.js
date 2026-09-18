@@ -1403,6 +1403,66 @@ const stationCommuteData = {
         "route_summary": "平和台(千葉県)→馬橋→大手町(東京都)",
         "lines_used": "流鉄流山線,ＪＲ常磐線",
         "exit_info": "E1(メトロスクエア)"
+    },
+    "芦花公園": {
+        "line": "",
+        "train_min": 34,
+        "station_to_office_min": 46,
+        "transfers": 2,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 11,
+        "route_summary": "芦花公園→笹塚→九段下→大手町(東京都)",
+        "lines_used": "京王線,京王新線,東京メトロ半蔵門線",
+        "exit_info": "E1(メトロスクエア)"
+    },
+    "八幡山": {
+        "line": "",
+        "train_min": 29,
+        "station_to_office_min": 41,
+        "transfers": 2,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 11,
+        "route_summary": "八幡山→笹塚→九段下→大手町(東京都)",
+        "lines_used": "京王線,京王新線,東京メトロ半蔵門線",
+        "exit_info": "E1(メトロスクエア)"
+    },
+    "北松戸": {
+        "line": "",
+        "train_min": 33,
+        "station_to_office_min": 38,
+        "transfers": 0,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 4,
+        "route_summary": "北松戸→大手町(東京都)",
+        "lines_used": "ＪＲ常磐線",
+        "exit_info": "E1(メトロスクエア)"
+    },
+    "原木中山": {
+        "line": "",
+        "train_min": 29,
+        "station_to_office_min": 39,
+        "transfers": 0,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 9,
+        "route_summary": "原木中山→大手町(東京都)",
+        "lines_used": "東京メトロ東西線",
+        "exit_info": "E1(メトロスクエア)"
+    },
+    "勝田台": {
+        "line": "",
+        "train_min": 46,
+        "station_to_office_min": 59,
+        "transfers": 0,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 1,
+        "transit_walk_min": 12,
+        "route_summary": "勝田台→東葉勝田台→大手町(東京都)",
+        "lines_used": "東葉高速鉄道快速",
+        "exit_info": "E1(メトロスクエア)"
     }
 };
 
