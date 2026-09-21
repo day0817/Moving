@@ -3,4 +3,7 @@ __pycache__/
 .env
 .claude/
 .gemini/
+node_modules/
+package-lock.json
+data/update_job.log
 

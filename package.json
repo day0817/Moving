@@ -1,0 +1,11 @@
+{
+  "name": "moving",
+  "version": "1.0.0",
+  "description": "Property search and commute comparison web app",
+  "scripts": {
+    "fetch-commute": "node scripts/fetch_station_commute.js"
+  },
+  "dependencies": {
+    "puppeteer-core": "^24.4.0"
+  }
+}

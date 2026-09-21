@@ -3,6 +3,13 @@ document.addEventListener("DOMContentLoaded", () => {
     let properties = typeof bukkenData !== 'undefined' ? bukkenData : [];
     let selectedProperties = [];
 
+    // 更新日時の反映
+    const lastUpdatedEl = document.getElementById("lastUpdated");
+    if (lastUpdatedEl && typeof bukkenUpdatedAt !== "undefined" && bukkenUpdatedAt) {
+        lastUpdatedEl.textContent = bukkenUpdatedAt;
+        lastUpdatedEl.setAttribute("datetime", bukkenUpdatedAt.replace(/\//g, "-"));
+    }
+
     // 関東7都県（住所の先頭一致でどの都道府県かを判定）
     const KANTO_PREFECTURES = ['東京都', '神奈川県', '埼玉県', '千葉県', '茨城県', '群馬県', '栃木県'];
 
@@ -133,11 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
         p._commuteInfo = getCommuteRouteInfo(p);
     });
 
-    // 必須カットオフ条件の適用（ドアドア 59分以下 かつ 総徒歩 15分以内）
+    // 必須カットオフ条件の適用（ドアドア 59分以下 かつ 総徒歩 18分以内）
     properties = properties.filter(p => {
         const best = p._commuteInfo?.best;
         if (!best) return false;
-        return (best.doorToDoor <= 59) && (best.totalWalkMin <= 15);
+        return (best.doorToDoor <= 59) && (best.totalWalkMin <= 18);
     });
 
     // 並び替え条件の定義

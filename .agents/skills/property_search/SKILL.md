@@ -12,9 +12,9 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 
 **スクリプト**
 * `.agents/skills/property_search/property_search.py` : SUUMO物件検索・データ抽出・駐車場詳細スクレイピングの本体スクリプト。
-* `scripts/fetch_station_commute.js` : `properties.js` の最寄り駅で未登録のものをCSVへ追加し、Yahoo!路線情報から各駅〜東京サンケイビル（直近月曜8:45着）の正確な乗車時間・乗換回数・到着駅・徒歩時間を取得して `data/station_commute.csv` を更新、そこから Webアプリ用 `station_commute.js` を再生成するスクリプト。
+* `scripts/fetch_station_commute.js` : `properties.js` の最寄り駅で未登録のものをCSVへ追加し、Googleマップ（Puppeteer / 直近月曜8:45着、Yahooフォールバック付）から各駅〜東京サンケイビルの正確な所要時間・乗換回数・到着駅・徒歩時間を取得して `data/station_commute.csv` を更新、そこから Webアプリ用 `station_commute.js` を再生成するスクリプト。
 * `.agents/skills/property_search/build_rail_lines.py` : 国土数値情報「鉄道データ(N02)」から関東圏の実路線ジオメトリを抽出し、`rail_lines.js` を生成するスクリプト。
-* `scripts/run_weekly_update.ps1` : ステップ1〜ステップ5（スクレイピング、通勤同期、キャッシュバスター更新、Gitプッシュ）を一括全自動実行する週次更新バッチ。
+* `scripts/run_weekly_update.ps1` : ステップ1〜ステップ5（スクレイピング、通勤同期、キャッシュバスターおよび更新日時の更新、Gitプッシュ）を一括全自動実行する週次更新バッチ。
 * `scripts/register_task.ps1` : Windowsタスクスケジューラに「毎週金曜日 20:30」の定期実行タスク（`Moving_Weekly_Property_Update`）を登録するスクリプト。
 
 **データ (`data/`)**
@@ -26,8 +26,8 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 * `doc/物件数推移.md` : 更新日ごとの駅別物件数推移とエリア供給分析レポート。
 
 **Webアプリ配信ファイル（リポジトリルート直下 = GitHub Pages 公開対象）**
-* `index.html` / `style.css` / `app.js` : 物件比較WebアプリのUI。
-* `properties.js` : 抽出された物件データ一覧（`property_search.py` が生成）。
+* `index.html` / `style.css` / `app.js` : 物件比較WebアプリのUI（ヘッダー右上に最終更新日時バッジを表示）。
+* `properties.js` : 抽出された物件データ一覧および最終更新日 `bukkenUpdatedAt`（`property_search.py` が生成）。
 * `station_commute.js` : 駅別通勤時間データベース（Webアプリ用）。`data/station_commute.csv` から機械生成するため直接編集しない。
 * `rail_lines.js` : 通勤アクセスマップ用の実路線ジオメトリ（`build_rail_lines.py` が生成）。
 * `Image/` : favicon・アプリアイコン類。`site.webmanifest` はルート直下。
@@ -37,7 +37,7 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 ## 2. 定期再集計・更新ワークフロー
 
 ### A. 全自動更新（推奨）
-ステップ1〜5の一連のフロー（スクレイピング、通勤同期、新駅再計算、キャッシュバスター更新、Gitプッシュ）を1コマンドで一括実行できます。
+ステップ1〜5の一連のフロー（スクレイピング、通勤同期、新駅再計算、キャッシュバスターおよびHTML更新日時の更新、Gitプッシュ）を1コマンドで一括実行できます。
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/run_weekly_update.ps1"
 ```
@@ -63,28 +63,29 @@ py .agents/skills/property_search/property_search.py
 ```powershell
 node scripts/fetch_station_commute.js
 ```
-1. `properties.js` の各物件の最寄り駅（徒歩12分以内）のうち `data/station_commute.csv` に無い駅を、空行としてCSVへ自動追加します。
-2. 通勤データが空の駅について、Yahoo!路線情報から「乗車時間」「乗換回数」「到着駅（大手町/東京）」「出口〜サンケイビルの実徒歩時間」を取得し、`data/station_commute.csv` を更新します。
+1. `properties.js` の各物件の最寄り駅（徒歩15分以内）のうち `data/station_commute.csv` に無い駅を、空行としてCSVへ自動追加します。
+2. 通勤データが空の駅について、Googleマップ（Puppeteerスクレイピング / 月曜8:45着）から「所要時間」「乗換回数」「到着駅（大手町/東京）」「出口〜サンケイビルの実徒歩時間」を取得し、`data/station_commute.csv` を更新します（Googleマップ失敗時はYahoo!路線情報へ自動フォールバック）。
 3. `data/station_commute.csv` から Webアプリ用の `station_commute.js`（`const stationCommuteData`）を**自動再生成**します（逐次保存の都度＋実行終了時）。手動編集は不要です。
 - スクレイピングせず JS だけ作り直したいときは `node scripts/fetch_station_commute.js --build-js-only`。
 - 新駅が追加された場合は、正確なドアドア時間で再判定するため**ステップ1をもう一度実行**します（駐車場情報はキャッシュ済みのため高速）。
-- **同名異駅に注意**：Yahoo!検索が意図と違う駅を選ぶ場合（例:「平和台」→東京メトロ有楽町線 vs 流鉄流山線）は、`fetch_station_commute.js` の `STATION_QUERY_OVERRIDES` に `'駅名': '駅名(都道府県)'` を追加し、CSVの当該行の値を空にして再実行します。
+- 既存全駅をGoogleマップで再同期したい場合は `node scripts/fetch_station_commute.js --force-refresh`。
 
 ### ステップ3: 必須カットオフ条件の確認
 - `property_search.py` が抽出・掲載判定する条件（`.agents/skills/property_search/property_search.py` 冒頭の定数）：
   - **自己負担額**: **5.0万円以下**（`MAX_SELF_PAY`）
     - 借上げ社宅の自己負担上限 **`COMPANY_SUBSIDY_CAP = 17.0`万**（〜17万は家賃2割負担、超過分は全額）。
     - **駐車場代は補助対象外**のため全額を自己負担へ加算。管理費は家賃に含む。
-  - **駅徒歩10分以下 / 築30年以下 / 専有面積80m²以上**
+  - **駅徒歩15分以下 / 築30年以下 / 専有面積80m²以上**
 - Webアプリ（`app.js`）側の**必須カットオフ条件**：
   - **ドアドア通勤時間**: **59分以下** (`doorToDoor <= 59`)
-  - **総徒歩時間**: **15分以内** (`totalWalkMin <= 15` / 物件〜駅 ＋ 到着駅〜オフィス)
+  - **総徒歩時間**: **18分以内** (`totalWalkMin <= 18` / 物件〜駅 ＋ 到着駅〜オフィス)
 
 > 社内制度の改定（自己負担2割の上限額 16万→17万）で自己負担額の計算が変わっています。
 > 制度が再度変わった場合は `property_search.py` の `COMPANY_SUBSIDY_CAP` / `MAX_SELF_PAY` を更新してください。
 
 ### ステップ4: Gitコミット＆GitHub Pagesへの自動反映
-まず `index.html` の 4 か所のキャッシュバスター `?v=YYYYMMDD` を当日日付へ更新（ブラウザに新データを再取得させるため必須）。
+まず `index.html` の 4 か所のキャッシュバスター `?v=YYYYMMDD`、およびヘッダーの最終更新日時表示（`<time id="lastUpdated">`）を当日日付へ更新します（ブラウザのキャッシュを回避し、画面上に最新更新日を表示させるため）。
+※ 全自動更新バッチ（`scripts/run_weekly_update.ps1`）を実行した場合は自動置換されます。
 ```powershell
 git add index.html properties.js station_commute.js rail_lines.js data/station_commute.csv data/geocoding_cache.json doc/物件検索結果.md doc/物件数推移.md
 git commit -m "feat(data): 週次物件データおよび物件数推移の更新"
@@ -96,6 +97,9 @@ git push origin main
 
 ## 3. 物件比較Webアプリの仕様概要
 
+- **更新日時バッジ（ヘッダー右上）**:
+  - ヘッダー右上にデータの最終更新日（例: `最終更新: 2026/09/09`）をピル型バッジで常時表示。
+  - `properties.js` の `bukkenUpdatedAt` をもとに `app.js` で動的に同期反映。静的HTML側にもフォールバック値を保持。
 - **Solarized / Solarized Dark テーマ**:
   - Ethan Schoonover公式パレットに完全準拠し、ヘッダー右上のボタンで Dark / Light を即座に切り替え可能。
 - **自己負担額の4段階カラーリング**:

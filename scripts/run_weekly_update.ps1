@@ -5,7 +5,7 @@
 #   1. SUUMOからの最新物件スクレイピング (.agents/skills/property_search/property_search.py)
 #   2. Yahoo!路線情報による駅別通勤データ同期 (scripts/fetch_station_commute.js)
 #   3. 新駅追加時の再判定スクレイピング
-#   4. index.html のキャッシュバスター (?v=YYYYMMDD) 更新
+#   4. index.html のキャッシュバスター (?v=YYYYMMDD) および更新日時の更新
 #   5. Gitコミット＆GitHub Pages (origin/main) への自動プッシュ
 # ==============================================================================
 
@@ -85,20 +85,27 @@ if ($csvStatus) {
 }
 
 # ------------------------------------------------------------------------------
-# ステップ4: index.html のキャッシュバスター更新
+# ステップ4: index.html のキャッシュバスターおよび更新日時表示の更新
 # ------------------------------------------------------------------------------
-Write-Log "--- ステップ4: index.html のキャッシュバスターを更新中 ---"
+Write-Log "--- ステップ4: index.html のキャッシュバスターおよび更新日時を更新中 ---"
 $indexPath = Join-Path $repoRoot "index.html"
 $today = (Get-Date).ToString("yyyyMMdd")
+$todaySlash = (Get-Date).ToString("yyyy/MM/dd")
+$todayHyphen = (Get-Date).ToString("yyyy-MM-dd")
 
 if (Test-Path $indexPath) {
     $indexContent = Get-Content -Path $indexPath -Raw -Encoding UTF8
     $newIndexContent = [System.Text.RegularExpressions.Regex]::Replace($indexContent, '\?v=\d{8}', "?v=$today")
+    $newIndexContent = [System.Text.RegularExpressions.Regex]::Replace(
+        $newIndexContent,
+        '<time id="lastUpdated" datetime="[^"]*">[^<]*</time>',
+        "<time id=`"lastUpdated`" datetime=`"$todayHyphen`">$todaySlash</time>"
+    )
     if ($indexContent -ne $newIndexContent) {
         Set-Content -Path $indexPath -Value $newIndexContent -Encoding UTF8 -NoNewline
-        Write-Log "index.html のキャッシュバスターを ?v=$today に更新しました。"
+        Write-Log "index.html のキャッシュバスター(?v=$today)および更新日時($todaySlash)を更新しました。"
     } else {
-        Write-Log "index.html のキャッシュバスターは既に ?v=$today です。"
+        Write-Log "index.html のキャッシュバスターおよび更新日時は既に最新です。"
     }
 } else {
     Write-Log "警告: index.html が見つかりません。" "WARN"

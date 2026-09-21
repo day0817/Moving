@@ -181,6 +181,47 @@ header {
     font-weight: 400;
 }
 
+/* ヘッダー右側アクション & 更新日時 */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.last-updated-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.85rem;
+    background: var(--card-bg-alt);
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.last-updated-badge:hover {
+    border-color: var(--accent);
+}
+
+.last-updated-badge .updated-icon {
+    stroke: var(--accent);
+    flex-shrink: 0;
+}
+
+.last-updated-badge .updated-label {
+    font-weight: 500;
+}
+
+.last-updated-badge time {
+    color: var(--text-strong);
+    font-weight: 600;
+    font-family: var(--font-outfit);
+}
+
 /* テーマ切り替えボタン */
 .theme-switch-wrapper {
     flex-shrink: 0;
@@ -1215,6 +1256,12 @@ header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
+    }
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.6rem;
     }
     .sort-compare-controls {
         flex-direction: column;

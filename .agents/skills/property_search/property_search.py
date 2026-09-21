@@ -8,6 +8,7 @@ import time
 import random
 import json
 import re
+import datetime
 
 # 都道府県コード（SUUMOパラメータ ta）
 PREFECTURES = {
@@ -50,6 +51,8 @@ PROPERTIES_JS_PATH = "properties.js"                   # Webアプリ（GitHub P
 TREND_REPORT_PATH = "doc/物件数推移.md"                # 物件数推移レポート
 DEFAULT_SEARCH_RESULT_PATH = "doc/物件検索結果.md"     # 検索結果レポートの既定出力先
 
+PARKING_CACHE_PATH = "data/parking_cache.json"        # 駐車場情報キャッシュ
+
 def load_geocoding_cache():
     if os.path.exists(CACHE_FILE_PATH):
         try:
@@ -65,6 +68,22 @@ def save_geocoding_cache(cache):
             json.dump(cache, f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"キャッシュの保存に失敗: {e}", file=sys.stderr)
+
+def load_parking_cache():
+    if os.path.exists(PARKING_CACHE_PATH):
+        try:
+            with open(PARKING_CACHE_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"駐車場キャッシュのロードに失敗: {e}", file=sys.stderr)
+    return {}
+
+def save_parking_cache(cache):
+    try:
+        with open(PARKING_CACHE_PATH, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"駐車場キャッシュの保存に失敗: {e}", file=sys.stderr)
 
 # 関東地方をやや広めに囲む範囲。この範囲外の結果はジオコーディングの誤マッチとみなして棄却する
 # (例: 「黒川」「塚田」「新田」等の全国に同名駅がある地名で、関東以外の地点が誤って返るケースがある)
@@ -555,6 +574,7 @@ def main():
     args = parser.parse_args()
 
     geocoding_cache = load_geocoding_cache()
+    parking_cache = load_parking_cache()
     station_commute_db = load_station_commute_db(STATION_COMMUTE_CSV_PATH)
     all_properties = []
     
@@ -655,11 +675,11 @@ def main():
                 station_name = "不明"
         
         # === 新フィルタリングルールの適用 ===
-        # 1. 駅徒歩10分以下
+        # 1. 駅徒歩15分以下
         # 2. 築30年以下
         age_years = parse_age_num(p["age_floor"])
         
-        if walk_min > 10 or age_years > 30:
+        if walk_min > 15 or age_years > 30:
             # 条件に合致しないためスキップ
             continue
             
@@ -677,6 +697,11 @@ def main():
             p_fee = old_p["parking_fee"]
             p_dist = old_p.get("parking_dist", 0)
             p_text = old_p.get("parking_text", "-")
+        elif p["url"] in parking_cache:
+            c = parking_cache[p["url"]]
+            p_fee = c.get("parking_fee", 0.0)
+            p_dist = c.get("parking_dist", 0)
+            p_text = c.get("parking_text", "-")
         else:
             # 新規物件のみ詳細ページを取得して駐車場情報を取得
             print(f"  [{idx+1}/{len(unique_properties)}] 駐車場情報を取得中: {p['title']} ({p['url']})... ", end="", flush=True, file=sys.stderr)
@@ -686,6 +711,12 @@ def main():
                 print("スキップ（掲載終了または詳細取得不可）", file=sys.stderr)
                 continue
             p_fee, p_dist, p_text = parse_parking_info(detail_html)
+            parking_cache[p["url"]] = {
+                "parking_fee": p_fee,
+                "parking_dist": p_dist,
+                "parking_text": p_text
+            }
+            save_parking_cache(parking_cache)
             print(f"完了 ({p_text})", file=sys.stderr)
             
         s_pay = calculate_self_pay(p['rent'], p['admin'], p_fee)
@@ -703,8 +734,8 @@ def main():
             "door_to_door": p.get("commute_min", 50) + walk_min
         }, station_commute_db)
 
-        # 必須カットオフ条件の適用：ドアドア通勤時間59分以下 かつ 総徒歩時間15分以内
-        if commute_best["door_to_door"] > 59 or commute_best["total_walk_min"] > 15:
+        # 必須カットオフ条件の適用：ドアドア通勤時間59分以下 かつ 総徒歩時間18分以内
+        if commute_best["door_to_door"] > 59 or commute_best["total_walk_min"] > 18:
             continue
 
         # 最適ルートの駅座標を解決
@@ -859,7 +890,8 @@ def main():
     print(f"\n結果を {args.output} に書き出しました。", file=sys.stderr)
 
     # Webアプリ（GitHub Pages）が読み込む properties.js の書き出し
-    js_content = f"const bukkenData = {json.dumps(json_properties, ensure_ascii=False, indent=2)};"
+    updated_at_str = datetime.date.today().strftime("%Y/%m/%d")
+    js_content = f'const bukkenUpdatedAt = "{updated_at_str}";\nconst bukkenData = {json.dumps(json_properties, ensure_ascii=False, indent=2)};\n'
 
     try:
         with open(PROPERTIES_JS_PATH, "w", encoding="utf-8") as f:
