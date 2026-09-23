@@ -2,10 +2,10 @@
 ドアドア30分シナリオ 調査スクリプト (scripts/scenario_search.py)
 
 目的:
-  面積・築年数の制限を撤廃し、ドアドア30分以内を優先した場合の物件供給量と妥協量を
+  条件（通勤時間、専有面積、築年数、建物種別、間取り）を引数で柔軟に変えて、
   段階的（selfcheck -> fetch -> stations -> parking -> report）に検証・集計する。
   本番資産（properties.js, station_commute.csv, parking_cache.json 等）は一切改変せず、
-  すべての作業成果物は .work/d2d30/ に隔離する。
+  すべての作業成果物は指定作業ディレクトリ（--work-dir）に隔離する。
 """
 
 import argparse
@@ -67,12 +67,22 @@ def load_ps_module(path: str = BASE_PROPERTY_SEARCH_PATH) -> ModuleType:
     return ps_mod
 
 
-def modify_url_params(base_url: str, **kwargs: Union[str, int, float]) -> str:
-    """URL のクエリパラメータを安全に差し替えて再構成する"""
+def modify_url_params(
+    base_url: str,
+    del_keys: Optional[List[str]] = None,
+    **kwargs: Union[str, int, float, List[str]]
+) -> str:
+    """URL のクエリパラメータを安全に差し替え・削除して再構成する"""
     parsed = urllib.parse.urlparse(base_url)
     qs = urllib.parse.parse_qs(parsed.query)
+    if del_keys:
+        for k in del_keys:
+            qs.pop(k, None)
     for k, v in kwargs.items():
-        qs[k] = [str(v)]
+        if isinstance(v, list):
+            qs[k] = [str(x) for x in v]
+        else:
+            qs[k] = [str(v)]
     new_query = urllib.parse.urlencode(qs, doseq=True)
     return urllib.parse.urlunparse(parsed._replace(query=new_query))
 
@@ -123,8 +133,6 @@ def extract_bedrooms(madori: str) -> int:
 def stage_selfcheck(ps_mod: ModuleType, js_path: str = BASE_PROPERTIES_JS_PATH, csv_path: str = BASE_STATION_COMMUTE_CSV_PATH) -> bool:
     """
     Step 1: properties.js の全36件を用い、本番ロジックとの完全一致をオフライン検証する。
-    1. calculate_self_pay が保存済み self_pay と一致すること。
-    2. evaluate_best_commute が保存済み door_to_door および total_walk_min と一致すること。
     """
     print("=== Stage: selfcheck（オフライン整合性検証） ===")
     if not os.path.exists(js_path):
@@ -184,12 +192,22 @@ def stage_selfcheck(ps_mod: ModuleType, js_path: str = BASE_PROPERTIES_JS_PATH, 
     return all_matched
 
 
-def stage_fetch(ps_mod: ModuleType, work_dir: str, tj: int, min_area: int, max_rent: float, max_walk: int, refresh: bool) -> bool:
+def stage_fetch(
+    ps_mod: ModuleType,
+    work_dir: str,
+    tj: int,
+    min_area: int,
+    max_rent: float,
+    max_walk: int,
+    refresh: bool,
+    all_types: bool = False,
+    min_bedrooms: int = 0
+) -> bool:
     """
     Stage: fetch (SUUMO一覧の取得)
     5都県から指定条件の一覧ページを順次取得し、raw_listings.json に保存する。
     """
-    print(f"=== Stage: fetch（SUUMO一覧の取得 tj={tj}, mb={min_area}, ct={max_rent}, et={max_walk}） ===")
+    print(f"=== Stage: fetch（SUUMO一覧取得: tj={tj}, ct={max_rent}, 全種別={all_types}, 居室{min_bedrooms}以上） ===")
     os.makedirs(work_dir, exist_ok=True)
     raw_path = os.path.join(work_dir, "raw_listings.json")
 
@@ -200,10 +218,15 @@ def stage_fetch(ps_mod: ModuleType, work_dir: str, tj: int, min_area: int, max_r
 
     all_properties: List[Dict[str, Union[str, int, float, None]]] = []
 
+    del_keys = ["ts"] if all_types else []
+    query_kwargs: Dict[str, Union[str, int, float, List[str]]] = {"tj": tj}
+    if min_bedrooms >= 3:
+        query_kwargs["md"] = ["07", "08", "09", "10", "11", "12", "13"]
+
     for pref_name, pref_code in PREFECTURES.items():
         print(f"\n[{pref_name}] 検索開始...", file=sys.stderr)
         base_url = ps_mod.build_suumo_url(pref_code, max_rent=max_rent, min_area=min_area, max_walk=max_walk)
-        target_url = modify_url_params(base_url, tj=tj)
+        target_url = modify_url_params(base_url, del_keys=del_keys, **query_kwargs)
         print(f"  URL: {target_url}", file=sys.stderr)
 
         first_html = ps_mod.fetch_properties(target_url)
@@ -250,11 +273,17 @@ def stage_fetch(ps_mod: ModuleType, work_dir: str, tj: int, min_area: int, max_r
     return True
 
 
-def stage_stations(ps_mod: ModuleType, work_dir: str, max_walk: int, max_age: int, max_self_pay: float) -> bool:
+def stage_stations(
+    ps_mod: ModuleType,
+    work_dir: str,
+    max_walk: int,
+    max_age: int,
+    max_self_pay: float,
+    min_bedrooms: int = 0,
+    base_extra_csv: Optional[str] = None
+) -> bool:
     """
     Stage: stations (通勤時間を取得する新規駅の洗い出し)
-    raw_listings.json から重複排除・基本フィルタを適用し、
-    不足駅を station_commute_extra.csv に空行として書き出す。
     """
     print("=== Stage: stations（新規駅の洗い出し） ===")
     raw_path = os.path.join(work_dir, "raw_listings.json")
@@ -281,10 +310,16 @@ def stage_stations(ps_mod: ModuleType, work_dir: str, max_walk: int, max_age: in
             unique_properties.append(p)
     print(f"重複排除後のユニーク物件数: {len(unique_properties)} 件")
 
-    # 2. 既存DBおよびextraDBの既登録駅を把握
+    # 2. 既存DBおよび引き継ぎextraDBの既登録駅を把握
     base_station_db = ps_mod.load_station_commute_db(BASE_STATION_COMMUTE_CSV_PATH)
-    extra_csv_path = os.path.join(work_dir, "station_commute_extra.csv")
+    known_stations: Set[str] = set(base_station_db.keys())
 
+    if base_extra_csv and os.path.exists(base_extra_csv):
+        imported_db = ps_mod.load_station_commute_db(base_extra_csv)
+        known_stations |= set(imported_db.keys())
+        print(f"引き継ぎextraDB ({base_extra_csv}) から {len(imported_db)} 駅を既知としてロード")
+
+    extra_csv_path = os.path.join(work_dir, "station_commute_extra.csv")
     existing_extra_stations: Set[str] = set()
     existing_extra_rows: List[Dict[str, str]] = []
     if os.path.exists(extra_csv_path):
@@ -296,18 +331,17 @@ def stage_stations(ps_mod: ModuleType, work_dir: str, max_walk: int, max_age: in
                     existing_extra_stations.add(st)
                     existing_extra_rows.append(row)
 
-    registered_stations: Set[str] = set(base_station_db.keys()) | existing_extra_stations
-    print(f"既存登録済み駅数: 本番DB={len(base_station_db)} 駅, extraDB={len(existing_extra_stations)} 駅")
+    registered_stations = known_stations | existing_extra_stations
+    print(f"合計登録済み駅数: {len(registered_stations)} 駅")
 
     # 3. 候補駅の抽出
-    new_stations_dict: Dict[str, str] = {}  # station_name -> primary_line
+    new_stations_dict: Dict[str, str] = {}
     passed_filter_props: int = 0
 
     for p in unique_properties:
         station_walk_str = str(p.get("station_walk", ""))
         first_walk_part = station_walk_str.split("/")[0] if "/" in station_walk_str else station_walk_str
 
-        # 先頭駅の徒歩分
         match = re.search(r"([^/]+)/([^/]+駅)\s*歩(\d+)分", station_walk_str)
         if match:
             walk_min = int(match.group(3))
@@ -315,13 +349,16 @@ def stage_stations(ps_mod: ModuleType, work_dir: str, max_walk: int, max_age: in
             match_fallback = re.search(r"([^/]+)歩(\d+)分", first_walk_part)
             walk_min = int(match_fallback.group(2)) if match_fallback else 15
 
-        # 築年数
         age_years = ps_mod.parse_age_num(str(p.get("age_floor", "")))
 
         if walk_min > max_walk or age_years > max_age:
             continue
 
-        # 駐車場0円仮定での自己負担上限判定
+        if min_bedrooms > 0:
+            madori_val = str(p.get("madori", ""))
+            if extract_bedrooms(madori_val) < min_bedrooms:
+                continue
+
         rent_str = str(p.get("rent", ""))
         admin_str = str(p.get("admin", ""))
         min_self_pay = ps_mod.calculate_self_pay(rent_str, admin_str, parking_fee=0.0)
@@ -330,17 +367,18 @@ def stage_stations(ps_mod: ModuleType, work_dir: str, max_walk: int, max_age: in
 
         passed_filter_props += 1
 
-        # 徒歩15分以内の全最寄り駅候補
         candidates = ps_mod.parse_station_walk_candidates(station_walk_str)
         for cand_line, cand_st, cand_walk in candidates:
+            # 1文字駅名やバス停表記（パース誤りゴミデータ）は除外
+            if len(cand_st) <= 1 or "バス" in cand_st or "バス停" in cand_st:
+                continue
             if cand_walk <= 15:
                 if cand_st not in registered_stations and cand_st not in new_stations_dict:
                     new_stations_dict[cand_st] = cand_line
 
-    print(f"基本条件（駅徒歩{max_walk}分以下・築{max_age}年以下・最低自己負担{max_self_pay}万以下）通過物件数: {passed_filter_props} 件")
+    print(f"基本条件通過物件数: {passed_filter_props} 件")
     print(f"新規追加対象駅数: {len(new_stations_dict)} 駅")
 
-    # 4. station_commute_extra.csv の書き出し
     new_rows: List[Dict[str, str]] = list(existing_extra_rows)
     for st_name, line_name in sorted(new_stations_dict.items()):
         new_rows.append({
@@ -367,11 +405,17 @@ def stage_stations(ps_mod: ModuleType, work_dir: str, max_walk: int, max_age: in
     return True
 
 
-def stage_parking(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_total_walk: int, max_self_pay: float) -> bool:
+def stage_parking(
+    ps_mod: ModuleType,
+    work_dir: str,
+    d2d_bands_str: str,
+    max_total_walk: int,
+    max_self_pay: float,
+    min_bedrooms: int = 0,
+    base_extra_csv: Optional[str] = None
+) -> bool:
     """
     Stage: parking (対象物件の駐車場代取得)
-    新通勤DBをマージしてドアドアを評価し、帯の最大値以下かつ総徒歩上限以下の物件を対象に
-    駐車場代キャッシュを作成・更新する。
     """
     print("=== Stage: parking（対象物件の駐車場代取得） ===")
     raw_path = os.path.join(work_dir, "raw_listings.json")
@@ -384,17 +428,18 @@ def stage_parking(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tot
 
     d2d_bands = [int(b.strip()) for b in d2d_bands_str.split(",") if b.strip()]
     max_d2d_target = max(d2d_bands)
-    print(f"対象帯上限: {max_d2d_target} 分以下, 総徒歩上限: {max_total_walk} 分以下")
 
     # 1. 通勤DBのマージ
-    base_station_db = ps_mod.load_station_commute_db(BASE_STATION_COMMUTE_CSV_PATH)
-    extra_station_db = ps_mod.load_station_commute_db(extra_csv_path) if os.path.exists(extra_csv_path) else {}
-    # 同名駅は本番優先
-    merged_station_db = dict(extra_station_db)
-    merged_station_db.update(base_station_db)
-    print(f"マージ後通勤DB駅数: {len(merged_station_db)} 駅 (本番:{len(base_station_db)}, extra:{len(extra_station_db)})")
+    merged_station_db: Dict[str, Dict[str, Union[str, int]]] = {}
+    if base_extra_csv and os.path.exists(base_extra_csv):
+        merged_station_db.update(ps_mod.load_station_commute_db(base_extra_csv))
+    if os.path.exists(extra_csv_path):
+        merged_station_db.update(ps_mod.load_station_commute_db(extra_csv_path))
+    # 本番最優先
+    merged_station_db.update(ps_mod.load_station_commute_db(BASE_STATION_COMMUTE_CSV_PATH))
+    print(f"マージ後通勤DB駅数: {len(merged_station_db)} 駅")
 
-    # 2. 駐車場キャッシュのマージ（本番は読み取りのみ）
+    # 2. 駐車場キャッシュ
     base_parking_cache = ps_mod.load_parking_cache()
     extra_parking_cache: Dict[str, Dict[str, Union[float, int, str]]] = {}
     if os.path.exists(extra_parking_path):
@@ -407,7 +452,6 @@ def stage_parking(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tot
     with open(raw_path, "r", encoding="utf-8") as f:
         raw_properties: List[Dict[str, Union[str, int, float, None]]] = json.load(f)
 
-    # 重複排除
     unique_properties: List[Dict[str, Union[str, int, float, None]]] = []
     seen_keys: Set[Tuple[str, str, str, str]] = set()
     for p in raw_properties:
@@ -446,12 +490,13 @@ def stage_parking(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tot
         if walk_min > 15:
             continue
 
-        # 最低自己負担判定
+        if min_bedrooms > 0 and extract_bedrooms(str(p.get("madori", ""))) < min_bedrooms:
+            continue
+
         min_self_pay = ps_mod.calculate_self_pay(str(p.get("rent", "")), str(p.get("admin", "")), 0.0)
         if min_self_pay > max_self_pay:
             continue
 
-        # 通勤時間計算
         commute_best = ps_mod.evaluate_best_commute({
             "station": station_name,
             "line": line_name,
@@ -467,16 +512,13 @@ def stage_parking(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tot
 
     print(f"ドアドア{max_d2d_target}分以下かつ総徒歩{max_total_walk}分以下の対象物件: {len(target_listings)} 件")
 
-    # 3. 駐車場情報の取得ループ
     fetched_count = 0
     for idx, p in enumerate(target_listings):
         url = str(p.get("url", ""))
         if not url:
             continue
 
-        if url in base_parking_cache:
-            continue
-        if url in extra_parking_cache:
+        if url in base_parking_cache or url in extra_parking_cache:
             continue
 
         title = str(p.get("title", ""))
@@ -506,7 +548,6 @@ def stage_parking(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tot
         fetched_count += 1
         print(f"完了 ({p_text}, 料金:{p_fee}万)", file=sys.stderr)
 
-        # 逐次保存
         with open(extra_parking_path, "w", encoding="utf-8") as f:
             json.dump(extra_parking_cache, f, ensure_ascii=False, indent=2)
 
@@ -514,11 +555,17 @@ def stage_parking(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tot
     return True
 
 
-def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_total_walk: int, max_self_pay: float) -> bool:
+def stage_report(
+    ps_mod: ModuleType,
+    work_dir: str,
+    d2d_bands_str: str,
+    max_total_walk: int,
+    max_self_pay: float,
+    min_bedrooms: int = 0,
+    base_extra_csv: Optional[str] = None
+) -> bool:
     """
     Stage: report (集計・テーブル生成)
-    候補物件の同一物件統合を行い、帯別（30分, 35分, 40分, ベースライン）の集計表および
-    物件一覧テーブルを生成する。
     """
     print("=== Stage: report（集計・テーブル生成） ===")
     raw_path = os.path.join(work_dir, "raw_listings.json")
@@ -534,24 +581,29 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
     d2d_bands = sorted([int(b.strip()) for b in d2d_bands_str.split(",") if b.strip()])
     max_d2d = max(d2d_bands)
 
-    # 1. DB・キャッシュ読み込み
-    base_station_db = ps_mod.load_station_commute_db(BASE_STATION_COMMUTE_CSV_PATH)
-    extra_station_db = ps_mod.load_station_commute_db(extra_csv_path) if os.path.exists(extra_csv_path) else {}
-    merged_station_db = dict(extra_station_db)
-    merged_station_db.update(base_station_db)
+    # 1. DB読み込み
+    merged_station_db: Dict[str, Dict[str, Union[str, int]]] = {}
+    if base_extra_csv and os.path.exists(base_extra_csv):
+        merged_station_db.update(ps_mod.load_station_commute_db(base_extra_csv))
+    if os.path.exists(extra_csv_path):
+        merged_station_db.update(ps_mod.load_station_commute_db(extra_csv_path))
+    merged_station_db.update(ps_mod.load_station_commute_db(BASE_STATION_COMMUTE_CSV_PATH))
 
+    # 駐車場キャッシュ
     base_parking_cache = ps_mod.load_parking_cache()
     extra_parking_cache: Dict[str, Dict[str, Union[float, int, str]]] = {}
     if os.path.exists(extra_parking_path):
-        with open(extra_parking_path, "r", encoding="utf-8") as f:
-            extra_parking_cache = json.load(f)
+        try:
+            with open(extra_parking_path, "r", encoding="utf-8") as f:
+                extra_parking_cache = json.load(f)
+        except Exception as e:
+            print(f"extra駐車場キャッシュ読み込み失敗: {e}", file=sys.stderr)
     merged_parking_cache = dict(base_parking_cache)
     merged_parking_cache.update(extra_parking_cache)
 
     with open(raw_path, "r", encoding="utf-8") as f:
         raw_properties: List[Dict[str, Union[str, int, float, None]]] = json.load(f)
 
-    # 2. 一次重複排除
     unique_properties: List[Dict[str, Union[str, int, float, None]]] = []
     seen_raw_keys: Set[Tuple[str, str, str, str]] = set()
     for p in raw_properties:
@@ -565,7 +617,6 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
             seen_raw_keys.add(key)
             unique_properties.append(p)
 
-    # 3. 物件評価
     evaluated_list: List[Dict[str, Union[str, float, int, bool, None]]] = []
     for p in unique_properties:
         station_walk_str = str(p.get("station_walk", ""))
@@ -589,6 +640,11 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
                 walk_min = 15
 
         if walk_min > 15:
+            continue
+
+        madori_str = str(p.get("madori", ""))
+        bedrooms = extract_bedrooms(madori_str)
+        if min_bedrooms > 0 and bedrooms < min_bedrooms:
             continue
 
         url = str(p.get("url", ""))
@@ -618,14 +674,13 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
         if commute_best["door_to_door"] > max_d2d or commute_best["total_walk_min"] > max_total_walk:
             continue
 
-        madori_str = str(p.get("madori", ""))
-        bedrooms = extract_bedrooms(madori_str)
         is_estimated = not bool(commute_best["is_db"])
 
         evaluated_list.append({
             "station": commute_best["station"],
             "line": commute_best["line"],
             "title": p.get("title", ""),
+            "type": p.get("type", "不明"),
             "rent": p.get("rent", ""),
             "admin": p.get("admin", ""),
             "parking_fee": p_fee,
@@ -653,7 +708,7 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
             "is_estimated": is_estimated
         })
 
-    # 4. 同一物件統合
+    # 同一物件統合
     seen_dedup: Dict[Tuple[float, str, str, str], int] = {}
     deduped_list: List[Dict[str, Union[str, float, int, bool, None]]] = []
     for item in evaluated_list:
@@ -669,27 +724,21 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
 
     print(f"同一物件統合後: {len(deduped_list)} 件 (統合前: {len(evaluated_list)} 件)")
 
-    # 5. candidates.json の保存
     with open(candidates_json_path, "w", encoding="utf-8") as f:
         json.dump(deduped_list, f, ensure_ascii=False, indent=2)
     print(f"保存完了: {candidates_json_path}")
 
-    # 6. 集計計算
-    # ベースラインデータの集計
-    with open(BASE_PROPERTIES_JS_PATH, "r", encoding="utf-8") as f:
-        base_raw = f.read()
-    m_base = re.search(r"const\s+bukkenData\s*=\s*(.*);", base_raw, re.DOTALL)
-    base_items: List[Dict[str, Union[str, float, int, None]]] = json.loads(m_base.group(1).strip()) if m_base else []
+    # 集計計算
+    confirmed_items = [x for x in deduped_list if not x.get("is_estimated")]
+    estimated_items = [x for x in deduped_list if x.get("is_estimated")]
 
-    def compute_stats(items: List[Dict[str, Union[str, float, int, bool, None]]], is_base: bool = False) -> Dict[str, Union[int, float, str]]:
+    def compute_stats(items: List[Dict[str, Union[str, float, int, bool, None]]]) -> Dict[str, Union[int, float, str]]:
         if not items:
             return {
                 "count": 0, "area_min": 0, "area_med": 0, "area_max": 0,
                 "age_min": 0, "age_med": 0, "age_max": 0,
-                "bed3_ratio": 0.0, "match_baseline_cnt": 0, "floor3_ratio": 0.0,
                 "self_pay_med": 0.0, "walk_med": 0.0,
-                "park_site": 0, "park_near": 0, "park_unknown": 0,
-                "estimated_cnt": 0
+                "park_site": 0, "park_near": 0, "park_unknown": 0
             }
 
         areas: List[float] = []
@@ -706,19 +755,6 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
         self_pays: List[float] = [float(x.get("self_pay", 0.0) or 0.0) for x in items]
         walks: List[int] = [int(x.get("walk_min", 0) or 0) for x in items]
 
-        bed3_count = sum(1 for x in items if int(x.get("bedrooms", 0) or 0) >= 3 or extract_bedrooms(str(x.get("madori", ""))) >= 3)
-        floor3_count = sum(1 for x in items if "3階建" in str(x.get("age_floor", "")))
-
-        # 現行条件（80m2以上かつ築30年以下）を満たす件数
-        match_baseline_cnt = 0
-        for x in items:
-            m_a = re.search(r"[\d.]+", str(x.get("menseki", "")))
-            area_val = float(m_a.group(0)) if m_a else 0.0
-            age_val = ps_mod.parse_age_num(str(x.get("age_floor", "")))
-            if area_val >= 80.0 and age_val <= 30:
-                match_baseline_cnt += 1
-
-        # 駐車場内訳
         park_site = sum(1 for x in items if int(x.get("parking_dist", 0) or 0) == 0 and str(x.get("parking_text", "")) not in ["-", "掲載終了/取得不可"])
         park_near = sum(1 for x in items if int(x.get("parking_dist", 0) or 0) > 0)
         park_unknown = sum(1 for x in items if str(x.get("parking_text", "")) in ["-", "掲載終了/取得不可"])
@@ -731,9 +767,6 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
             "age_min": min(ages) if ages else 0,
             "age_med": round(statistics.median(ages), 1) if ages else 0,
             "age_max": max(ages) if ages else 0,
-            "bed3_ratio": round(bed3_count / len(items) * 100, 1),
-            "match_baseline_cnt": match_baseline_cnt,
-            "floor3_ratio": round(floor3_count / len(items) * 100, 1),
             "self_pay_med": round(statistics.median(self_pays), 2) if self_pays else 0,
             "walk_med": round(statistics.median(walks), 1) if walks else 0,
             "park_site": park_site,
@@ -741,97 +774,46 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
             "park_unknown": park_unknown
         }
 
-    # 推定ルートの物件と確定ルートの物件を分離
-    confirmed_items = [x for x in deduped_list if not x.get("is_estimated")]
-    estimated_items = [x for x in deduped_list if x.get("is_estimated")]
-
     band_stats: Dict[int, Dict[str, Union[int, float, str]]] = {}
     for band in d2d_bands:
         band_items = [x for x in confirmed_items if int(x.get("door_to_door", 0) or 0) <= band]
         band_stats[band] = compute_stats(band_items)
 
-    base_stats = compute_stats(base_items, is_base=True)
-
     # 7. tables.md の構築
     md_lines: List[str] = []
-    md_lines.append("# 集計テーブル（ドアドア30分シナリオ）\n")
+    md_lines.append("# 集計テーブル（全種別・居室3以上・大手町30分圏・家賃18万以下）\n")
     md_lines.append("## 1. 帯別集計表（累積）\n")
-    md_lines.append("| 指標 | ドアドア30分以下 | ドアドア35分以下 | ドアドア40分以下 | ベースライン（現行） |")
-    md_lines.append("| :--- | :---: | :---: | :---: | :---: |")
+    md_lines.append("| 指標 | ドアドア30分以下 | ドアドア35分以下 | ドアドア40分以下 |")
+    md_lines.append("| :--- | :---: | :---: | :---: |")
 
     def format_stat_row(label: str, key_min: str, key_med: str, key_max: str, unit: str = "") -> str:
         s30 = f"{band_stats[30][key_min]} / {band_stats[30][key_med]} / {band_stats[30][key_max]}" if band_stats[30]["count"] > 0 else "-"
         s35 = f"{band_stats[35][key_min]} / {band_stats[35][key_med]} / {band_stats[35][key_max]}" if band_stats[35]["count"] > 0 else "-"
         s40 = f"{band_stats[40][key_min]} / {band_stats[40][key_med]} / {band_stats[40][key_max]}" if band_stats[40]["count"] > 0 else "-"
-        s_base = f"{base_stats[key_min]} / {base_stats[key_med]} / {base_stats[key_max]}"
-        return f"| {label} | {s30}{unit} | {s35}{unit} | {s40}{unit} | {s_base}{unit} |"
+        return f"| {label} | {s30}{unit} | {s35}{unit} | {s40}{unit} |"
 
-    md_lines.append(f"| 件数（統合後） | **{band_stats[30]['count']}件** | **{band_stats[35]['count']}件** | **{band_stats[40]['count']}件** | **{base_stats['count']}件** |")
+    md_lines.append(f"| 件数（統合後） | **{band_stats[30]['count']}件** | **{band_stats[35]['count']}件** | **{band_stats[40]['count']}件** |")
     md_lines.append(format_stat_row("専有面積（最小/中央/最大 m²）", "area_min", "area_med", "area_max"))
     md_lines.append(format_stat_row("築年数（最小/中央/最大 年）", "age_min", "age_med", "age_max"))
-    md_lines.append(f"| 居室3以上の割合 | {band_stats[30]['bed3_ratio']}% | {band_stats[35]['bed3_ratio']}% | {band_stats[40]['bed3_ratio']}% | {base_stats['bed3_ratio']}% |")
-    md_lines.append(f"| 現行条件も満たす件数（80m²以上・築30年以下） | {band_stats[30]['match_baseline_cnt']}件 | {band_stats[35]['match_baseline_cnt']}件 | {band_stats[40]['match_baseline_cnt']}件 | {base_stats['count']}件 |")
-    md_lines.append(f"| 3階建ての割合 | {band_stats[30]['floor3_ratio']}% | {band_stats[35]['floor3_ratio']}% | {band_stats[40]['floor3_ratio']}% | {base_stats['floor3_ratio']}% |")
-    md_lines.append(f"| 自己負担 中央値 | {band_stats[30]['self_pay_med']}万円 | {band_stats[35]['self_pay_med']}万円 | {band_stats[40]['self_pay_med']}万円 | {base_stats['self_pay_med']}万円 |")
-    md_lines.append(f"| 駅徒歩 中央値 | {band_stats[30]['walk_med']}分 | {band_stats[35]['walk_med']}分 | {band_stats[40]['walk_med']}分 | {base_stats['walk_med']}分 |")
-    md_lines.append(f"| 駐車場（敷地内 / 近隣 / 記載なし） | {band_stats[30]['park_site']} / {band_stats[30]['park_near']} / {band_stats[30]['park_unknown']} | {band_stats[35]['park_site']} / {band_stats[35]['park_near']} / {band_stats[35]['park_unknown']} | {band_stats[40]['park_site']} / {band_stats[40]['park_near']} / {band_stats[40]['park_unknown']} | {base_stats['park_site']} / {base_stats['park_near']} / {base_stats['park_unknown']} |")
+    md_lines.append(f"| 自己負担 中央値 | {band_stats[30]['self_pay_med']}万円 | {band_stats[35]['self_pay_med']}万円 | {band_stats[40]['self_pay_med']}万円 |")
+    md_lines.append(f"| 駅徒歩 中央値 | {band_stats[30]['walk_med']}分 | {band_stats[35]['walk_med']}分 | {band_stats[40]['walk_med']}分 |")
+    md_lines.append(f"| 駐車場（敷地内 / 近隣 / 記載なし） | {band_stats[30]['park_site']} / {band_stats[30]['park_near']} / {band_stats[30]['park_unknown']} | {band_stats[35]['park_site']} / {band_stats[35]['park_near']} / {band_stats[35]['park_unknown']} | {band_stats[40]['park_site']} / {band_stats[40]['park_near']} / {band_stats[40]['park_unknown']} |")
     md_lines.append("")
 
-    # 妥協量まとめ
-    if band_stats[30]["count"] > 0:
-        area_diff = round(float(band_stats[30]["area_med"]) - float(base_stats["area_med"]), 2)
-        age_diff = round(float(band_stats[30]["age_med"]) - float(base_stats["age_med"]), 1)
-        bed3_diff = round(float(band_stats[30]["bed3_ratio"]) - float(base_stats["bed3_ratio"]), 1)
-        md_lines.append(f"**ベースラインとの中央値差（ドアドア30分以下）:**")
-        md_lines.append(f"- 専有面積: {area_diff:+.2f} m²（{base_stats['area_med']} m² → {band_stats[30]['area_med']} m²）")
-        md_lines.append(f"- 築年数: {age_diff:+.1f} 年（{base_stats['age_med']} 年 → {band_stats[30]['age_med']} 年）")
-        md_lines.append(f"- 居室3以上の割合: {bed3_diff:+.1f} pt（{base_stats['bed3_ratio']}% → {band_stats[30]['bed3_ratio']}%）")
-        md_lines.append("")
-
-    # 推定ルート物件（参考）
-    if estimated_items:
-        md_lines.append(f"### （参考）推定ルート採用のため件数外とした物件: {len(estimated_items)}件\n")
-        md_lines.append("| 駅 | 路線 | 物件名 | 自己負担 | 推定ドアドア | 間取り/面積 | 築年数 | リンク |")
-        md_lines.append("| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |")
-        for x in estimated_items:
-            md_lines.append(f"| {x['station']} | {x['line']} | {x['title']} | {x['self_pay']}万 | {x['door_to_door']}分 | {x['madori']} / {x['menseki']} | {x['age_floor']} | [詳細]({x['url']}) |")
-        md_lines.append("")
-
-    # 30分以下の物件一覧
+    # 物件一覧
     d2d30_items = [x for x in confirmed_items if int(x.get("door_to_door", 0) or 0) <= 30]
     md_lines.append(f"## 2. ドアドア30分以下の物件一覧（全 {len(d2d30_items)} 件）\n")
     if d2d30_items:
-        md_lines.append("| 駅 | 路線 | 物件名 | 家賃/管理費 | 自己負担 | ドアドア (徒歩+乗車) | 間取り/面積 | 築年数 | 駐車場 | リンク |")
-        md_lines.append("| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |")
+        md_lines.append("| 種別 | 駅 | 路線 | 物件名 | 家賃/管理費 | 自己負担 | ドアドア (徒歩+乗車) | 間取り/面積 | 築年数・構造 | 駐車場 | リンク |")
+        md_lines.append("| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |")
         for x in sorted(d2d30_items, key=lambda it: (int(it.get("door_to_door", 0) or 0), float(it.get("self_pay", 0.0) or 0.0))):
             rent_adm = f"{x['rent']} / {x['admin']}"
             d2d_breakdown = f"{x['door_to_door']}分 (歩{x['walk_min']}+乗{x['train_min']})"
             madori_menseki = f"{x['madori']} / {x['menseki']}"
-            md_lines.append(f"| {x['station']} | {x['line']} | {x['title']} | {rent_adm} | {x['self_pay']}万 | {d2d_breakdown} | {madori_menseki} | {x['age_floor']} | {x['parking_text']} | [詳細]({x['url']}) |")
+            ptype = x.get("type", "不明")
+            md_lines.append(f"| {ptype} | {x['station']} | {x['line']} | {x['title']} | {rent_adm} | {x['self_pay']}万 | {d2d_breakdown} | {madori_menseki} | {x['age_floor']} | {x['parking_text']} | [詳細]({x['url']}) |")
     else:
         md_lines.append("該当物件はありません。\n")
-    md_lines.append("")
-
-    # 駅別件数（40分以下・30分以下）
-    md_lines.append("## 3. 駅別の物件件数（ドアドア40分以下・30分以下）\n")
-    station_counts_40: Dict[str, Dict[str, Union[str, int]]] = {}
-    for x in confirmed_items:
-        st = str(x.get("station", "不明"))
-        ln = str(x.get("line", "不明"))
-        d = int(x.get("door_to_door", 0) or 0)
-        if st not in station_counts_40:
-            station_counts_40[st] = {"line": ln, "cnt_30": 0, "cnt_35": 0, "cnt_40": 0}
-        if d <= 30:
-            station_counts_40[st]["cnt_30"] = int(station_counts_40[st]["cnt_30"]) + 1
-        if d <= 35:
-            station_counts_40[st]["cnt_35"] = int(station_counts_40[st]["cnt_35"]) + 1
-        if d <= 40:
-            station_counts_40[st]["cnt_40"] = int(station_counts_40[st]["cnt_40"]) + 1
-
-    md_lines.append("| 駅名 | 主要路線 | 30分以下 | 35分以下 | 40分以下 |")
-    md_lines.append("| :--- | :--- | :---: | :---: | :---: |")
-    for st, c in sorted(station_counts_40.items(), key=lambda it: (-it[1]["cnt_40"], -it[1]["cnt_30"], it[0])):
-        md_lines.append(f"| {st} | {c['line']} | {c['cnt_30']}件 | {c['cnt_35']}件 | {c['cnt_40']}件 |")
     md_lines.append("")
 
     with open(tables_md_path, "w", encoding="utf-8") as f:
@@ -841,9 +823,9 @@ def stage_report(ps_mod: ModuleType, work_dir: str, d2d_bands_str: str, max_tota
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="ドアドア30分シナリオ 調査スクリプト")
+    parser = argparse.ArgumentParser(description="シナリオ検索スクリプト")
     parser.add_argument("--stage", choices=["selfcheck", "fetch", "stations", "parking", "report"], required=True,
-                        help="実行ステージ: selfcheck (一致確認), fetch (SUUMO取得), stations (駅洗い出し), parking (駐車場取得), report (集計)")
+                        help="実行ステージ: selfcheck, fetch, stations, parking, report")
     parser.add_argument("--tj", type=int, default=40, help="大手町までの通勤時間フィルタ (分)")
     parser.add_argument("--min-area", type=int, default=0, help="専有面積下限 (m2, 0=制限なし)")
     parser.add_argument("--max-age", type=int, default=999, help="築年数上限 (年, 999=制限なし)")
@@ -854,6 +836,9 @@ def main() -> None:
     parser.add_argument("--d2d-bands", type=str, default="30,35,40", help="集計するドアドア帯 (分, カンマ区切り)")
     parser.add_argument("--work-dir", type=str, default=".work/d2d30", help="作業データ格納ディレクトリ")
     parser.add_argument("--refresh", action="store_true", help="raw_listings.json が存在しても再取得する")
+    parser.add_argument("--all-types", action="store_true", help="一戸建てだけでなく全種別（マンション・アパート含む）を対象にする")
+    parser.add_argument("--min-bedrooms", type=int, default=0, help="最小居室数 (例: 3で3K/3DK/3LDK/4K以上)")
+    parser.add_argument("--base-extra-csv", type=str, default=None, help="引き継ぐ過去の extra 駅通勤CSVパス")
 
     args = parser.parse_args()
 
@@ -862,13 +847,25 @@ def main() -> None:
     if args.stage == "selfcheck":
         ok = stage_selfcheck(ps_mod)
     elif args.stage == "fetch":
-        ok = stage_fetch(ps_mod, args.work_dir, args.tj, args.min_area, args.max_rent, args.max_walk, args.refresh)
+        ok = stage_fetch(
+            ps_mod, args.work_dir, args.tj, args.min_area, args.max_rent, args.max_walk,
+            args.refresh, all_types=args.all_types, min_bedrooms=args.min_bedrooms
+        )
     elif args.stage == "stations":
-        ok = stage_stations(ps_mod, args.work_dir, args.max_walk, args.max_age, args.max_self_pay)
+        ok = stage_stations(
+            ps_mod, args.work_dir, args.max_walk, args.max_age, args.max_self_pay,
+            min_bedrooms=args.min_bedrooms, base_extra_csv=args.base_extra_csv
+        )
     elif args.stage == "parking":
-        ok = stage_parking(ps_mod, args.work_dir, args.d2d_bands, args.max_total_walk, args.max_self_pay)
+        ok = stage_parking(
+            ps_mod, args.work_dir, args.d2d_bands, args.max_total_walk, args.max_self_pay,
+            min_bedrooms=args.min_bedrooms, base_extra_csv=args.base_extra_csv
+        )
     elif args.stage == "report":
-        ok = stage_report(ps_mod, args.work_dir, args.d2d_bands, args.max_total_walk, args.max_self_pay)
+        ok = stage_report(
+            ps_mod, args.work_dir, args.d2d_bands, args.max_total_walk, args.max_self_pay,
+            min_bedrooms=args.min_bedrooms, base_extra_csv=args.base_extra_csv
+        )
     else:
         ok = False
 
