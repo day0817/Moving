@@ -14,12 +14,15 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 * `.agents/skills/property_search/property_search.py` : SUUMO物件検索・データ抽出・駐車場詳細スクレイピングの本体スクリプト。
 * `scripts/fetch_station_commute.js` : `properties.js` の最寄り駅で未登録のものをCSVへ追加し、Googleマップ（Puppeteer / 直近月曜8:45着、Yahooフォールバック付）から各駅〜東京サンケイビルの正確な所要時間・乗換回数・到着駅・徒歩時間を取得して `data/station_commute.csv` を更新、そこから Webアプリ用 `station_commute.js` を再生成するスクリプト。
 * `.agents/skills/property_search/build_rail_lines.py` : 国土数値情報「鉄道データ(N02)」から関東圏の実路線ジオメトリを抽出し、`rail_lines.js` を生成するスクリプト。
-* `scripts/run_weekly_update.ps1` : ステップ1〜ステップ5（スクレイピング、通勤同期、キャッシュバスターおよび更新日時の更新、Gitプッシュ）を一括全自動実行する週次更新バッチ。
+* `scripts/check_flood_risk.py` : `properties.js` の各物件の住所（丁目単位）と最寄駅について、国土地理院「重ねるハザードマップ」のタイル画像（洪水・家屋倒壊等氾濫想定区域・高潮・津波・内水・土砂災害警戒区域）を読み取って浸水リスクを判定し、Webアプリ用の `flood_risk.js` を生成するスクリプト（標準ライブラリ＋requestsのみ）。
+* `scripts/run_weekly_update.ps1` : ステップ1〜ステップ6（スクレイピング、通勤同期、浸水リスク判定、キャッシュバスターおよび更新日時の更新、Gitプッシュ）を一括全自動実行する週次更新バッチ。
 * `scripts/register_task.ps1` : Windowsタスクスケジューラに「毎週金曜日 20:30」の定期実行タスク（`Moving_Weekly_Property_Update`）を登録するスクリプト。
 
 **データ (`data/`)**
 * `data/station_commute.csv` : 駅別通勤データCSV（`fetch_station_commute.js` の入出力）。
 * `data/geocoding_cache.json` : 駅座標のジオコーディング結果キャッシュ。
+* `data/flood_risk_cache.json` : 浸水リスク判定結果のキャッシュ（`check_flood_risk.py` が生成。180日間は再判定しない）。
+* `data/flood_risk_notes.json` : 浸水リスクの手動評価と被害実績（**手で編集**）。`manual` は自動判定できないときの代わりの評価、`history` は地図に載らない被害実績で、`level` を書くと表示レベルの下限になる。
 
 **ドキュメント (`doc/`)**
 * `doc/物件検索結果.md` : 検索結果および前回差分（🆕 新規追加物件）のレポート。
@@ -30,6 +33,7 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 * `properties.js` : 抽出された物件データ一覧および最終更新日 `bukkenUpdatedAt`（`property_search.py` が生成）。
 * `station_commute.js` : 駅別通勤時間データベース（Webアプリ用）。`data/station_commute.csv` から機械生成するため直接編集しない。
 * `rail_lines.js` : 通勤アクセスマップ用の実路線ジオメトリ（`build_rail_lines.py` が生成）。
+* `flood_risk.js` : 物件住所・最寄駅の浸水リスク判定結果（`check_flood_risk.py` が生成。直接編集しない）。
 * `Image/` : favicon・アプリアイコン類。`site.webmanifest` はルート直下。
 
 ---
@@ -37,7 +41,7 @@ description: 指定エリアのSUUMO賃貸から条件に合致する戸建て�
 ## 2. 定期再集計・更新ワークフロー
 
 ### A. 全自動更新（推奨）
-ステップ1〜5の一連のフロー（スクレイピング、通勤同期、新駅再計算、キャッシュバスターおよびHTML更新日時の更新、Gitプッシュ）を1コマンドで一括実行できます。
+ステップ1〜6の一連のフロー（スクレイピング、通勤同期、新駅再計算、浸水リスク判定、キャッシュバスターおよびHTML更新日時の更新、Gitプッシュ）を1コマンドで一括実行できます。
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/run_weekly_update.ps1"
 ```
@@ -83,11 +87,27 @@ node scripts/fetch_station_commute.js
 > 社内制度の改定（自己負担2割の上限額 16万→17万）で自己負担額の計算が変わっています。
 > 制度が再度変わった場合は `property_search.py` の `COMPANY_SUBSIDY_CAP` / `MAX_SELF_PAY` を更新してください。
 
-### ステップ4: Gitコミット＆GitHub Pagesへの自動反映
-まず `index.html` の 4 か所のキャッシュバスター `?v=YYYYMMDD`、およびヘッダーの最終更新日時表示（`<time id="lastUpdated">`）を当日日付へ更新します（ブラウザのキャッシュを回避し、画面上に最新更新日を表示させるため）。
+### ステップ4: 浸水リスク自動判定
+```powershell
+py scripts/check_flood_risk.py
+```
+- 未判定（または判定から180日以上たった）住所・駅だけ、国土地理院の住所検索で丁目の代表点を求め、重ねるハザードマップのタイルを読み取って判定します。初回は数分かかります。
+- 代表点に加え、周囲（丁目: 150m以内 / 町・大字: 300m以内）も約100m間隔×8方向で調べます。周辺だけで見つかった区域は1段階下げて評価します。
+- 判定基準（高い方を採用）:
+  - **極高**: 洪水・高潮・津波で3m以上、または家屋倒壊等氾濫想定区域の区域内
+  - **高**: 0.5〜3m、または内水0.5m以上
+  - **中**: 0.5m未満、または土砂災害警戒区域の区域内
+  - **低**: 調べた範囲に想定区域なし
+- 表示レベルは「自動判定」と `data/flood_risk_notes.json` の被害実績（`history[].level`）の高い方。自動判定できない住所は手動評価（`manual`）を表示し、バッジに「手動」と付きます。
+- レイヤーが取得できない（URL変更など）と疑われるときは `py scripts/check_flood_risk.py --check-layers` で確認し、スクリプト冒頭の `LAYERS` を直します。凡例にない色はログに出るので `DEPTH_PALETTE` を見直します。
+- 洪水レイヤーが読めない場合は判定を中止し（終了コード1）、既存のキャッシュと手動評価で `flood_risk.js` を出力します（「想定区域なし」と誤判定しないため）。
+- 通信せずに `flood_risk.js` だけ作り直す: `py scripts/check_flood_risk.py --offline`（`flood_risk_notes.json` を編集したとき）。全件再判定: `--force`。
+
+### ステップ5: Gitコミット＆GitHub Pagesへの自動反映
+まず `index.html` の 5 か所のキャッシュバスター `?v=YYYYMMDD`、およびヘッダーの最終更新日時表示（`<time id="lastUpdated">`）を当日日付へ更新します（ブラウザのキャッシュを回避し、画面上に最新更新日を表示させるため）。
 ※ 全自動更新バッチ（`scripts/run_weekly_update.ps1`）を実行した場合は自動置換されます。
 ```powershell
-git add index.html properties.js station_commute.js rail_lines.js data/station_commute.csv data/geocoding_cache.json doc/物件検索結果.md doc/物件数推移.md
+git add index.html properties.js station_commute.js rail_lines.js flood_risk.js data/station_commute.csv data/flood_risk_cache.json data/geocoding_cache.json doc/物件検索結果.md doc/物件数推移.md
 git commit -m "feat(data): 週次物件データおよび物件数推移の更新"
 git push origin main
 ```
@@ -107,6 +127,9 @@ git push origin main
   - `3.21 〜 4.00万円`: イエロー（軽度注意）
   - `4.01 〜 5.00万円`: ウォームアンバー（中間注意）
   - `5.01万円 〜`: ソフトコーラルレッド（上限域注意）
+- **浸水リスクバッジ（`🌊 浸水 低/中/要確認/高/極高`）**:
+  - `flood_risk.js` をもとに、カード上部に浸水リスクを5段階の色（緑/黄/紫/橙/赤）で表示。タップすると判定理由・レイヤー別の結果・被害実績・最寄駅周辺の評価・「重ねるハザードマップ」へのリンクを表示。
+  - 手動評価の物件はバッジに「手動」と表示。フィルタ「浸水リスク高を除く」、並び替え「浸水リスク（低い順）」、比較表の「浸水リスク」行に対応。
 - **到着駅アイコン（`🗼`）**:
   - 到着駅が東京駅の物件（サンケイビルまで徒歩7〜10分）には、総徒歩バッジ内に `🗼` アイコンを表示。
 - **通勤詳細ポップオーバー**:

@@ -647,6 +647,220 @@ header {
     color: var(--color-orange);
 }
 
+/* ========================================================
+   浸水リスク（バッジ・詳細パネル）
+   低=green / 中=yellow / 要確認=violet / 高=orange / 極高=red
+   ======================================================== */
+.flood-low { --flood-color: var(--color-green); --flood-rgb: 133, 153, 0; }
+.flood-medium { --flood-color: var(--color-yellow); --flood-rgb: 181, 137, 0; }
+.flood-unknown { --flood-color: var(--color-violet); --flood-rgb: 108, 113, 196; }
+.flood-high { --flood-color: var(--color-orange); --flood-rgb: 203, 75, 22; }
+.flood-extreme { --flood-color: var(--color-red); --flood-rgb: 220, 50, 47; }
+
+.flood-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 4px;
+    font-family: var(--font-outfit);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--flood-color);
+    background: rgba(var(--flood-rgb), 0.12);
+    border: 1px solid rgba(var(--flood-rgb), 0.4);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.flood-badge:hover,
+.flood-badge[aria-expanded="true"] {
+    background: rgba(var(--flood-rgb), 0.22);
+}
+
+.flood-badge:focus-visible {
+    outline: 2px solid var(--flood-color);
+    outline-offset: 1px;
+}
+
+.flood-badge-src {
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 0 0.3rem;
+    border-radius: 3px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color-strong);
+}
+
+.flood-level-pill {
+    display: inline-block;
+    min-width: 2.6em;
+    text-align: center;
+    padding: 0.05rem 0.45rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: var(--flood-color);
+}
+
+.flood-detail {
+    margin: -0.35rem 0 0.9rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: var(--radius-sm);
+    background: var(--card-bg-subtle);
+    border: 1px solid var(--border-color);
+    font-size: 0.78rem;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flood-detail[hidden] {
+    display: none;
+}
+
+.flood-detail-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.flood-source {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+.flood-reasons,
+.flood-history {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.flood-reasons li {
+    color: var(--text-strong);
+}
+
+.flood-raised {
+    font-size: 0.72rem;
+    color: var(--color-orange);
+}
+
+.flood-layer-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 0.15rem 0.6rem;
+    margin: 0;
+    padding: 0.45rem 0.55rem;
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    font-size: 0.72rem;
+}
+
+.flood-layer-grid dt {
+    color: var(--text-secondary);
+}
+
+.flood-layer-grid dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+.flood-layer-hit { color: var(--color-red); }
+.flood-layer-near { color: var(--color-orange); }
+.flood-layer-none { color: var(--color-green); }
+.flood-layer-grid dd.flood-layer-na { color: var(--text-muted); font-weight: 400; }
+
+.flood-history-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-orange);
+}
+
+.flood-history li {
+    line-height: 1.45;
+}
+
+.flood-history-date {
+    font-weight: 700;
+    margin-right: 0.25rem;
+    color: var(--text-strong);
+}
+
+.flood-history a,
+.flood-map-link {
+    color: var(--accent);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.flood-history a:hover,
+.flood-map-link:hover {
+    text-decoration: underline;
+}
+
+.flood-station {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.flood-station span:last-child {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+}
+
+.flood-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.flood-foot .flood-map-link {
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.flood-compare-reason {
+    margin-top: 0.25rem;
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+    max-width: 220px;
+}
+
+/* 浸水リスク高を除くトグル */
+.new-filter-control {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.flood-filter-label:hover {
+    border-color: var(--color-orange);
+}
+
+.flood-filter-label:has(input:checked) {
+    background: rgba(203, 75, 22, 0.15);
+    border-color: var(--color-orange);
+    color: var(--text-strong);
+    box-shadow: 0 0 12px rgba(203, 75, 22, 0.25);
+}
+
+.flood-filter-pill {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
 .compare-checkbox-label {
     display: flex;
     align-items: center;

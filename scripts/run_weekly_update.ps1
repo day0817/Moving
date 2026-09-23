@@ -5,8 +5,9 @@
 #   1. SUUMOからの最新物件スクレイピング (.agents/skills/property_search/property_search.py)
 #   2. Yahoo!路線情報による駅別通勤データ同期 (scripts/fetch_station_commute.js)
 #   3. 新駅追加時の再判定スクレイピング
-#   4. index.html のキャッシュバスター (?v=YYYYMMDD) および更新日時の更新
-#   5. Gitコミット＆GitHub Pages (origin/main) への自動プッシュ
+#   4. 重ねるハザードマップによる浸水リスク自動判定 (scripts/check_flood_risk.py)
+#   5. index.html のキャッシュバスター (?v=YYYYMMDD) および更新日時の更新
+#   6. Gitコミット＆GitHub Pages (origin/main) への自動プッシュ
 # ==============================================================================
 
 $ErrorActionPreference = "Continue"
@@ -85,9 +86,26 @@ if ($csvStatus) {
 }
 
 # ------------------------------------------------------------------------------
-# ステップ4: index.html のキャッシュバスターおよび更新日時表示の更新
+# ステップ4: 浸水リスク自動判定（新しい住所・駅だけ重ねるハザードマップに問い合わせ、flood_risk.js を生成）
 # ------------------------------------------------------------------------------
-Write-Log "--- ステップ4: index.html のキャッシュバスターおよび更新日時を更新中 ---"
+Write-Log "--- ステップ4: 浸水リスク自動判定 (check_flood_risk.py) を実行中 ---"
+$floodScript = Join-Path $repoRoot "scripts\check_flood_risk.py"
+
+if (Test-Path $floodScript) {
+    $floodProc = Start-Process -FilePath "py" -ArgumentList "`"$floodScript`"" -NoNewWindow -Wait -PassThru
+    if ($floodProc.ExitCode -ne 0) {
+        Write-Log "警告: check_flood_risk.py の終了コードが $($floodProc.ExitCode) です（ハザードマップを取得できない場合は手動評価で表示されます）。" "WARN"
+    } else {
+        Write-Log "ステップ4完了: check_flood_risk.py が正常終了しました。"
+    }
+} else {
+    Write-Log "警告: $floodScript が存在しません。浸水リスク判定をスキップします。" "WARN"
+}
+
+# ------------------------------------------------------------------------------
+# ステップ5: index.html のキャッシュバスターおよび更新日時表示の更新
+# ------------------------------------------------------------------------------
+Write-Log "--- ステップ5: index.html のキャッシュバスターおよび更新日時を更新中 ---"
 $indexPath = Join-Path $repoRoot "index.html"
 $today = (Get-Date).ToString("yyyyMMdd")
 $todaySlash = (Get-Date).ToString("yyyy/MM/dd")
@@ -112,16 +130,18 @@ if (Test-Path $indexPath) {
 }
 
 # ------------------------------------------------------------------------------
-# ステップ5: Gitコミット＆GitHub Pages (origin/main) へのプッシュ
+# ステップ6: Gitコミット＆GitHub Pages (origin/main) へのプッシュ
 # ------------------------------------------------------------------------------
-Write-Log "--- ステップ5: 変更差分の確認とGitプッシュ ---"
+Write-Log "--- ステップ6: 変更差分の確認とGitプッシュ ---"
 
 $targetFiles = @(
     "index.html",
     "properties.js",
     "station_commute.js",
     "rail_lines.js",
+    "flood_risk.js",
     "data/station_commute.csv",
+    "data/flood_risk_cache.json",
     "data/geocoding_cache.json",
     "doc/物件検索結果.md",
     "doc/物件数推移.md"
@@ -149,7 +169,7 @@ if ($hasDiff) {
     Write-Log "GitHub Pages (origin/main) へプッシュを実行中..."
     $pushOutput = git push origin main 2>&1
     Write-Log "Push結果:`n$pushOutput"
-    Write-Log "ステップ5完了: GitHub Pages への自動反映が完了しました。"
+    Write-Log "ステップ6完了: GitHub Pages への自動反映が完了しました。"
 } else {
     Write-Log "更新対象ファイルに差分はありませんでした。Gitプッシュは不要です。"
 }

@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260922">
+    <link rel="stylesheet" href="style.css?v=20260923">
 </head>
 <body>
     <header>
@@ -56,6 +56,11 @@
                     <h3>エリア切り替え（都道府県）</h3>
                 </div>
                 <div class="new-filter-control">
+                    <label class="new-filter-label flood-filter-label" for="hideFloodRiskCheck" title="浸水リスク「高」「極高」の物件を一覧から除きます">
+                        <input type="checkbox" id="hideFloodRiskCheck">
+                        <span class="flood-filter-pill">🌊</span>
+                        <span class="toggle-text">浸水リスク高を除く (<span id="floodRiskCount">0</span>)</span>
+                    </label>
                     <label class="new-filter-label" for="onlyNewCheck" id="onlyNewFilterBtn">
                         <input type="checkbox" id="onlyNewCheck">
                         <span class="new-badge-pill">NEW</span>
@@ -106,8 +111,9 @@
     </div>
 
     <!-- データスクリプトおよびメインスクリプト -->
-    <script src="station_commute.js?v=20260922"></script>
-    <script src="properties.js?v=20260922"></script>
-    <script src="app.js?v=20260922"></script>
+    <script src="station_commute.js?v=20260923"></script>
+    <script src="properties.js?v=20260923"></script>
+    <script src="flood_risk.js?v=20260923"></script>
+    <script src="app.js?v=20260923"></script>
 </body>
 </html>
