@@ -140,6 +140,50 @@ document.addEventListener("DOMContentLoaded", () => {
         p._commuteInfo = getCommuteRouteInfo(p);
     });
 
+    // 浸水リスクデータ（flood_risk.js を scripts/check_flood_risk.py が生成。未生成なら空）
+    const floodData = typeof floodRiskData !== 'undefined'
+        ? floodRiskData
+        : { properties: {}, stations: {}, layers: {}, depth_labels: {} };
+
+    const FLOOD_LEVELS = {
+        low: { label: '低', rank: 0 },
+        medium: { label: '中', rank: 1 },
+        unknown: { label: '要確認', rank: 2 },
+        high: { label: '高', rank: 3 },
+        extreme: { label: '極高', rank: 4 },
+    };
+    const HAZARD_MAP_URL = 'https://disaportal.gsi.go.jp/maps/';
+
+    // 物件住所の判定結果と、最寄駅（最速ルートの駅を優先）周辺の判定結果を取り出す
+    function getFloodInfo(p) {
+        const entry = floodData.properties?.[p.address] || null;
+        const bestStation = p._commuteInfo?.best?.station;
+        const stationName = floodData.stations?.[bestStation] ? bestStation : p.station;
+        return {
+            entry,
+            level: entry?.level || null,
+            station: floodData.stations?.[stationName] || null,
+            stationName,
+        };
+    }
+
+    properties.forEach(p => {
+        p._flood = getFloodInfo(p);
+    });
+
+    // 判定なしは「要確認」と同じ順位で並べる
+    function getFloodRank(p) {
+        return FLOOD_LEVELS[p._flood?.level]?.rank ?? FLOOD_LEVELS.unknown.rank;
+    }
+
+    function isHighFloodRisk(p) {
+        return p._flood?.level === 'high' || p._flood?.level === 'extreme';
+    }
+
+    function escapeHtml(str) {
+        return String(str ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
     // 必須カットオフ条件の適用（ドアドア 59分以下 かつ 総徒歩 18分以内）
     properties = properties.filter(p => {
         const best = p._commuteInfo?.best;
@@ -155,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
         'age-asc': { label: '築年数（浅い順）', compare: (a, b) => parseAge(a.age_floor) - parseAge(b.age_floor) },
         'rent-asc': { label: '自己負担額（低い順）', compare: (a, b) => a.self_pay - b.self_pay },
         'menseki-desc': { label: '専有面積（広い順）', compare: (a, b) => parseAreaSize(b.menseki) - parseAreaSize(a.menseki) },
+        'flood-asc': { label: '浸水リスク（低い順）', compare: (a, b) => getFloodRank(a) - getFloodRank(b) },
     };
 
     // 要素取得
@@ -167,6 +212,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const onlyNewCheck = document.getElementById("onlyNewCheck");
     const onlyNewFilterBtn = document.getElementById("onlyNewFilterBtn");
     const newBukkenCount = document.getElementById("newBukkenCount");
+    const hideFloodRiskCheck = document.getElementById("hideFloodRiskCheck");
+    const floodRiskCount = document.getElementById("floodRiskCount");
     const themeToggleBtn = document.getElementById("themeToggleBtn");
     const themeLabel = document.getElementById("themeLabel");
     
@@ -213,7 +260,9 @@ document.addEventListener("DOMContentLoaded", () => {
         prefecture: "all",
         city: "all",
         onlyNew: false,
-        sortPriority: ['walk-asc', 'commute-asc', 'total-walk-asc', 'age-asc', 'rent-asc', 'menseki-desc'],
+        hideHighFlood: false,
+        openFlood: new Set(), // 浸水リスク詳細を開いている物件URL（再描画しても開いたままにする）
+        sortPriority: ['walk-asc', 'commute-asc', 'total-walk-asc', 'age-asc', 'rent-asc', 'menseki-desc', 'flood-asc'],
     };
 
     // ヘルパー関数: 築年数の数値をパース
@@ -254,6 +303,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 return false;
             }
 
+            // 浸水リスク「高」「極高」を除く
+            if (state.hideHighFlood && isHighFloodRisk(p)) {
+                return false;
+            }
+
             // 都道府県フィルタ
             if (state.prefecture !== "all") {
                 const pref = getPrefecture(p.address);
@@ -283,11 +337,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // NEW物件の総数を更新
+    // NEW物件・浸水リスク高の物件の総数を更新
     function updateNewCount() {
         const count = properties.filter(p => p.is_new).length;
         if (newBukkenCount) {
             newBukkenCount.textContent = count;
+        }
+        if (floodRiskCount) {
+            floodRiskCount.textContent = properties.filter(isHighFloodRisk).length;
         }
     }
 
@@ -295,7 +352,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderAreaTabs() {
         if (!areaTabs) return;
 
-        const baseProps = state.onlyNew ? properties.filter(p => p.is_new) : properties;
+        const baseProps = properties.filter(p =>
+            (!state.onlyNew || p.is_new) && (!state.hideHighFlood || !isHighFloodRisk(p)));
 
         const prefCounts = {};
         baseProps.forEach(p => {
@@ -460,6 +518,110 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
 
+    // 浸水リスクの1レイヤー分の表示文言
+    function formatFloodLayer(key, v) {
+        const kind = floodData.layers?.[key]?.kind || 'depth';
+        if (!v || v.status === 'unavailable') return { text: '未取得', cls: 'na' };
+        if (v.status === 'error') return { text: '取得失敗', cls: 'na' };
+        const depthText = rank => rank === -1 ? '区域内（深さは地図で確認）' : (floodData.depth_labels?.[rank] || '区域内');
+        if (v.center) return { text: kind === 'area' ? '区域内' : depthText(v.center), cls: 'hit' };
+        if (v.nearby) {
+            const text = kind === 'area' || v.nearby === -1 ? '周辺に区域あり' : `周辺に ${depthText(v.nearby)}`;
+            return { text, cls: 'near' };
+        }
+        return { text: 'なし', cls: 'none' };
+    }
+
+    function floodLevelPill(level) {
+        const meta = FLOOD_LEVELS[level];
+        return meta ? `<span class="flood-level-pill flood-${level}">${meta.label}</span>` : '';
+    }
+
+    // 評価の根拠となる一文（自動判定の先頭理由 or 手動評価の理由）
+    function getFloodReason(entry) {
+        if (!entry) return '';
+        if (entry.source === 'auto') return entry.auto?.reasons?.[0] || '';
+        return entry.manual?.reason || entry.history?.[0]?.text || '';
+    }
+
+    function getFloodSourceText(entry) {
+        if (entry.source === 'auto') return `ハザードマップ自動判定（${entry.auto.checked_at}）`;
+        if (entry.source === 'manual') return `手動評価（${entry.manual.date}）・ハザードマップ自動判定は未実施`;
+        return '被害実績のみ';
+    }
+
+    function renderFloodBadge(p) {
+        const { entry, level } = p._flood;
+        if (!level) return '';
+        const isOpen = state.openFlood.has(p.url);
+        const srcTag = entry.source === 'auto' ? '' : '<span class="flood-badge-src">手動</span>';
+        return `
+            <button type="button" class="flood-badge flood-${level}" data-flood-toggle aria-expanded="${isOpen}" title="タップで浸水リスクの内訳を表示">
+                🌊 浸水 ${FLOOD_LEVELS[level].label}${srcTag}
+            </button>
+        `;
+    }
+
+    function renderFloodDetail(p) {
+        const { entry, level, station, stationName } = p._flood;
+        if (!level) return '';
+        const isOpen = state.openFlood.has(p.url);
+
+        const reasons = entry.source === 'auto' ? (entry.auto.reasons || []) : [getFloodReason(entry)].filter(Boolean);
+        const raisedNote = entry.source === 'auto' && entry.auto.level !== level
+            ? `<div class="flood-raised">※ 地図の判定は「${FLOOD_LEVELS[entry.auto.level]?.label}」。下の被害実績を踏まえて引き上げています</div>`
+            : '';
+
+        const layersHtml = entry.source === 'auto'
+            ? `<dl class="flood-layer-grid">${Object.keys(floodData.layers || {}).map(key => {
+                const f = formatFloodLayer(key, entry.auto.layers?.[key]);
+                return `<dt>${escapeHtml(floodData.layers[key].label)}</dt><dd class="flood-layer-${f.cls}">${escapeHtml(f.text)}</dd>`;
+            }).join('')}</dl>`
+            : '';
+
+        const historyHtml = (entry.history || []).map(h => `
+            <li>
+                <span class="flood-history-date">${escapeHtml(h.date || '')}</span>
+                ${escapeHtml(h.text)}
+                ${h.url ? `<a href="${escapeHtml(h.url)}" target="_blank" rel="noopener noreferrer">出典↗</a>` : ''}
+            </li>
+        `).join('');
+
+        const stationHtml = station && station.level
+            ? `<div class="flood-station">🚉 ${escapeHtml(stationName)}駅周辺: ${floodLevelPill(station.level)} <span>${escapeHtml(getFloodReason(station))}</span></div>`
+            : '';
+
+        // 地図リンク: 判定位置 → 最寄駅 → トップページの順
+        let mapUrl = 'https://disaportal.gsi.go.jp/';
+        let positionText = '住所で検索して建物の位置を確認してください。';
+        if (entry.point) {
+            mapUrl = entry.point.map_url;
+            const precision = entry.point.precision === 'chome' ? '丁目の代表点' : '町・大字の代表点';
+            positionText = `判定位置は${precision}（${escapeHtml(entry.point.title || p.address)}）で、実際の建物の位置とは異なります。`;
+        } else if (p.lat && p.lng) {
+            mapUrl = `${HAZARD_MAP_URL}?ll=${p.lat},${p.lng}&z=16&base=pale`;
+            positionText = '地図は最寄駅周辺を表示します。住所で検索して建物の位置を確認してください。';
+        }
+
+        return `
+            <div class="flood-detail" ${isOpen ? '' : 'hidden'}>
+                <div class="flood-detail-head">
+                    ${floodLevelPill(level)}
+                    <span class="flood-source">${escapeHtml(getFloodSourceText(entry))}</span>
+                </div>
+                <ul class="flood-reasons">${reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
+                ${raisedNote}
+                ${layersHtml}
+                ${historyHtml ? `<div class="flood-history-label">⚠ 被害実績など</div><ul class="flood-history">${historyHtml}</ul>` : ''}
+                ${stationHtml}
+                <div class="flood-foot">
+                    <span>${positionText}</span>
+                    <a href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener noreferrer" class="flood-map-link">重ねるハザードマップで確認 ↗</a>
+                </div>
+            </div>
+        `;
+    }
+
     // 物件カード一覧の描画
     function renderProperties() {
         const filtered = getFilteredProperties();
@@ -507,6 +669,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="header-badges">
                             ${newBadge}
                             <span class="station-badge">${best.station || p.station}駅 (${best.line || p.line})</span>
+                            ${renderFloodBadge(p)}
                             ${parkingFeeBadge}
                             ${parkingDistBadge}
                         </div>
@@ -515,6 +678,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             比較
                         </label>
                     </div>
+
+                    ${renderFloodDetail(p)}
 
                     <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="bukken-title-btn" title="${p.title}">
                         <span class="bukken-title-text">${p.title}</span>
@@ -715,6 +880,17 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
         }).join('');
 
+        const floodRow = selectedProperties.map(p => {
+            const { entry, level } = p._flood;
+            if (!level) return '<td>-</td>';
+            return `
+                <td>
+                    ${floodLevelPill(level)}${entry.source === 'auto' ? '' : ' <span class="flood-badge-src">手動</span>'}
+                    <div class="flood-compare-reason">${escapeHtml(getFloodReason(entry))}</div>
+                </td>
+            `;
+        }).join('');
+
         const spaceRow = selectedProperties.map(p => `
             <td>${p.madori} (${p.menseki})</td>
         `).join('');
@@ -758,6 +934,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 <tr>
                     <th>ドアドア通勤時間</th>
                     ${commuteRow}
+                </tr>
+                <tr>
+                    <th>浸水リスク</th>
+                    ${floodRow}
                 </tr>
                 <tr>
                     <th>間取り / 面積</th>
@@ -819,6 +999,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
             renderProperties();
+        });
+    }
+
+    // 3b. 浸水リスク高を除くトグル
+    if (hideFloodRiskCheck) {
+        hideFloodRiskCheck.addEventListener("change", (e) => {
+            state.hideHighFlood = e.target.checked;
+            renderProperties();
+        });
+    }
+
+    // 3c. 浸水リスクバッジで詳細パネルを開閉
+    if (bukkenGrid) {
+        bukkenGrid.addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-flood-toggle]");
+            if (!btn) return;
+            const card = btn.closest(".bukken-card");
+            const panel = card?.querySelector(".flood-detail");
+            if (!panel) return;
+            const willOpen = panel.hasAttribute("hidden");
+            panel.toggleAttribute("hidden", !willOpen);
+            btn.setAttribute("aria-expanded", String(willOpen));
+            const url = card.getAttribute("data-url");
+            if (willOpen) state.openFlood.add(url); else state.openFlood.delete(url);
         });
     }
 
