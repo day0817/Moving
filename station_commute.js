@@ -1811,6 +1811,78 @@ const stationCommuteData = {
         "route_summary": "市川大野→[乗換1回]→大手町(東京都)",
         "lines_used": "武蔵野線,東西線",
         "exit_info": ""
+    },
+    "鐘ヶ淵": {
+        "line": "",
+        "train_min": 21,
+        "station_to_office_min": 31,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 7,
+        "transit_walk_min": 3,
+        "route_summary": "鐘ヶ淵→[乗換1回]→大手町(東京都)",
+        "lines_used": "東武スカイツリーライン,千代田線",
+        "exit_info": ""
+    },
+    "東向島": {
+        "line": "",
+        "train_min": 21,
+        "station_to_office_min": 26,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 2,
+        "transit_walk_min": 3,
+        "route_summary": "東向島→[乗換1回]→大手町(東京都)",
+        "lines_used": "東武スカイツリーライン",
+        "exit_info": ""
+    },
+    "八広": {
+        "line": "",
+        "train_min": 15,
+        "station_to_office_min": 25,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 7,
+        "transit_walk_min": 3,
+        "route_summary": "八広→[乗換1回]→大手町(東京都)",
+        "lines_used": "押上線,半蔵門線",
+        "exit_info": ""
+    },
+    "神奈川新町": {
+        "line": "",
+        "train_min": 29,
+        "station_to_office_min": 45,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 13,
+        "transit_walk_min": 3,
+        "route_summary": "神奈川新町→[乗換1回]→大手町(東京都)",
+        "lines_used": "京急本線,東海道線",
+        "exit_info": ""
+    },
+    "さいたま新都心": {
+        "line": "",
+        "train_min": 31,
+        "station_to_office_min": 43,
+        "transfers": 0,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 12,
+        "transit_walk_min": 0,
+        "route_summary": "さいたま新都心→大手町(東京都)",
+        "lines_used": "宇都宮線",
+        "exit_info": ""
+    },
+    "中浦和": {
+        "line": "",
+        "train_min": 39,
+        "station_to_office_min": 46,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 4,
+        "transit_walk_min": 3,
+        "route_summary": "中浦和→[乗換1回]→大手町(東京都)",
+        "lines_used": "埼京線,丸ノ内線",
+        "exit_info": ""
     }
 };
 
