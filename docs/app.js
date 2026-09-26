@@ -526,6 +526,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const arrival = getArrivalInfo(best);
         const stars = p._stars;
         const arrivalTitle = `${arrival.label}（サンケイビルまで徒歩${best.arrivalWalkMin}分）`;
+        const arrivalIconHtml = arrival.key === 'tokyo'
+            ? `<span class="arrival-icon" role="img" aria-label="${escapeHtml(arrivalTitle)}" title="${escapeHtml(arrivalTitle)}">${icon(arrival.key, 'icon-sm')}</span>`
+            : '';
 
         return `
             <div class="commute-visual-container" tabindex="0" role="group" aria-label="自己負担・ドアドア・駅徒歩。フォーカスすると通勤の内訳を表示します">
@@ -535,7 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     ${renderStars(stars.selfPay, 'selfPay')}
                 </div>
                 <div class="stat">
-                    <span class="stat-label">ドアドア<span class="arrival-icon" role="img" aria-label="${escapeHtml(arrivalTitle)}" title="${escapeHtml(arrivalTitle)}">${icon(arrival.key, 'icon-sm')}</span></span>
+                    <span class="stat-label">ドアドア${arrivalIconHtml}</span>
                     <span class="stat-value">${best.doorToDoor}<span class="stat-unit">分</span></span>
                     ${renderStars(stars.doorToDoor, 'doorToDoor')}
                 </div>
@@ -750,7 +753,6 @@ document.addEventListener("DOMContentLoaded", () => {
             <tr><th scope="row">${rule.label}</th>${rule.steps.map(([max]) => `<td>${max}${rule.unit}以下</td>`).join('')}</tr>
         `).join('');
         legend.innerHTML = `
-            <span class="legend-item">${icon('otemachi', 'icon-sm')}大手町駅着</span>
             <span class="legend-item">${icon('tokyo', 'icon-sm')}東京駅着</span>
             <details class="sort-pop legend-pop">
                 <summary class="legend-item legend-link">${icon('star', 'icon-sm star-on')}★の基準</summary>
