@@ -5,9 +5,9 @@ const puppeteer = require('puppeteer-core');
 
 const CSV_PATH = path.join(__dirname, '..', 'data', 'station_commute.csv');
 // Webアプリ（GitHub Pages）が <script src> で読み込む駅別通勤DB。CSVから機械生成する。
-const JS_PATH = path.join(__dirname, '..', 'station_commute.js');
+const JS_PATH = path.join(__dirname, '..', 'docs', 'data', 'station_commute.js');
 // 掲載物件データ。ここに含まれる駅で station_commute.csv に無いものを新規取得対象として追加する。
-const PROPERTIES_JS_PATH = path.join(__dirname, '..', 'properties.js');
+const PROPERTIES_JS_PATH = path.join(__dirname, '..', 'docs', 'data', 'properties.js');
 // properties.js の各物件の最寄り駅のうち、これ以下の徒歩分の駅を通勤DBの取得対象に含める
 // （駅徒歩上限15分緩和に合わせて15に変更）
 const CANDIDATE_STATION_MAX_WALK = 15;

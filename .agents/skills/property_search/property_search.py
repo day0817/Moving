@@ -47,9 +47,9 @@ STATIC_STATION_COORDS = {
 # 目的: データ/ドキュメント/Webアプリ配信ファイルを役割ごとのディレクトリに分離して管理する。
 CACHE_FILE_PATH = "data/geocoding_cache.json"          # ジオコーディング結果キャッシュ
 STATION_COMMUTE_CSV_PATH = "data/station_commute.csv"  # 駅別通勤DB（CSV, スクレイパの入出力）
-PROPERTIES_JS_PATH = "properties.js"                   # Webアプリ（GitHub Pages）が読み込む物件データ
-TREND_REPORT_PATH = "doc/物件数推移.md"                # 物件数推移レポート
-DEFAULT_SEARCH_RESULT_PATH = "doc/物件検索結果.md"     # 検索結果レポートの既定出力先
+PROPERTIES_JS_PATH = "docs/data/properties.js"         # Webアプリ（GitHub Pages が docs/ を公開）が読み込む物件データ
+TREND_REPORT_PATH = "research/物件数推移.md"           # 物件数推移レポート
+DEFAULT_SEARCH_RESULT_PATH = "research/物件検索結果.md"  # 検索結果レポートの既定出力先
 
 PARKING_CACHE_PATH = "data/parking_cache.json"        # 駐車場情報キャッシュ
 
@@ -900,7 +900,7 @@ def main():
     except Exception as e:
         print(f"properties.js の書き出しに失敗: {e}", file=sys.stderr)
 
-    # 物件数推移レポート（doc/物件数推移.md）の自動更新
+    # 物件数推移レポート（research/物件数推移.md）の自動更新
     update_station_trend_report(json_properties, TREND_REPORT_PATH, len(new_properties))
 
 

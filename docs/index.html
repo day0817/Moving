@@ -1,119 +1,112 @@
 ﻿<!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>引越先物件 比較・検討ナビゲート</title>
     <!-- Favicon & App Icons -->
-    <link rel="icon" type="image/svg+xml" href="Image/favicon.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="Image/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="Image/favicon-16x16.png">
-    <link rel="shortcut icon" href="Image/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="Image/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+    <link rel="shortcut icon" href="images/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
-    <meta name="theme-color" content="#073642">
+    <meta name="theme-color" content="#fdf6e3">
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts（ロゴ用の表示フォントのみ。本文はシステムフォント） -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260926">
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=20260927">
+
+    <!-- 描画前に外観（ライト/ダーク）を決めてチラつきを防ぐ。既定はライト。キーは app.js と同じ -->
+    <script>
+        try {
+            if (localStorage.getItem("bukken_theme_v2") === "dark") document.documentElement.setAttribute("data-theme", "dark");
+        } catch (e) {
+            console.warn("外観の設定を読み込めませんでした（ライト表示で開きます）", e);
+        }
+    </script>
 </head>
 <body>
-    <header>
-        <div class="header-container">
-            <div class="header-content">
-                <h1 class="logo-text">Bukken<span>Compare</span></h1>
-                <p class="subtitle">大手町通勤のための賃貸一戸建て（80m²以上・駐車場込）比較ナビ</p>
+    <header class="c-navbar">
+        <div class="nav-inner">
+            <div class="brand">
+                <h1 class="brand-name">Bukken<span>Compare</span></h1>
+                <p class="brand-sub">大手町通勤のための賃貸一戸建て（80m²以上・駐車場込）比較ナビ</p>
             </div>
-            <div class="header-right">
-                <div class="last-updated-badge" title="物件データの最終更新日">
-                    <svg class="updated-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span class="updated-label">最終更新:</span>
+            <div class="nav-right">
+                <span class="updated" title="物件データの最終更新日">
+                    <svg class="icon-svg icon-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span class="updated-label">最終更新</span>
                     <time id="lastUpdated" datetime="2026-09-26">2026/09/26</time>
-                </div>
-                <div class="theme-switch-wrapper">
-                    <button id="themeToggleBtn" class="theme-toggle-btn" title="テーマ切り替え (Solarized / Solarized Dark)" aria-label="テーマ切り替え">
-                        <span class="theme-toggle-indicator">
-                            <span class="theme-icon dark-icon">🌙</span>
-                            <span class="theme-icon light-icon">☀️</span>
-                        </span>
-                        <span class="theme-text" id="themeLabel">Solarized Dark</span>
-                    </button>
-                </div>
+                </span>
+                <button type="button" id="themeToggleBtn" class="theme-btn" aria-label="ライト/ダーク切り替え" title="ライト/ダーク切り替え">
+                    <svg class="icon-svg icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg class="icon-svg icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="container">
-        <!-- フィルタコントロールパネル -->
-        <section class="filter-panel glass">
-            <div class="filter-header-row">
-                <div class="filter-group-header">
-                    <h3>エリア切り替え（都道府県）</h3>
-                </div>
-                <div class="new-filter-control">
-                    <label class="new-filter-label flood-filter-label" for="hideFloodRiskCheck" title="浸水リスク「高」「極高」の物件を一覧から除きます">
-                        <input type="checkbox" id="hideFloodRiskCheck">
-                        <span class="flood-filter-pill">🌊</span>
-                        <span class="toggle-text">浸水リスク高を除く (<span id="floodRiskCount">0</span>)</span>
-                    </label>
-                    <label class="new-filter-label" for="onlyNewCheck" id="onlyNewFilterBtn">
-                        <input type="checkbox" id="onlyNewCheck">
-                        <span class="new-badge-pill">NEW</span>
-                        <span class="toggle-text">新規追加のみ表示 (<span id="newBukkenCount">0</span>)</span>
-                    </label>
-                </div>
+    <!-- 操作バー（スクロールしても上に残る）: エリア・絞り込み・並び順 -->
+    <div class="toolbar-wrap">
+        <div class="toolbar">
+            <div class="chips" id="areaTabs" role="group" aria-label="エリア（都道府県）">
+                <!-- JavaScript側で動的に生成されます -->
             </div>
-
-            <div class="filter-group">
-                <div class="tabs" id="areaTabs">
-                    <!-- JavaScript側で動的に生成されます -->
-                </div>
-                <div class="tabs tabs--sub" id="cityTabs" style="display: none;">
-                    <!-- 都道府県選択時のみ、JavaScript側で市区町村タブを動的に生成 -->
-                </div>
+            <div class="toolbar-right">
+                <label class="check" for="hideFloodRiskCheck" title="浸水リスク「高」「極高」の物件を一覧から除きます">
+                    <input type="checkbox" id="hideFloodRiskCheck" checked>
+                    <span>浸水<span class="check-long">リスク</span>高を除く</span>
+                    <span class="count" id="floodRiskCount">0</span>
+                </label>
+                <label class="check" for="onlyNewCheck" title="今回の更新で新しく追加された物件だけを表示します">
+                    <input type="checkbox" id="onlyNewCheck">
+                    <span>NEWのみ</span>
+                    <span class="count" id="newBukkenCount">0</span>
+                </label>
+                <details class="sort-pop" id="sortPop">
+                    <summary class="c-btn c-btn-secondary c-btn-sm">
+                        <svg class="icon-svg icon-sm" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                        並び順
+                    </summary>
+                    <div class="sort-panel">
+                        <p class="sort-panel-note">上の条件から順に比べて並べます。ドラッグ、または矢印ボタンで入れ替えできます。</p>
+                        <ol class="sort-list" id="sortPriorityList">
+                            <!-- JavaScript側で動的に生成されます -->
+                        </ol>
+                    </div>
+                </details>
             </div>
-
-            <div class="sort-compare-controls">
-                <div class="sort-box sort-box--priority">
-                    <label>並び替えの優先順位（ドラッグ、または▲▼ボタンで並び替え。第1条件から順に比較します）</label>
-                    <ul class="sort-priority-list" id="sortPriorityList">
-                        <!-- JavaScript側で動的に生成されます -->
-                    </ul>
-                </div>
-                <button class="compare-btn-trigger" id="openCompareBtn" disabled>
-                    選択した物件を比較 (<span id="compareCount">0</span>)
-                </button>
-            </div>
-        </section>
-
-        <!-- 物件カードグリッド -->
-        <section class="bukken-grid" id="bukkenGrid">
-            <!-- 動的にJSで生成 -->
-        </section>
-    </main>
-
-    <!-- 比較モーダル -->
-    <div class="modal-overlay" id="compareModal">
-        <div class="modal-content glass">
-            <button class="close-modal" id="closeModalBtn">&times;</button>
-            <h2>選択物件の徹底比較</h2>
-            <div class="table-container">
-                <table class="compare-table" id="compareTable">
-                    <!-- 動的に比較テーブルを生成 -->
-                </table>
+        </div>
+        <!-- 都道府県を選んだときだけ市区町村を表示 -->
+        <div class="toolbar toolbar--sub" id="cityTabsRow" hidden>
+            <div class="chips" id="cityTabs" role="group" aria-label="市区町村">
+                <!-- JavaScript側で動的に生成されます -->
             </div>
         </div>
     </div>
 
+    <main class="page">
+        <div class="result-line">
+            <span class="result-count"><strong class="num" id="resultCount">0</strong> 件</span>
+            <span class="sort-summary" id="sortSummary"></span>
+            <span class="legend" id="legend">
+                <!-- JavaScript側で動的に生成されます（到着駅アイコン・★の基準） -->
+            </span>
+        </div>
+
+        <!-- 物件カードグリッド -->
+        <section class="bukken-grid" id="bukkenGrid" aria-label="物件一覧">
+            <!-- 動的にJSで生成 -->
+        </section>
+    </main>
+
     <!-- データスクリプトおよびメインスクリプト -->
-    <script src="station_commute.js?v=20260926"></script>
-    <script src="properties.js?v=20260926"></script>
-    <script src="flood_risk.js?v=20260926"></script>
-    <script src="app.js?v=20260926"></script>
+    <script src="data/station_commute.js?v=20260927"></script>
+    <script src="data/properties.js?v=20260927"></script>
+    <script src="data/flood_risk.js?v=20260927"></script>
+    <script src="app.js?v=20260927"></script>
 </body>
 </html>

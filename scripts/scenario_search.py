@@ -27,7 +27,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 # 本番資産のパス（読み取り専用）
 BASE_PROPERTY_SEARCH_PATH = ".agents/skills/property_search/property_search.py"
 BASE_STATION_COMMUTE_CSV_PATH = "data/station_commute.csv"
-BASE_PROPERTIES_JS_PATH = "properties.js"
+BASE_PROPERTIES_JS_PATH = "docs/data/properties.js"
 BASE_PARKING_CACHE_PATH = "data/parking_cache.json"
 
 # 都道府県コード
@@ -834,7 +834,7 @@ def main() -> None:
     parser.add_argument("--max-self-pay", type=float, default=5.0, help="自己負担上限 (万円)")
     parser.add_argument("--max-total-walk", type=int, default=18, help="総徒歩上限 (分)")
     parser.add_argument("--d2d-bands", type=str, default="30,35,40", help="集計するドアドア帯 (分, カンマ区切り)")
-    parser.add_argument("--work-dir", type=str, default=".work/d2d30", help="作業データ格納ディレクトリ")
+    parser.add_argument("--work-dir", type=str, default="tmp/d2d30", help="作業データ格納ディレクトリ")
     parser.add_argument("--refresh", action="store_true", help="raw_listings.json が存在しても再取得する")
     parser.add_argument("--all-types", action="store_true", help="一戸建てだけでなく全種別（マンション・アパート含む）を対象にする")
     parser.add_argument("--min-bedrooms", type=int, default=0, help="最小居室数 (例: 3で3K/3DK/3LDK/4K以上)")

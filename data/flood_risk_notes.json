@@ -1,5 +1,5 @@
 {
-  "_説明": "手動評価と被害実績。manual は自動判定できない場合の代わりに表示する評価（doc/浸水リスク評価.md）。history は地図に載らない被害実績で、level を書くと表示レベルの下限になる（null はメモのみ）。level: low / medium / high / extreme / unknown",
+  "_説明": "手動評価と被害実績。manual は自動判定できない場合の代わりに表示する評価（research/浸水リスク評価.md）。history は地図に載らない被害実績で、level を書くと表示レベルの下限になる（null はメモのみ）。level: low / medium / high / extreme / unknown",
   "properties": {
     "東京都西東京市富士町４": {
       "manual": {

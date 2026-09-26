@@ -1,9 +1,13 @@
+# Python / Node の生成物
 __pycache__/
 *.pyc
+node_modules/
+package-lock.json
+
+# 秘密情報・ツールのローカル設定
 .env
 .claude/
 .gemini/
-node_modules/
-package-lock.json
-data/update_job.log
-.work/
+
+# 一時フォルダ: 作業データ・ログ・使い捨てスクリプトの置き場所（中身はいつ消してもよい。ルールは README.md）
+tmp/

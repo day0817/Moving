@@ -6,8 +6,10 @@
 #   2. Yahoo!路線情報による駅別通勤データ同期 (scripts/fetch_station_commute.js)
 #   3. 新駅追加時の再判定スクレイピング
 #   4. 重ねるハザードマップによる浸水リスク自動判定 (scripts/check_flood_risk.py)
-#   5. index.html のキャッシュバスター (?v=YYYYMMDD) および更新日時の更新
+#   5. docs/index.html のキャッシュバスター (?v=YYYYMMDD) および更新日時の更新
 #   6. Gitコミット＆GitHub Pages (origin/main) への自動プッシュ
+#
+# 公開: GitHub Pages が main ブランチの docs/ フォルダを公開している（Webアプリ一式は docs/ に置く）
 # ==============================================================================
 
 $ErrorActionPreference = "Continue"
@@ -17,7 +19,8 @@ $scriptDir = $PSScriptRoot
 $repoRoot = (Split-Path -Parent $scriptDir)
 Set-Location $repoRoot
 
-$logDir = Join-Path $repoRoot "data"
+# ログは一時フォルダ tmp/logs/ に書く（Git管理外。消しても次回実行時に作り直す）
+$logDir = Join-Path $repoRoot "tmp\logs"
 if (-not (Test-Path $logDir)) {
     New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 }
@@ -106,7 +109,7 @@ if (Test-Path $floodScript) {
 # ステップ5: index.html のキャッシュバスターおよび更新日時表示の更新
 # ------------------------------------------------------------------------------
 Write-Log "--- ステップ5: index.html のキャッシュバスターおよび更新日時を更新中 ---"
-$indexPath = Join-Path $repoRoot "index.html"
+$indexPath = Join-Path $repoRoot "docs\index.html"
 $today = (Get-Date).ToString("yyyyMMdd")
 $todaySlash = (Get-Date).ToString("yyyy/MM/dd")
 $todayHyphen = (Get-Date).ToString("yyyy-MM-dd")
@@ -134,17 +137,18 @@ if (Test-Path $indexPath) {
 # ------------------------------------------------------------------------------
 Write-Log "--- ステップ6: 変更差分の確認とGitプッシュ ---"
 
+# コミット対象: 公開するWebアプリのデータ（docs/）、スクリプトのデータ・キャッシュ（data/）、自動生成レポート（research/）
 $targetFiles = @(
-    "index.html",
-    "properties.js",
-    "station_commute.js",
-    "rail_lines.js",
-    "flood_risk.js",
+    "docs/index.html",
+    "docs/data/properties.js",
+    "docs/data/station_commute.js",
+    "docs/data/flood_risk.js",
     "data/station_commute.csv",
     "data/flood_risk_cache.json",
     "data/geocoding_cache.json",
-    "doc/物件検索結果.md",
-    "doc/物件数推移.md"
+    "data/parking_cache.json",
+    "research/物件検索結果.md",
+    "research/物件数推移.md"
 )
 
 $hasDiff = $false

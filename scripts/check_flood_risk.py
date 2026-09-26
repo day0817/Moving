@@ -33,11 +33,11 @@ import zlib
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-PROPERTIES_JS_PATH = os.path.join(REPO_ROOT, "properties.js")
+PROPERTIES_JS_PATH = os.path.join(REPO_ROOT, "docs", "data", "properties.js")
 GEOCODING_CACHE_PATH = os.path.join(REPO_ROOT, "data", "geocoding_cache.json")  # 駅座標（property_search.py が生成）
 CACHE_PATH = os.path.join(REPO_ROOT, "data", "flood_risk_cache.json")          # 判定結果キャッシュ
 NOTES_PATH = os.path.join(REPO_ROOT, "data", "flood_risk_notes.json")          # 手動評価・被害実績（手で編集）
-OUTPUT_JS_PATH = os.path.join(REPO_ROOT, "flood_risk.js")                      # Webアプリが読み込むデータ
+OUTPUT_JS_PATH = os.path.join(REPO_ROOT, "docs", "data", "flood_risk.js")      # Webアプリが読み込むデータ
 
 TILE_BASE_URL = "https://disaportal.gsi.go.jp/data/raster"
 GSI_ADDRESS_SEARCH_URL = "https://msearch.gsi.go.jp/address-search/AddressSearch"

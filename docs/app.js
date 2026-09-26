@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // データ初期化 (properties.jsから読み込まれたbukkenDataを使用)
     let properties = typeof bukkenData !== 'undefined' ? bukkenData : [];
-    let selectedProperties = [];
 
     // 更新日時の反映
     const lastUpdatedEl = document.getElementById("lastUpdated");
@@ -184,6 +183,83 @@ document.addEventListener("DOMContentLoaded", () => {
         return String(str ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     }
 
+    // ========================================================
+    // ★評価（自己負担・駅徒歩・ドアドアを各★0〜3で採点し、合計を総★数とする）
+    // 浸水リスク「高」「極高」の物件は、他の評価に関係なく総★数を0にする
+    // ========================================================
+    const STAR_RULES = {
+        selfPay: { label: '自己負担', unit: '万円', steps: [[3.4, 3], [4.2, 2], [5.0, 1]] },
+        walk: { label: '駅徒歩', unit: '分', steps: [[5, 3], [10, 2], [15, 1]] },
+        doorToDoor: { label: 'ドアドア', unit: '分', steps: [[40, 3], [50, 2], [60, 1]] },
+    };
+
+    // 上限値以下に入った最初の段の★数。どの段にも入らなければ★0
+    function starsFor(ruleKey, value) {
+        const rule = STAR_RULES[ruleKey];
+        if (!rule) throw new Error(`★評価の基準が未定義です: ${ruleKey}`);
+        if (typeof value !== 'number' || Number.isNaN(value)) return 0;
+        const hit = rule.steps.find(([max]) => value <= max);
+        return hit ? hit[1] : 0;
+    }
+
+    function starRuleText(ruleKey) {
+        const { label, unit, steps } = STAR_RULES[ruleKey];
+        return `${label}: ` + steps.map(([max, stars]) => `${max}${unit}以下★${stars}`).join(' / ');
+    }
+
+    function getStarInfo(p) {
+        const best = p._commuteInfo?.best || {};
+        // 自己負担は小数の誤差（例: 3.4000000000000004）で段を取り違えないよう、表示と同じ小数2桁で比べる
+        const selfPay = starsFor('selfPay', Math.round(p.self_pay * 100) / 100);
+        const walk = starsFor('walk', best.propWalkMin ?? p.walk_min);
+        const doorToDoor = starsFor('doorToDoor', best.doorToDoor ?? p.door_to_door);
+        const zeroByFlood = isHighFloodRisk(p);
+        return { selfPay, walk, doorToDoor, zeroByFlood, total: zeroByFlood ? 0 : selfPay + walk + doorToDoor };
+    }
+
+    properties.forEach(p => {
+        p._stars = getStarInfo(p);
+    });
+
+    // ========================================================
+    // アイコン（単色インラインSVG・色は currentColor で親から受け取る）
+    // ========================================================
+    const ICON_PATHS = {
+        star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+        train: '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14"/><path d="M9 14h.01"/><path d="M15 14h.01"/><path d="M8 21l2-4"/><path d="M16 21l-2-4"/>',
+        home: '<path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+        office: '<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/><path d="M10 21v-3h4v3"/>',
+        // 到着駅: 大手町＝地下鉄（トンネルと車両）、東京＝丸の内駅舎（両端のドーム）
+        otemachi: '<path d="M3 21V11a9 9 0 0 1 18 0v10"/><rect x="8" y="9" width="8" height="8" rx="2"/><path d="M8 13h8"/><path d="M2 21h20"/>',
+        tokyo: '<path d="M2 21h20"/><path d="M3 21V9h5v12"/><path d="M16 21V9h5v12"/><path d="M3 9a2.5 2.5 0 0 1 5 0"/><path d="M16 9a2.5 2.5 0 0 1 5 0"/><path d="M8 13h8"/><path d="M10 13l2-2 2 2"/><path d="M12 21v-4"/>',
+        external: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+        chevronDown: '<polyline points="6 9 12 15 18 9"/>',
+        chevronUp: '<polyline points="18 15 12 9 6 15"/>',
+        grip: '<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>',
+        alert: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+        car: '<path d="M5 16v-5l2-5h10l2 5v5"/><path d="M3 16h18"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/>',
+    };
+
+    function icon(name, extraClass = '') {
+        const paths = ICON_PATHS[name];
+        if (!paths) throw new Error(`未定義のアイコンです: ${name}`);
+        return `<svg class="icon-svg ${extraClass}" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+    }
+
+    // 到着駅（大手町 / 東京）の見分け。東京駅着はサンケイビルまでの徒歩が長い
+    function getArrivalInfo(best) {
+        const isTokyo = Boolean(best.arrivalStation && best.arrivalStation.startsWith('東京'));
+        return isTokyo
+            ? { key: 'tokyo', label: '東京駅着', name: '東京' }
+            : { key: 'otemachi', label: '大手町駅着', name: (best.arrivalStation || '大手町').replace(/\(.*\)/, '') };
+    }
+
+    // ★3つの並び（塗り＝獲得、線＝未獲得）
+    function renderStars(count, ruleKey) {
+        const stars = [0, 1, 2].map(i => icon('star', i < count ? 'star-on' : 'star-off')).join('');
+        return `<span class="stars" role="img" aria-label="★${count}（3段階中）" title="${escapeHtml(starRuleText(ruleKey))}">${stars}</span>`;
+    }
+
     // 必須カットオフ条件の適用（ドアドア 59分以下 かつ 総徒歩 18分以内）
     properties = properties.filter(p => {
         const best = p._commuteInfo?.best;
@@ -192,60 +268,66 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // 並び替え条件の定義
+    // label: 並び順リストの表示 / dir: 並ぶ向き / short: 件数の横に出す短い名前
     const SORT_CRITERIA = {
-        'walk-asc': { label: '物件〜駅徒歩（短い順）', compare: (a, b) => (a._commuteInfo?.best?.propWalkMin ?? a.walk_min) - (b._commuteInfo?.best?.propWalkMin ?? b.walk_min) },
-        'total-walk-asc': { label: '総徒歩時間（短い順）', compare: (a, b) => (a._commuteInfo?.best?.totalWalkMin ?? a.walk_min) - (b._commuteInfo?.best?.totalWalkMin ?? b.walk_min) },
-        'commute-asc': { label: 'ドアドア時間（短い順）', compare: (a, b) => (a._commuteInfo?.best?.doorToDoor ?? a.door_to_door) - (b._commuteInfo?.best?.doorToDoor ?? b.door_to_door) },
-        'age-asc': { label: '築年数（浅い順）', compare: (a, b) => parseAge(a.age_floor) - parseAge(b.age_floor) },
-        'rent-asc': { label: '自己負担額（低い順）', compare: (a, b) => a.self_pay - b.self_pay },
-        'menseki-desc': { label: '専有面積（広い順）', compare: (a, b) => parseAreaSize(b.menseki) - parseAreaSize(a.menseki) },
-        'flood-asc': { label: '浸水リスク（低い順）', compare: (a, b) => getFloodRank(a) - getFloodRank(b) },
+        'walk-asc': { label: '物件〜駅徒歩', dir: '短い順', short: '駅徒歩', compare: (a, b) => (a._commuteInfo?.best?.propWalkMin ?? a.walk_min) - (b._commuteInfo?.best?.propWalkMin ?? b.walk_min) },
+        'total-walk-asc': { label: '総徒歩時間', dir: '短い順', short: '総徒歩', compare: (a, b) => (a._commuteInfo?.best?.totalWalkMin ?? a.walk_min) - (b._commuteInfo?.best?.totalWalkMin ?? b.walk_min) },
+        'commute-asc': { label: 'ドアドア時間', dir: '短い順', short: 'ドアドア', compare: (a, b) => (a._commuteInfo?.best?.doorToDoor ?? a.door_to_door) - (b._commuteInfo?.best?.doorToDoor ?? b.door_to_door) },
+        'age-asc': { label: '築年数', dir: '浅い順', short: '築年数', compare: (a, b) => parseAge(a.age_floor) - parseAge(b.age_floor) },
+        'rent-asc': { label: '自己負担額', dir: '低い順', short: '自己負担', compare: (a, b) => a.self_pay - b.self_pay },
+        'menseki-desc': { label: '専有面積', dir: '広い順', short: '面積', compare: (a, b) => parseAreaSize(b.menseki) - parseAreaSize(a.menseki) },
+        'flood-asc': { label: '浸水リスク', dir: '低い順', short: '浸水', compare: (a, b) => getFloodRank(a) - getFloodRank(b) },
+        'stars-desc': { label: '総★数', dir: '多い順', short: '総★数', compare: (a, b) => b._stars.total - a._stars.total },
     };
 
     // 要素取得
     const bukkenGrid = document.getElementById("bukkenGrid");
     const areaTabs = document.getElementById("areaTabs");
     const cityTabs = document.getElementById("cityTabs");
+    const cityTabsRow = document.getElementById("cityTabsRow");
     const sortPriorityList = document.getElementById("sortPriorityList");
-    const openCompareBtn = document.getElementById("openCompareBtn");
-    const compareCount = document.getElementById("compareCount");
+    const sortSummary = document.getElementById("sortSummary");
+    const resultCount = document.getElementById("resultCount");
+    const legend = document.getElementById("legend");
     const onlyNewCheck = document.getElementById("onlyNewCheck");
-    const onlyNewFilterBtn = document.getElementById("onlyNewFilterBtn");
     const newBukkenCount = document.getElementById("newBukkenCount");
     const hideFloodRiskCheck = document.getElementById("hideFloodRiskCheck");
     const floodRiskCount = document.getElementById("floodRiskCount");
     const themeToggleBtn = document.getElementById("themeToggleBtn");
-    const themeLabel = document.getElementById("themeLabel");
-    
-    // モーダル要素
-    const compareModal = document.getElementById("compareModal");
-    const closeModalBtn = document.getElementById("closeModalBtn");
-    const compareTable = document.getElementById("compareTable");
 
     // ========================================================
-    // テーマ管理（Solarized / Solarized Dark）
+    // テーマ管理（Solarized Light / Dark）。既定はライト
     // ========================================================
-    const THEME_STORAGE_KEY = "bukken_theme";
+    // 利用者が切り替えたときだけ保存する。旧キー "bukken_theme" は、旧デザインが
+    // 起動のたびに既定の "dark" を書き込んでいたため読まない（新しい既定のライトで開くように）
+    // ※ index.html の <head> でも同じキーを読んで、描画前に外観を決めている
+    const THEME_STORAGE_KEY = "bukken_theme_v2";
 
     function getInitialTheme() {
-        const saved = localStorage.getItem(THEME_STORAGE_KEY);
-        if (saved === "light" || saved === "dark") return saved;
-        return "dark"; // デフォルトは Solarized Dark
+        try {
+            return localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+        } catch (e) {
+            console.warn("外観の設定を読み込めませんでした（ライト表示で開きます）", e);
+            return "light";
+        }
     }
 
     function applyTheme(theme) {
         document.documentElement.setAttribute("data-theme", theme);
-        document.body.setAttribute("data-theme", theme);
-        localStorage.setItem(THEME_STORAGE_KEY, theme);
-        if (themeLabel) {
-            themeLabel.textContent = theme === "light" ? "Solarized Light" : "Solarized Dark";
+        if (themeToggleBtn) {
+            themeToggleBtn.setAttribute("aria-label", theme === "dark" ? "ライト表示に切り替え" : "ダーク表示に切り替え");
         }
     }
 
     function toggleTheme() {
-        const current = document.documentElement.getAttribute("data-theme") || "dark";
+        const current = document.documentElement.getAttribute("data-theme") || "light";
         const next = current === "light" ? "dark" : "light";
         applyTheme(next);
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, next);
+        } catch (e) {
+            console.warn("外観の設定を保存できませんでした（次回はライト表示で開きます）", e);
+        }
     }
 
     // テーマ初期適用
@@ -260,9 +342,9 @@ document.addEventListener("DOMContentLoaded", () => {
         prefecture: "all",
         city: "all",
         onlyNew: false,
-        hideHighFlood: false,
+        hideHighFlood: true, // 既定で浸水リスク「高」「極高」を除く（index.html のチェック初期値と合わせる）
         openFlood: new Set(), // 浸水リスク詳細を開いている物件URL（再描画しても開いたままにする）
-        sortPriority: ['walk-asc', 'commute-asc', 'total-walk-asc', 'age-asc', 'rent-asc', 'menseki-desc', 'flood-asc'],
+        sortPriority: ['walk-asc', 'commute-asc', 'total-walk-asc', 'age-asc', 'rent-asc', 'menseki-desc', 'flood-asc', 'stars-desc'],
     };
 
     // ヘルパー関数: 築年数の数値をパース
@@ -278,21 +360,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!mensekiStr) return 0;
         const m = mensekiStr.match(/([\d.]+)m/);
         return m ? parseFloat(m[1]) : 0;
-    }
-
-    // ヘルパー関数: 自己負担額のカラークラス判定
-    function getSelfPayColorClass(val) {
-        if (val <= 3.2) return "color-default";
-        if (val <= 4.0) return "color-yellow";
-        if (val <= 5.0) return "color-orange";
-        return "color-red";
-    }
-
-    // ヘルパー関数: 通勤時間のカラークラス判定
-    function getCommuteColorClass(minutes) {
-        if (minutes <= 40) return "green";
-        if (minutes <= 50) return "yellow";
-        return "red";
     }
 
     // フィルタリング処理
@@ -363,20 +430,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        let html = `
-            <button class="tab-btn ${state.prefecture === 'all' ? 'active' : ''}" data-pref="all">
-                すべて (${baseProps.length})
-            </button>
-        `;
+        let html = chipHtml('pref', 'all', 'すべて', baseProps.length, state.prefecture === 'all');
 
         KANTO_PREFECTURES.forEach(pref => {
             const count = prefCounts[pref] || 0;
             if (count > 0 || state.prefecture === pref) {
-                html += `
-                    <button class="tab-btn ${state.prefecture === pref ? 'active' : ''}" data-pref="${pref}">
-                        ${pref} (${count})
-                    </button>
-                `;
+                html += chipHtml('pref', pref, pref, count, state.prefecture === pref);
             }
         });
 
@@ -384,17 +443,23 @@ document.addEventListener("DOMContentLoaded", () => {
         renderCityTabs(baseProps);
     }
 
+    // エリアのチップ1つ分（kind: 'pref' = 都道府県 / 'city' = 市区町村）
+    function chipHtml(kind, value, label, count, isActive) {
+        const subClass = kind === 'city' ? ' chip--sub' : '';
+        return `<button type="button" class="chip${subClass}" data-${kind}="${escapeHtml(value)}" aria-pressed="${isActive}">${escapeHtml(label)}<span class="chip-count">${count}</span></button>`;
+    }
+
     // 市区町村タブの描画
     function renderCityTabs(baseProps) {
         if (!cityTabs) return;
 
         if (state.prefecture === 'all') {
-            cityTabs.style.display = 'none';
+            if (cityTabsRow) cityTabsRow.hidden = true;
             cityTabs.innerHTML = '';
             return;
         }
 
-        cityTabs.style.display = 'flex';
+        if (cityTabsRow) cityTabsRow.hidden = false;
         const prefProps = baseProps.filter(p => getPrefecture(p.address) === state.prefecture);
 
         const cityCounts = {};
@@ -405,76 +470,48 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        let html = `
-            <button class="tab-btn tab-btn--sub ${state.city === 'all' ? 'active' : ''}" data-city="all">
-                全域 (${prefProps.length})
-            </button>
-        `;
+        let html = chipHtml('city', 'all', '全域', prefProps.length, state.city === 'all');
 
         Object.keys(cityCounts).sort().forEach(city => {
-            const count = cityCounts[city];
-            html += `
-                <button class="tab-btn tab-btn--sub ${state.city === city ? 'active' : ''}" data-city="${city}">
-                    ${city} (${count})
-                </button>
-            `;
+            html += chipHtml('city', city, city, cityCounts[city], state.city === city);
         });
 
         cityTabs.innerHTML = html;
     }
 
-    // ポップオーバーHTMLの生成（上段: ステップタイムライン案B ＋ 下段: 詳細内訳案A）
+    // 通勤の内訳ポップオーバー（上段: 自宅→駅→到着駅→会社の流れ ＋ 下段: 所要時間の内訳・他の駅）
     function renderPopoverHtml(best, others) {
-        const arrStationShort = (best.arrivalStation || '大手町').replace(/\(.*\)/, '');
+        const arrival = getArrivalInfo(best);
+        const station = escapeHtml(best.station);
 
         return `
-            <div class="commute-popover glass">
-                <div class="popover-header">
-                    <span class="popover-title">🚆 最適通勤ルート詳細</span>
-                    <span class="popover-badge">最速ルート</span>
+            <div class="commute-popover" role="tooltip">
+                <div class="pop-head">
+                    <span class="pop-title">${icon('train', 'icon-sm')}最速ルートの内訳（${escapeHtml(best.line)}）</span>
                 </div>
-
-                <!-- 上段: ステップタイムライン (案B) -->
-                <div class="popover-timeline-box">
-                    <div class="popover-flow">
-                        <div class="popover-node">🏠 家</div>
-                        <div class="popover-leg walk">
-                            <span class="popover-leg-label">歩${best.propWalkMin}分</span>
-                        </div>
-                        <div class="popover-node">🚉 ${best.station}</div>
-                        <div class="popover-leg train">
-                            <span class="popover-leg-label">電車${best.trainMin}分 (乗換${best.transfers})</span>
-                        </div>
-                        <div class="popover-node office">🚉 ${arrStationShort}</div>
-                        <div class="popover-leg walk">
-                            <span class="popover-leg-label">歩${best.arrivalWalkMin}分</span>
-                        </div>
-                        <div class="popover-node office">🏢 会社</div>
-                    </div>
-                </div>
-
-                <!-- 下段: 詳細内訳 (案A) -->
-                <div class="popover-section">
-                    <div class="popover-section-label">■ ${best.station}駅ルート詳細 (${best.line})</div>
-                    <ul class="popover-breakdown-list">
-                        <li><span>① 物件〜${best.station}駅 徒歩</span><strong>${best.propWalkMin} 分</strong></li>
-                        <li><span>② 電車乗車 (${best.linesUsed || best.line})</span><strong>${best.trainMin} 分</strong></li>
-                        <li><span>③ 乗換・構内移動・待ち (乗換${best.transfers}回)</span><strong>${best.transitWalkMin} 分</strong></li>
-                        <li><span>④ ${best.arrivalStation}〜サンケイビル 徒歩</span><strong>${best.arrivalWalkMin} 分</strong></li>
-                        <li class="total-row">
-                            <span>合計ドアドア / 総徒歩</span>
-                            <span style="color:var(--primary-blue,#2E4FB5);">${best.doorToDoor} 分 / ${best.totalWalkMin} 分</span>
-                        </li>
-                    </ul>
-                </div>
-
+                <ol class="pop-flow" aria-label="通勤ルート">
+                    <li class="pop-node"><span class="pop-dot">${icon('home', 'icon-sm')}</span>自宅</li>
+                    <li class="pop-leg">徒歩${best.propWalkMin}分</li>
+                    <li class="pop-node"><span class="pop-dot">${icon('train', 'icon-sm')}</span>${station}</li>
+                    <li class="pop-leg is-train">電車${best.trainMin}分・乗換${best.transfers}回</li>
+                    <li class="pop-node"><span class="pop-dot">${icon(arrival.key, 'icon-sm')}</span>${escapeHtml(arrival.name)}</li>
+                    <li class="pop-leg">徒歩${best.arrivalWalkMin}分</li>
+                    <li class="pop-node"><span class="pop-dot">${icon('office', 'icon-sm')}</span>会社</li>
+                </ol>
+                <ul class="pop-breakdown">
+                    <li><span>① 物件〜${station}駅 徒歩</span><strong>${best.propWalkMin}分</strong></li>
+                    <li><span>② 電車乗車（${escapeHtml(best.linesUsed || best.line)}）</span><strong>${best.trainMin}分</strong></li>
+                    <li><span>③ 乗換・構内移動・待ち（乗換${best.transfers}回）</span><strong>${best.transitWalkMin}分</strong></li>
+                    <li><span>④ ${escapeHtml(best.arrivalStation)}〜サンケイビル 徒歩</span><strong>${best.arrivalWalkMin}分</strong></li>
+                    <li class="total-row"><span>合計ドアドア / 総徒歩</span><strong>${best.doorToDoor}分 / ${best.totalWalkMin}分</strong></li>
+                </ul>
                 ${others && others.length > 0 ? `
-                    <div class="popover-section" style="border-top: 1px solid var(--border-color); padding-top: 0.45rem;">
-                        <div class="popover-section-label">■ 他の利用可能駅ルート比較</div>
+                    <div class="pop-others">
+                        <p class="pop-label">他の利用可能駅</p>
                         ${others.map(o => `
-                            <div class="popover-other-route-item">
-                                <span><strong>${o.station}駅</strong> (歩${o.propWalkMin}分 + 電車${o.trainMin}分)</span>
-                                <span>計 <strong>${o.doorToDoor}分</strong> (総徒歩${o.totalWalkMin}分/乗換${o.transfers}回)</span>
+                            <div class="pop-other">
+                                <span><strong>${escapeHtml(o.station)}駅</strong>（歩${o.propWalkMin}分＋電車${o.trainMin}分）</span>
+                                <span>計 <strong>${o.doorToDoor}分</strong>（総徒歩${o.totalWalkMin}分・乗換${o.transfers}回）</span>
                             </div>
                         `).join('')}
                     </div>
@@ -483,38 +520,47 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
 
-    // 通勤ビジュアル部分のHTML生成（通常: 案C 3連バッジ ＋ ホバー: ポップオーバー）
+    // 数字の段（自己負担・ドアドア・駅徒歩＋各★）。ホバー/タップで通勤の内訳ポップオーバーを出す
     function renderCommuteVisual(p) {
         const { best, others } = p._commuteInfo;
-        const popoverHtml = renderPopoverHtml(best, others);
-        const isTokyoArrival = Boolean(best.arrivalStation && best.arrivalStation.startsWith('東京'));
-        const tokyoIconHtml = isTokyoArrival
-            ? `<span class="tokyo-icon" title="到着駅: 東京駅（サンケイビルまで徒歩${best.arrivalWalkMin}分）">🗼</span>`
-            : '';
+        const arrival = getArrivalInfo(best);
+        const stars = p._stars;
+        const arrivalTitle = `${arrival.label}（サンケイビルまで徒歩${best.arrivalWalkMin}分）`;
 
         return `
-            <div class="commute-visual-container" tabindex="0" title="ホバーまたはタップで詳細内訳を表示">
-                <div class="commute-badges-box">
-                    <div class="commute-badge-row">
-                        <div class="c-badge primary">
-                            <span class="c-badge-label">🚪 ドアドア</span>
-                            <span class="c-badge-val">${best.doorToDoor}分</span>
-                        </div>
-                        <div class="c-badge walk">
-                            <span class="c-badge-label">🚶 物件〜駅</span>
-                            <span class="c-badge-val">${best.propWalkMin}分</span>
-                        </div>
-                        <div class="c-badge total-walk">
-                            <span class="c-badge-label">👣 総徒歩${tokyoIconHtml}</span>
-                            <span class="c-badge-val">${best.totalWalkMin}分</span>
-                        </div>
-                    </div>
-                    <div class="commute-badge-sub">
-                        <span>乗車 <strong>${best.trainMin}分</strong> / 乗換 <strong>${best.transfers}回</strong></span>
-                    </div>
+            <div class="commute-visual-container" tabindex="0" role="group" aria-label="自己負担・ドアドア・駅徒歩。フォーカスすると通勤の内訳を表示します">
+                <div class="stat">
+                    <span class="stat-label">自己負担</span>
+                    <span class="stat-value">${p.self_pay.toFixed(2)}<span class="stat-unit">万円/月</span></span>
+                    ${renderStars(stars.selfPay, 'selfPay')}
                 </div>
-                ${popoverHtml}
+                <div class="stat">
+                    <span class="stat-label">ドアドア<span class="arrival-icon" role="img" aria-label="${escapeHtml(arrivalTitle)}" title="${escapeHtml(arrivalTitle)}">${icon(arrival.key, 'icon-sm')}</span></span>
+                    <span class="stat-value">${best.doorToDoor}<span class="stat-unit">分</span></span>
+                    ${renderStars(stars.doorToDoor, 'doorToDoor')}
+                </div>
+                <div class="stat">
+                    <span class="stat-label">駅徒歩</span>
+                    <span class="stat-value">${best.propWalkMin}<span class="stat-unit">分</span></span>
+                    ${renderStars(stars.walk, 'walk')}
+                </div>
+                ${renderPopoverHtml(best, others)}
             </div>
+        `;
+    }
+
+    // カード左上の総★数。浸水リスク「高」「極高」は★0（理由をツールチップに出す）
+    function renderStarTotal(p) {
+        const s = p._stars;
+        const detail = `自己負担★${s.selfPay}・駅徒歩★${s.walk}・ドアドア★${s.doorToDoor}`;
+        const title = s.zeroByFlood
+            ? `浸水リスク「${FLOOD_LEVELS[p._flood.level].label}」のため総★数は0（${detail}）`
+            : `総★数 ${s.total}（${detail}）`;
+        const isZero = s.total === 0;
+        return `
+            <span class="star-total${isZero ? ' is-zero' : ''}" role="img" aria-label="${escapeHtml(title)}" title="${escapeHtml(title)}">
+                ${icon('star', isZero ? 'icon-sm' : 'icon-sm star-on')}<span class="num">${s.total}</span>
+            </span>
         `;
     }
 
@@ -534,7 +580,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function floodLevelPill(level) {
         const meta = FLOOD_LEVELS[level];
-        return meta ? `<span class="flood-level-pill flood-${level}">${meta.label}</span>` : '';
+        return meta ? `<span class="flood-tag lv-${level}">${meta.label}</span>` : '';
     }
 
     // 評価の根拠となる一文（自動判定の先頭理由 or 手動評価の理由）
@@ -554,10 +600,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const { entry, level } = p._flood;
         if (!level) return '';
         const isOpen = state.openFlood.has(p.url);
-        const srcTag = entry.source === 'auto' ? '' : '<span class="flood-badge-src">手動</span>';
+        const srcTag = entry.source === 'auto' ? '' : '<span class="flood-src">手動</span>';
         return `
-            <button type="button" class="flood-badge flood-${level}" data-flood-toggle aria-expanded="${isOpen}" title="タップで浸水リスクの内訳を表示">
-                🌊 浸水 ${FLOOD_LEVELS[level].label}${srcTag}
+            <button type="button" class="flood-tag flood-toggle lv-${level}" data-flood-toggle aria-expanded="${isOpen}" title="押すと浸水リスクの内訳を表示">
+                浸水 ${FLOOD_LEVELS[level].label}${srcTag}${icon('chevronDown', 'icon-xs chev')}
             </button>
         `;
     }
@@ -583,12 +629,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li>
                 <span class="flood-history-date">${escapeHtml(h.date || '')}</span>
                 ${escapeHtml(h.text)}
-                ${h.url ? `<a href="${escapeHtml(h.url)}" target="_blank" rel="noopener noreferrer">出典↗</a>` : ''}
+                ${h.url ? `<a href="${escapeHtml(h.url)}" target="_blank" rel="noopener noreferrer">出典${icon('external', 'icon-xs')}</a>` : ''}
             </li>
         `).join('');
 
         const stationHtml = station && station.level
-            ? `<div class="flood-station">🚉 ${escapeHtml(stationName)}駅周辺: ${floodLevelPill(station.level)} <span>${escapeHtml(getFloodReason(station))}</span></div>`
+            ? `<div class="flood-station">${icon('train', 'icon-xs')}${escapeHtml(stationName)}駅周辺: ${floodLevelPill(station.level)} <span>${escapeHtml(getFloodReason(station))}</span></div>`
             : '';
 
         // 地図リンク: 判定位置 → 最寄駅 → トップページの順
@@ -604,7 +650,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         return `
-            <div class="flood-detail" ${isOpen ? '' : 'hidden'}>
+            <div class="flood-detail lv-${level}" ${isOpen ? '' : 'hidden'}>
                 <div class="flood-detail-head">
                     ${floodLevelPill(level)}
                     <span class="flood-source">${escapeHtml(getFloodSourceText(entry))}</span>
@@ -612,13 +658,66 @@ document.addEventListener("DOMContentLoaded", () => {
                 <ul class="flood-reasons">${reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
                 ${raisedNote}
                 ${layersHtml}
-                ${historyHtml ? `<div class="flood-history-label">⚠ 被害実績など</div><ul class="flood-history">${historyHtml}</ul>` : ''}
+                ${historyHtml ? `<div class="flood-history-label">${icon('alert', 'icon-xs')}被害実績など</div><ul class="flood-history">${historyHtml}</ul>` : ''}
                 ${stationHtml}
                 <div class="flood-foot">
                     <span>${positionText}</span>
-                    <a href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener noreferrer" class="flood-map-link">重ねるハザードマップで確認 ↗</a>
+                    <a href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener noreferrer" class="flood-map-link">重ねるハザードマップで確認${icon('external', 'icon-xs')}</a>
                 </div>
             </div>
+        `;
+    }
+
+    // 間取り・面積・築年数・階建を1行に（例: 4LDK ・ 84.18m² ・ 築21年 ・ 2階建）
+    function formatSpec(p) {
+        const area = String(p.menseki || '').replace(/m2$/, 'm²');
+        const ageFloor = String(p.age_floor || '').replace('地上', '').split(/\s+/).filter(Boolean);
+        return [p.madori, area, ...ageFloor].filter(Boolean).map(escapeHtml).join(' ・ ');
+    }
+
+    // 駐車場の注意（有料・100m以上離れている）。問題なければ空文字
+    function renderParkingNotes(p) {
+        const isPaidParking = (p.parking_fee && p.parking_fee > 0) ||
+            (p.parking_text && !p.parking_text.includes('無料') && !p.parking_text.includes('付') && p.parking_text !== '-');
+        const notes = [
+            isPaidParking ? `駐車場 ${p.parking_fee > 0 ? (p.parking_fee + '万円') : '有料'}` : null,
+            (p.parking_dist && p.parking_dist >= 100) ? `駐車場 ${p.parking_dist}m先` : null,
+        ].filter(Boolean);
+        return notes.length
+            ? `<div class="card-notes">${notes.map(t => `<span class="note-tag">${icon('car', 'icon-sm')}${escapeHtml(t)}</span>`).join('')}</div>`
+            : '';
+    }
+
+    // 物件カード1枚。物件名が SUUMO へのリンクを兼ねる
+    function renderCard(p) {
+        const best = p._commuteInfo?.best || {};
+        const title = escapeHtml(p.title);
+        return `
+            <article class="c-card bukken-card" data-url="${escapeHtml(p.url)}">
+                <div class="card-top">
+                    ${renderStarTotal(p)}
+                    <span class="card-station">${icon('train', 'icon-sm')}${escapeHtml(best.station || p.station)}駅 <span class="line">${escapeHtml(best.line || p.line)}</span></span>
+                    <span class="card-tags">
+                        ${p.is_new ? '<span class="new-tag">NEW</span>' : ''}
+                        ${renderFloodBadge(p)}
+                    </span>
+                </div>
+
+                ${renderFloodDetail(p)}
+
+                <h3 class="card-title">
+                    <a href="${escapeHtml(p.url)}" target="_blank" rel="noopener noreferrer" title="${title}（SUUMOで開く）">${title}${icon('external', 'icon-xs title-ext')}</a>
+                </h3>
+
+                ${renderCommuteVisual(p)}
+
+                <div>
+                    <p class="card-meta">${formatSpec(p)}</p>
+                    <p class="card-sub">総徒歩${best.totalWalkMin ?? '-'}分・乗換${best.transfers ?? '-'}回 ／ ${escapeHtml(p.address)}</p>
+                </div>
+
+                ${renderParkingNotes(p)}
+            </article>
         `;
     }
 
@@ -630,113 +729,40 @@ document.addEventListener("DOMContentLoaded", () => {
         updateNewCount();
         renderAreaTabs();
 
+        if (resultCount) resultCount.textContent = sorted.length;
+        if (sortSummary) {
+            const firstThree = state.sortPriority.slice(0, 3).map(key => SORT_CRITERIA[key]?.short).filter(Boolean);
+            sortSummary.textContent = `並び順: ${firstThree.join(' → ')} → …`;
+        }
+
         if (!bukkenGrid) return;
 
-        if (sorted.length === 0) {
-            bukkenGrid.innerHTML = `
-                <div class="no-results glass">
-                    <p>該当する条件の物件が見つかりませんでした。</p>
-                </div>
-            `;
-            return;
-        }
-
-        bukkenGrid.innerHTML = sorted.map(p => {
-            const isSelected = selectedProperties.some(item => item.url === p.url);
-            const selfPayClass = getSelfPayColorClass(p.self_pay);
-            const best = p._commuteInfo?.best || {};
-
-            // 駐車場代が有料の場合のみ強調バッジ表示
-            const isPaidParking = (p.parking_fee && p.parking_fee > 0) || 
-                (p.parking_text && !p.parking_text.includes('無料') && !p.parking_text.includes('付') && p.parking_text !== '-');
-            const parkingFeeBadge = isPaidParking
-                ? `<span class="parking-badge fee-warning">駐車場 ${p.parking_fee > 0 ? (p.parking_fee + '万円') : '有料'}</span>`
-                : '';
-
-            // 駐車場が100m以上離れている場合の警告バッジ
-            const parkingDistBadge = (p.parking_dist && p.parking_dist >= 100)
-                ? `<span class="parking-badge warning">駐車場 ${p.parking_dist}m先</span>`
-                : '';
-
-            // NEWバッジ
-            const newBadge = p.is_new
-                ? `<span class="card-new-badge">NEW</span>`
-                : '';
-
-            return `
-                <div class="bukken-card glass" data-url="${p.url}">
-                    <div class="card-header">
-                        <div class="header-badges">
-                            ${newBadge}
-                            <span class="station-badge">${best.station || p.station}駅 (${best.line || p.line})</span>
-                            ${renderFloodBadge(p)}
-                            ${parkingFeeBadge}
-                            ${parkingDistBadge}
-                        </div>
-                        <label class="compare-checkbox-label">
-                            <input type="checkbox" class="compare-check" ${isSelected ? 'checked' : ''} data-url="${p.url}">
-                            比較
-                        </label>
-                    </div>
-
-                    ${renderFloodDetail(p)}
-
-                    <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="bukken-title-btn" title="${p.title}">
-                        <span class="bukken-title-text">${p.title}</span>
-                        <span class="bukken-title-icon">↗</span>
-                    </a>
-
-                    <div class="rent-box">
-                        <div class="self-pay-row ${selfPayClass}">
-                            自己負担: <strong>${p.self_pay.toFixed(2)}</strong> 万円/月
-                        </div>
-                    </div>
-
-                    ${renderCommuteVisual(p)}
-
-                    <div class="room-details">
-                        <div>
-                            <span class="label">間取り / 面積</span>
-                            <span class="value">${p.madori} (${p.menseki})</span>
-                        </div>
-                        <div>
-                            <span class="label">築年数 / 階建</span>
-                            <span class="value">${p.age_floor}</span>
-                        </div>
-                    </div>
-
-                    <div class="location-info">
-                        <div><strong>住所:</strong> ${p.address}</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // 比較チェックボックスのイベント設定
-        bukkenGrid.querySelectorAll(".compare-check").forEach(chk => {
-            chk.addEventListener("change", (e) => {
-                const url = e.target.getAttribute("data-url");
-                const prop = properties.find(p => p.url === url);
-                if (e.target.checked) {
-                    if (!selectedProperties.some(p => p.url === url) && prop) {
-                        selectedProperties.push(prop);
-                    }
-                } else {
-                    selectedProperties = selectedProperties.filter(p => p.url !== url);
-                }
-                updateCompareControls();
-            });
-        });
+        bukkenGrid.innerHTML = sorted.length > 0
+            ? sorted.map(renderCard).join('')
+            : '<p class="no-results">該当する条件の物件が見つかりませんでした。</p>';
     }
 
-    // 比較ボタンの更新
-    function updateCompareControls() {
-        if (compareCount) {
-            compareCount.textContent = selectedProperties.length;
-        }
-        if (openCompareBtn) {
-            openCompareBtn.disabled = selectedProperties.length < 2;
-        }
+    // 件数の横の凡例: 到着駅アイコンと★の基準（押すと基準表を開く）
+    function renderLegend() {
+        if (!legend) return;
+        const header = [3, 2, 1].map(n => `<th scope="col">★${n}</th>`).join('');
+        const rows = Object.entries(STAR_RULES).map(([, rule]) => `
+            <tr><th scope="row">${rule.label}</th>${rule.steps.map(([max]) => `<td>${max}${rule.unit}以下</td>`).join('')}</tr>
+        `).join('');
+        legend.innerHTML = `
+            <span class="legend-item">${icon('otemachi', 'icon-sm')}大手町駅着</span>
+            <span class="legend-item">${icon('tokyo', 'icon-sm')}東京駅着</span>
+            <details class="sort-pop legend-pop">
+                <summary class="legend-item legend-link">${icon('star', 'icon-sm star-on')}★の基準</summary>
+                <div class="sort-panel">
+                    <table class="rule-table">
+                        <thead><tr><th></th>${header}</tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <p class="sort-panel-note">総★数は3項目の★の合計（最大9）。どの段にも入らない項目は★0。浸水リスク「高」「極高」の物件は総★数0。</p>
+                </div>
+            </details>
+        `;
     }
 
     // 優先順位ソートリストの描画
@@ -751,12 +777,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             return `
                 <li class="sort-priority-item" draggable="true" data-key="${key}" data-index="${index}">
-                    <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+                    <span class="drag-handle" aria-hidden="true">${icon('grip', 'icon-sm')}</span>
                     <span class="priority-rank">${index + 1}</span>
-                    <span class="priority-label">${criterion.label}</span>
+                    <span class="priority-label">${criterion.label}<small>${criterion.dir}</small></span>
                     <div class="priority-arrows">
-                        <button class="priority-arrow-btn priority-arrow-up" data-action="up" data-index="${index}" ${isFirst ? 'disabled' : ''} title="優先度を上げる">▲</button>
-                        <button class="priority-arrow-btn priority-arrow-down" data-action="down" data-index="${index}" ${isLast ? 'disabled' : ''} title="優先度を下げる">▼</button>
+                        <button type="button" class="priority-arrow-btn priority-arrow-up" data-action="up" data-index="${index}" ${isFirst ? 'disabled' : ''} title="優先度を上げる" aria-label="${criterion.label}の優先度を上げる">${icon('chevronUp', 'icon-sm')}</button>
+                        <button type="button" class="priority-arrow-btn priority-arrow-down" data-action="down" data-index="${index}" ${isLast ? 'disabled' : ''} title="優先度を下げる" aria-label="${criterion.label}の優先度を下げる">${icon('chevronDown', 'icon-sm')}</button>
                     </div>
                 </li>
             `;
@@ -836,134 +862,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 比較モーダルの描画
-    function renderCompareTable() {
-        if (!compareTable || selectedProperties.length === 0) return;
-
-        const headers = selectedProperties.map(p => {
-            const best = p._commuteInfo?.best || {};
-            return `
-                <th>
-                    <div style="margin-bottom: 0.3rem;">
-                        ${p.is_new ? '<span class="card-new-badge" style="margin-right: 4px;">NEW</span>' : ''}
-                        <strong>${best.station || p.station}駅</strong>
-                    </div>
-                    <div style="font-size: 0.85rem; font-weight: normal; max-width: 220px; word-break: break-all;">${p.title}</div>
-                </th>
-            `;
-        }).join('');
-
-        const selfPayRow = selectedProperties.map(p => {
-            const selfPayClass = getSelfPayColorClass(p.self_pay);
-            return `<td class="self-pay-val ${selfPayClass}"><strong>${p.self_pay.toFixed(2)}</strong> 万円/月</td>`;
-        }).join('');
-
-        const rentRow = selectedProperties.map(p => `
-            <td><strong>${p.rent}</strong> (管理費: ${p.admin || '-'})</td>
-        `).join('');
-
-        const parkingRow = selectedProperties.map(p => `
-            <td>${p.parking_fee > 0 ? (p.parking_fee + '万円') : (p.parking_text || '-')} ${p.parking_dist ? `(${p.parking_dist}m先)` : ''}</td>
-        `).join('');
-
-        const commuteRow = selectedProperties.map(p => {
-            const best = p._commuteInfo?.best || {};
-            const colorClass = getCommuteColorClass(best.doorToDoor || p.door_to_door);
-            const isTokyo = Boolean(best.arrivalStation && best.arrivalStation.startsWith('東京'));
-            const tokyoIcon = isTokyo ? ' <span class="tokyo-icon" title="到着駅: 東京駅（サンケイビルまで徒歩' + best.arrivalWalkMin + '分）">🗼</span>' : '';
-            return `
-                <td class="commute-val ${colorClass}">
-                    <strong>計 ${best.doorToDoor || p.door_to_door}分</strong><br>
-                    <span style="font-size: 0.78rem;">(乗車${best.trainMin || p.train_min}分, 乗換${best.transfers ?? p.transfers}回)</span><br>
-                    <span style="font-size: 0.74rem; color: var(--color-cyan);">総徒歩: ${best.totalWalkMin || (p.walk_min + 1)}分${tokyoIcon}</span>
-                </td>
-            `;
-        }).join('');
-
-        const floodRow = selectedProperties.map(p => {
-            const { entry, level } = p._flood;
-            if (!level) return '<td>-</td>';
-            return `
-                <td>
-                    ${floodLevelPill(level)}${entry.source === 'auto' ? '' : ' <span class="flood-badge-src">手動</span>'}
-                    <div class="flood-compare-reason">${escapeHtml(getFloodReason(entry))}</div>
-                </td>
-            `;
-        }).join('');
-
-        const spaceRow = selectedProperties.map(p => `
-            <td>${p.madori} (${p.menseki})</td>
-        `).join('');
-
-        const ageRow = selectedProperties.map(p => `
-            <td>${p.age_floor}</td>
-        `).join('');
-
-        const addressRow = selectedProperties.map(p => `
-            <td style="font-size: 0.82rem;">${p.address}</td>
-        `).join('');
-
-        const linkRow = selectedProperties.map(p => `
-            <td>
-                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="detail-btn">
-                    詳細を見る &rarr;
-                </a>
-            </td>
-        `).join('');
-
-        compareTable.innerHTML = `
-            <thead>
-                <tr>
-                    <th>項目</th>
-                    ${headers}
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <th>自己負担額</th>
-                    ${selfPayRow}
-                </tr>
-                <tr>
-                    <th>家賃 / 管理費</th>
-                    ${rentRow}
-                </tr>
-                <tr>
-                    <th>駐車場</th>
-                    ${parkingRow}
-                </tr>
-                <tr>
-                    <th>ドアドア通勤時間</th>
-                    ${commuteRow}
-                </tr>
-                <tr>
-                    <th>浸水リスク</th>
-                    ${floodRow}
-                </tr>
-                <tr>
-                    <th>間取り / 面積</th>
-                    ${spaceRow}
-                </tr>
-                <tr>
-                    <th>築年数 / 階建</th>
-                    ${ageRow}
-                </tr>
-                <tr>
-                    <th>住所</th>
-                    ${addressRow}
-                </tr>
-                <tr>
-                    <th>SUUMOリンク</th>
-                    ${linkRow}
-                </tr>
-            </tbody>
-        `;
-    }
-
     // イベントリスナー設定
     // 1. 都道府県タブクリック
     if (areaTabs) {
         areaTabs.addEventListener("click", (e) => {
-            const btn = e.target.closest(".tab-btn");
+            const btn = e.target.closest("[data-pref]");
             if (!btn) return;
             const pref = btn.getAttribute("data-pref");
             if (pref) {
@@ -977,7 +880,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. 市区町村タブクリック
     if (cityTabs) {
         cityTabs.addEventListener("click", (e) => {
-            const btn = e.target.closest(".tab-btn--sub");
+            const btn = e.target.closest("[data-city]");
             if (!btn) return;
             const city = btn.getAttribute("data-city");
             if (city) {
@@ -991,13 +894,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (onlyNewCheck) {
         onlyNewCheck.addEventListener("change", (e) => {
             state.onlyNew = e.target.checked;
-            if (onlyNewFilterBtn) {
-                if (state.onlyNew) {
-                    onlyNewFilterBtn.classList.add("active");
-                } else {
-                    onlyNewFilterBtn.classList.remove("active");
-                }
-            }
             renderProperties();
         });
     }
@@ -1026,33 +922,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 4. 比較モーダル
-    if (openCompareBtn) {
-        openCompareBtn.addEventListener("click", () => {
-            renderCompareTable();
-            if (compareModal) compareModal.classList.add("active");
+    // 4. 並び順・★の基準のポップオーバー: 外側のクリックと ESC キーで閉じる
+    // （並び替えで押したボタンが再描画で消えても判定できるよう、発火時の経路で内外を見る）
+    document.addEventListener("click", (e) => {
+        const path = e.composedPath();
+        document.querySelectorAll("details.sort-pop[open]").forEach(pop => {
+            if (!path.includes(pop)) pop.open = false;
         });
-    }
-
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener("click", () => {
-            if (compareModal) compareModal.classList.remove("active");
-        });
-    }
-
-    if (compareModal) {
-        compareModal.addEventListener("click", (e) => {
-            if (e.target === compareModal) {
-                compareModal.classList.remove("active");
-            }
-        });
-    }
-
-    // ESCキーでモーダルを閉じる
+    });
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && compareModal && compareModal.classList.contains("active")) {
-            compareModal.classList.remove("active");
-        }
+        if (e.key !== "Escape") return;
+        document.querySelectorAll("details.sort-pop[open]").forEach(pop => { pop.open = false; });
     });
 
     // 5. ポップオーバーの画面端はみ出し防止・動的位置調整
@@ -1097,6 +977,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // 初期化実行
+    // ブラウザが再読み込み時にチェック状態を復元することがあるため、画面のチェックを状態に合わせる
+    if (hideFloodRiskCheck) hideFloodRiskCheck.checked = state.hideHighFlood;
+    if (onlyNewCheck) onlyNewCheck.checked = state.onlyNew;
+    renderLegend();
     updateNewCount();
     renderSortPriorityList();
     renderProperties();

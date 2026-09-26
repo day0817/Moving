@@ -2,7 +2,7 @@
  * scripts/fetch_extra_station_commute.js
  * 
  * 目的:
- *   指定された外部CSV（例: .work/d2d30_all_3r/station_commute_extra.csv）の未取得行（station_to_office_min が空）のみを対象に、
+ *   指定された外部CSV（例: tmp/d2d30_all_3r/station_commute_extra.csv）の未取得行（station_to_office_min が空）のみを対象に、
  *   Googleマップ（およびYahoo!路線情報フォールバック）で月曜8:45着・東京サンケイビル着の通勤時間を取得・逐次保存する。
  *   本番の station_commute.csv や station_commute.js には一切触らない。
  */
