@@ -1883,6 +1883,114 @@ const stationCommuteData = {
         "route_summary": "中浦和→[乗換1回]→大手町(東京都)",
         "lines_used": "埼京線,丸ノ内線",
         "exit_info": ""
+    },
+    "京成金町": {
+        "line": "",
+        "train_min": 32,
+        "station_to_office_min": 39,
+        "transfers": 0,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 7,
+        "transit_walk_min": 0,
+        "route_summary": "京成金町→大手町(東京都)",
+        "lines_used": "常磐線各停",
+        "exit_info": ""
+    },
+    "小竹向原": {
+        "line": "",
+        "train_min": 21,
+        "station_to_office_min": 29,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 5,
+        "transit_walk_min": 3,
+        "route_summary": "小竹向原→[乗換1回]→大手町(東京都)",
+        "lines_used": "有楽町線,丸ノ内線",
+        "exit_info": ""
+    },
+    "石神井公園": {
+        "line": "",
+        "train_min": 27,
+        "station_to_office_min": 35,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 5,
+        "transit_walk_min": 3,
+        "route_summary": "石神井公園→[乗換1回]→大手町(東京都)",
+        "lines_used": "池袋線,丸ノ内線",
+        "exit_info": ""
+    },
+    "矢向": {
+        "line": "",
+        "train_min": 24,
+        "station_to_office_min": 40,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 13,
+        "transit_walk_min": 3,
+        "route_summary": "矢向→[乗換1回]→大手町(東京都)",
+        "lines_used": "南武線,東海道線",
+        "exit_info": ""
+    },
+    "京成西船": {
+        "line": "",
+        "train_min": 34,
+        "station_to_office_min": 48,
+        "transfers": 0,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 14,
+        "transit_walk_min": 0,
+        "route_summary": "京成西船→大手町(東京都)",
+        "lines_used": "東西線",
+        "exit_info": ""
+    },
+    "前原": {
+        "line": "",
+        "train_min": 48,
+        "station_to_office_min": 57,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 6,
+        "transit_walk_min": 3,
+        "route_summary": "前原→[乗換1回]→大手町(東京都)",
+        "lines_used": "京成松戸線,東葉高速線",
+        "exit_info": ""
+    },
+    "流山おおたかの森": {
+        "line": "",
+        "train_min": 43,
+        "station_to_office_min": 54,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 8,
+        "transit_walk_min": 3,
+        "route_summary": "流山おおたかの森→[乗換1回]→大手町(東京都)",
+        "lines_used": "つくばエクスプレス,千代田線",
+        "exit_info": ""
+    },
+    "初石": {
+        "line": "",
+        "train_min": 54,
+        "station_to_office_min": 63,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 6,
+        "transit_walk_min": 3,
+        "route_summary": "初石→[乗換1回]→大手町(東京都)",
+        "lines_used": "東武アーバンパークライン,常磐線各停",
+        "exit_info": ""
+    },
+    "バス11分 (バス停)稲毛": {
+        "line": "",
+        "train_min": 41,
+        "station_to_office_min": 51,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 7,
+        "transit_walk_min": 3,
+        "route_summary": "バス11分 (バス停)稲毛→[乗換1回]→大手町(東京都)",
+        "lines_used": "総武線快速,丸ノ内線",
+        "exit_info": ""
     }
 };
 
