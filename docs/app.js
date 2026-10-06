@@ -238,6 +238,11 @@ document.addEventListener("DOMContentLoaded", () => {
         grip: '<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>',
         alert: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
         car: '<path d="M5 16v-5l2-5h10l2 5v5"/><path d="M3 16h18"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/>',
+        clipboard: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>',
+        check: '<polyline points="20 6 9 17 4 12"/>',
+        search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+        x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+        refresh: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
     };
 
     function icon(name, extraClass = '') {
@@ -294,6 +299,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const hideFloodRiskCheck = document.getElementById("hideFloodRiskCheck");
     const floodRiskCount = document.getElementById("floodRiskCount");
     const themeToggleBtn = document.getElementById("themeToggleBtn");
+    const bukkenSearchInput = document.getElementById("bukkenSearchInput");
+    const clearSearchBtn = document.getElementById("clearSearchBtn");
+    const onlyKeptCheck = document.getElementById("onlyKeptCheck");
+    const keptBukkenCount = document.getElementById("keptBukkenCount");
+    const toastBox = document.getElementById("toastBox");
+
+    // ========================================================
+    // キープ（お気に入り・ピン留め）管理
+    // ========================================================
+    const KEEPS_STORAGE_KEY = "bukken_keeps_v1";
+
+    function loadKeeps() {
+        try {
+            const raw = localStorage.getItem(KEEPS_STORAGE_KEY);
+            return new Set(raw ? JSON.parse(raw) : []);
+        } catch (e) {
+            return new Set();
+        }
+    }
+
+    function saveKeeps(set) {
+        try {
+            localStorage.setItem(KEEPS_STORAGE_KEY, JSON.stringify(Array.from(set)));
+        } catch (e) {
+            // 保存失敗時は何もしない
+        }
+    }
 
     // ========================================================
     // テーマ管理（Solarized Light / Dark）。既定はライト
@@ -343,7 +375,10 @@ document.addEventListener("DOMContentLoaded", () => {
         city: "all",
         onlyNew: false,
         hideHighFlood: true, // 既定で浸水リスク「高」「極高」を除く（index.html のチェック初期値と合わせる）
+        onlyKept: false,     // キープした物件のみ表示
+        searchQuery: "",     // フリーワード検索クエリ
         openFlood: new Set(), // 浸水リスク詳細を開いている物件URL（再描画しても開いたままにする）
+        keeps: loadKeeps(),   // キープした物件URL一覧
         sortPriority: ['walk-asc', 'commute-asc', 'total-walk-asc', 'age-asc', 'rent-asc', 'menseki-desc', 'flood-asc', 'stars-desc'],
     };
 
@@ -364,7 +399,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // フィルタリング処理
     function getFilteredProperties() {
+        const queryTerms = state.searchQuery ? state.searchQuery.toLowerCase().split(/\s+/).filter(Boolean) : [];
+
         return properties.filter(p => {
+            // キープ（★ピン留め）のみ表示
+            if (state.onlyKept && !state.keeps.has(p.url)) {
+                return false;
+            }
+
             // NEW物件のみ表示
             if (state.onlyNew && !p.is_new) {
                 return false;
@@ -387,6 +429,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (city !== state.city) return false;
             }
 
+            // フリーワード検索
+            if (queryTerms.length > 0) {
+                const best = p._commuteInfo?.best || {};
+                const targetText = [
+                    p.title,
+                    p.address,
+                    p.station,
+                    best.station,
+                    p.line,
+                    best.line,
+                    p.madori,
+                    p.menseki,
+                    p.age_floor,
+                    p.parking_text,
+                    `★${p._stars.total}`,
+                    `${p.self_pay.toFixed(1)}万`,
+                ].filter(Boolean).join(' ').toLowerCase();
+
+                const matchAll = queryTerms.every(term => targetText.includes(term));
+                if (!matchAll) return false;
+            }
+
             return true;
         });
     }
@@ -404,14 +468,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // NEW物件・浸水リスク高の物件の総数を更新
-    function updateNewCount() {
-        const count = properties.filter(p => p.is_new).length;
+    // NEW物件・浸水リスク高・キープ物件の総数を更新
+    function updateCounts() {
         if (newBukkenCount) {
-            newBukkenCount.textContent = count;
+            newBukkenCount.textContent = properties.filter(p => p.is_new).length;
         }
         if (floodRiskCount) {
             floodRiskCount.textContent = properties.filter(isHighFloodRisk).length;
+        }
+        if (keptBukkenCount) {
+            keptBukkenCount.textContent = state.keeps.size;
         }
     }
 
@@ -691,10 +757,57 @@ document.addEventListener("DOMContentLoaded", () => {
             : '';
     }
 
+    // トースト通知の表示
+    function showToast(msg) {
+        if (!toastBox) return;
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.innerHTML = `${icon('check', 'icon-sm')}<span>${escapeHtml(msg)}</span>`;
+        toastBox.appendChild(el);
+        setTimeout(() => {
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 250);
+        }, 2800);
+    }
+
+    // 物件サマリーのクリップボードコピー
+    async function copyBukkenSummary(url, triggerEl) {
+        const p = properties.find(item => item.url === url);
+        if (!p) return;
+        const best = p._commuteInfo?.best || {};
+        const arrival = getArrivalInfo(best);
+        const text = [
+            `【${p.title}】`,
+            `・最寄駅: ${best.station || p.station}駅（徒歩${best.propWalkMin || p.walk_min}分）/ ${arrival.name}まで電車${best.trainMin || p.train_min}分（乗換${best.transfers || p.transfers}回）`,
+            `・通勤時間: ドアドア${best.doorToDoor || p.door_to_door}分 / 総徒歩${best.totalWalkMin || p.walk_min}分`,
+            `・自己負担額: ${p.self_pay.toFixed(2)}万円/月 (管理費・社宅上限差額・駐車場代等込)`,
+            `・建物仕様: ${formatSpec(p)}`,
+            `・所在地: ${p.address}`,
+            `・SUUMOリンク: ${p.url}`,
+        ].join('\n');
+
+        try {
+            await navigator.clipboard.writeText(text);
+            if (triggerEl) {
+                const origHtml = triggerEl.innerHTML;
+                triggerEl.classList.add('is-copied');
+                triggerEl.innerHTML = `${icon('check', 'icon-xs')}<span>✓ コピー完了</span>`;
+                setTimeout(() => {
+                    triggerEl.classList.remove('is-copied');
+                    triggerEl.innerHTML = origHtml;
+                }, 1200);
+            }
+            showToast('物件情報をクリップボードにコピーしました');
+        } catch (e) {
+            showToast('コピーに失敗しました（クリップボード権限を確認してください）');
+        }
+    }
+
     // 物件カード1枚。物件名が SUUMO へのリンクを兼ねる
     function renderCard(p) {
         const best = p._commuteInfo?.best || {};
         const title = escapeHtml(p.title);
+        const isKept = state.keeps.has(p.url);
         return `
             <article class="c-card bukken-card" data-url="${escapeHtml(p.url)}">
                 <div class="card-top">
@@ -720,6 +833,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
 
                 ${renderParkingNotes(p)}
+
+                <div class="card-actions-bar">
+                    <button type="button" class="btn-keep" data-action="toggle-keep" data-url="${escapeHtml(p.url)}" aria-pressed="${isKept}" title="${isKept ? 'キープを解除' : '比較用にキープ'}">
+                        ${icon('star', isKept ? 'icon-xs star-on' : 'icon-xs')}${isKept ? 'キープ中' : 'キープ'}
+                    </button>
+                    <button type="button" class="btn-copy" data-action="copy-info" data-url="${escapeHtml(p.url)}" title="物件サマリーをクリップボードにコピー">
+                        ${icon('clipboard', 'icon-xs')}<span>共有コピー</span>
+                    </button>
+                </div>
             </article>
         `;
     }
@@ -729,7 +851,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const filtered = getFilteredProperties();
         const sorted = sortProperties(filtered);
 
-        updateNewCount();
+        updateCounts();
         renderAreaTabs();
 
         if (resultCount) resultCount.textContent = sorted.length;
@@ -742,7 +864,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         bukkenGrid.innerHTML = sorted.length > 0
             ? sorted.map(renderCard).join('')
-            : '<p class="no-results">該当する条件の物件が見つかりませんでした。</p>';
+            : `
+            <div class="empty-card">
+                <div class="empty-card-icon">${icon('search', 'icon-sm')}</div>
+                <div class="empty-card-title">該当する条件の物件が見つかりませんでした</div>
+                <p class="empty-card-desc">
+                    ${state.searchQuery ? `キーワード「${escapeHtml(state.searchQuery)}」に一致する物件がありません。` : '絞り込み条件（エリア・浸水リスク・NEW・キープ）を見直してください。'}
+                </p>
+                <div class="empty-card-action">
+                    <button type="button" class="c-btn c-btn-secondary c-btn-sm" id="resetFiltersBtn">
+                        ${icon('refresh', 'icon-xs')} 条件をリセット
+                    </button>
+                </div>
+            </div>
+            `;
     }
 
     // 件数の横の凡例: 到着駅アイコンと★の基準（押すと基準表を開く）
@@ -924,17 +1059,134 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // 3d. カード上のクリックイベント委譲（キープ・コピー・条件リセット）
+    if (bukkenGrid) {
+        bukkenGrid.addEventListener("click", (e) => {
+            // キープトグル
+            const keepBtn = e.target.closest('[data-action="toggle-keep"]');
+            if (keepBtn) {
+                e.preventDefault();
+                const url = keepBtn.getAttribute("data-url");
+                if (url) {
+                    if (state.keeps.has(url)) {
+                        state.keeps.delete(url);
+                        showToast('キープを解除しました');
+                    } else {
+                        state.keeps.add(url);
+                        showToast('物件をキープしました');
+                    }
+                    saveKeeps(state.keeps);
+                    updateCounts();
+                    renderProperties();
+                }
+                return;
+            }
+
+            // サマリーコピー
+            const copyBtn = e.target.closest('[data-action="copy-info"]');
+            if (copyBtn) {
+                e.preventDefault();
+                const url = copyBtn.getAttribute("data-url");
+                if (url) copyBukkenSummary(url, copyBtn);
+                return;
+            }
+
+            // 条件リセット
+            const resetBtn = e.target.closest('#resetFiltersBtn');
+            if (resetBtn) {
+                e.preventDefault();
+                state.prefecture = 'all';
+                state.city = 'all';
+                state.onlyNew = false;
+                state.hideHighFlood = true;
+                state.onlyKept = false;
+                state.searchQuery = '';
+                if (bukkenSearchInput) bukkenSearchInput.value = '';
+                if (clearSearchBtn) clearSearchBtn.hidden = true;
+                if (onlyNewCheck) onlyNewCheck.checked = false;
+                if (hideFloodRiskCheck) hideFloodRiskCheck.checked = true;
+                if (onlyKeptCheck) onlyKeptCheck.checked = false;
+                renderProperties();
+                showToast('絞り込み条件をリセットしました');
+                return;
+            }
+        });
+    }
+
+    // 3e. キープのみ表示トグル
+    if (onlyKeptCheck) {
+        onlyKeptCheck.addEventListener("change", (e) => {
+            state.onlyKept = e.target.checked;
+            renderProperties();
+        });
+    }
+
+    // 3f. フリーワード検索
+    let searchTimer = null;
+    if (bukkenSearchInput) {
+        bukkenSearchInput.addEventListener("input", (e) => {
+            clearTimeout(searchTimer);
+            const val = e.target.value.trim();
+            if (clearSearchBtn) clearSearchBtn.hidden = !val;
+            searchTimer = setTimeout(() => {
+                state.searchQuery = val;
+                renderProperties();
+            }, 140);
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener("click", () => {
+            if (bukkenSearchInput) {
+                bukkenSearchInput.value = '';
+                bukkenSearchInput.focus();
+            }
+            clearSearchBtn.hidden = true;
+            state.searchQuery = '';
+            renderProperties();
+        });
+    }
+
     // 4. 並び順・★の基準のポップオーバー: 外側のクリックと ESC キーで閉じる
-    // （並び替えで押したボタンが再描画で消えても判定できるよう、発火時の経路で内外を見る）
     document.addEventListener("click", (e) => {
         const path = e.composedPath();
         document.querySelectorAll("details.sort-pop[open]").forEach(pop => {
             if (!path.includes(pop)) pop.open = false;
         });
     });
+
+    // キーボードショートカット
     document.addEventListener("keydown", (e) => {
-        if (e.key !== "Escape") return;
-        document.querySelectorAll("details.sort-pop[open]").forEach(pop => { pop.open = false; });
+        if (e.key === "Escape") {
+            document.querySelectorAll("details.sort-pop[open]").forEach(pop => { pop.open = false; });
+            if (state.searchQuery && bukkenSearchInput) {
+                bukkenSearchInput.value = '';
+                if (clearSearchBtn) clearSearchBtn.hidden = true;
+                state.searchQuery = '';
+                renderProperties();
+            }
+            return;
+        }
+
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            if (bukkenSearchInput) {
+                bukkenSearchInput.focus();
+                bukkenSearchInput.select();
+            }
+            return;
+        }
+
+        if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const tag = document.activeElement ? document.activeElement.tagName : '';
+            if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) {
+                e.preventDefault();
+                if (bukkenSearchInput) {
+                    bukkenSearchInput.focus();
+                    bukkenSearchInput.select();
+                }
+            }
+        }
     });
 
     // 5. ポップオーバーの画面端はみ出し防止・動的位置調整
@@ -982,8 +1234,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ブラウザが再読み込み時にチェック状態を復元することがあるため、画面のチェックを状態に合わせる
     if (hideFloodRiskCheck) hideFloodRiskCheck.checked = state.hideHighFlood;
     if (onlyNewCheck) onlyNewCheck.checked = state.onlyNew;
+    if (onlyKeptCheck) onlyKeptCheck.checked = state.onlyKept;
     renderLegend();
-    updateNewCount();
+    updateCounts();
     renderSortPriorityList();
     renderProperties();
 });

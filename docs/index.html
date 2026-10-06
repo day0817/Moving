@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja" data-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -29,6 +29,8 @@
     </script>
 </head>
 <body>
+    <a class="skip-link" href="#mainContent">本文へスキップ</a>
+
     <header class="c-navbar">
         <div class="nav-inner">
             <div class="brand">
@@ -49,13 +51,25 @@
         </div>
     </header>
 
-    <!-- 操作バー（スクロールしても上に残る）: エリア・絞り込み・並び順 -->
+    <!-- 操作バー（スクロールしても上に残る）: エリア・検索・絞り込み・並び順 -->
     <div class="toolbar-wrap">
         <div class="toolbar">
             <div class="chips" id="areaTabs" role="group" aria-label="エリア（都道府県）">
                 <!-- JavaScript側で動的に生成されます -->
             </div>
             <div class="toolbar-right">
+                <div class="search-box">
+                    <svg class="icon-svg icon-sm search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="search" id="bukkenSearchInput" class="search-input" placeholder="駅名・間取り・平米を検索... [/]" aria-label="物件をキーワード検索">
+                    <button type="button" id="clearSearchBtn" class="search-clear-btn" aria-label="検索をクリア" title="検索をクリア" hidden>
+                        <svg class="icon-svg icon-xs" viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+                <label class="check" for="onlyKeptCheck" title="キープ（★ピン留め）した物件だけを表示します">
+                    <input type="checkbox" id="onlyKeptCheck">
+                    <span>キープのみ</span>
+                    <span class="count" id="keptBukkenCount">0</span>
+                </label>
                 <label class="check" for="hideFloodRiskCheck" title="浸水リスク「高」「極高」の物件を一覧から除きます">
                     <input type="checkbox" id="hideFloodRiskCheck" checked>
                     <span>浸水<span class="check-long">リスク</span>高を除く</span>
@@ -88,9 +102,9 @@
         </div>
     </div>
 
-    <main class="page">
+    <main class="page" id="mainContent" tabindex="-1">
         <div class="result-line">
-            <span class="result-count"><strong class="num" id="resultCount">0</strong> 件</span>
+            <span class="result-count" role="status" aria-live="polite"><strong class="num" id="resultCount">0</strong> 件</span>
             <span class="sort-summary" id="sortSummary"></span>
             <span class="legend" id="legend">
                 <!-- JavaScript側で動的に生成されます（到着駅アイコン・★の基準） -->
@@ -102,6 +116,8 @@
             <!-- 動的にJSで生成 -->
         </section>
     </main>
+
+    <div class="toast-box" id="toastBox" aria-live="polite"></div>
 
     <!-- データスクリプトおよびメインスクリプト -->
     <script src="data/station_commute.js?v=20261002"></script>
