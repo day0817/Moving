@@ -1991,6 +1991,42 @@ const stationCommuteData = {
         "route_summary": "バス11分 (バス停)稲毛→[乗換1回]→大手町(東京都)",
         "lines_used": "総武線快速,丸ノ内線",
         "exit_info": ""
+    },
+    "練馬春日町": {
+        "line": "",
+        "train_min": 41,
+        "station_to_office_min": 48,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 4,
+        "transit_walk_min": 3,
+        "route_summary": "練馬春日町→[乗換1回]→大手町(東京都)",
+        "lines_used": "大江戸線,半蔵門線",
+        "exit_info": ""
+    },
+    "南浦和": {
+        "line": "",
+        "train_min": 36,
+        "station_to_office_min": 45,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 6,
+        "transit_walk_min": 3,
+        "route_summary": "南浦和→[乗換1回]→大手町(東京都)",
+        "lines_used": "京浜東北線,千代田線",
+        "exit_info": ""
+    },
+    "馬込沢": {
+        "line": "",
+        "train_min": 34,
+        "station_to_office_min": 48,
+        "transfers": 2,
+        "arrival_station": "東京",
+        "arrival_walk_min": 8,
+        "transit_walk_min": 6,
+        "route_summary": "馬込沢→[乗換2回]→東京",
+        "lines_used": "東武アーバンパークライン,総武線快速,丸ノ内線",
+        "exit_info": ""
     }
 };
 

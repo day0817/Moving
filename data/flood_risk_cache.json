@@ -2182,6 +2182,226 @@
         },
         "unknown_colors": []
       }
+    },
+    "千葉県市川市中山２": {
+      "checked_at": "2026-10-09",
+      "geocode": {
+        "lat": 35.721333,
+        "lng": 139.948486,
+        "title": "千葉県市川市中山二丁目",
+        "matches": 1,
+        "source": "gsi",
+        "query": "千葉県市川市中山二丁目",
+        "precision": "chome"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "low",
+        "reasons": [
+          "周辺150m以内に土砂災害警戒区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "千葉県船橋市藤原７": {
+      "checked_at": "2026-10-09",
+      "geocode": {
+        "lat": 35.743088,
+        "lng": 139.986755,
+        "title": "千葉県船橋市藤原七丁目",
+        "matches": 1,
+        "source": "gsi",
+        "query": "千葉県船橋市藤原七丁目",
+        "precision": "chome"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "medium",
+        "reasons": [
+          "周辺150m以内に 洪水（想定最大規模） 0.5〜3m（1階床上） の区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 2
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "埼玉県越谷市蒲生茜町": {
+      "checked_at": "2026-10-09",
+      "geocode": {
+        "lat": 35.866741,
+        "lng": 139.788803,
+        "title": "埼玉県越谷市蒲生茜町",
+        "matches": 1,
+        "source": "gsi",
+        "query": "埼玉県越谷市蒲生茜町",
+        "precision": "town"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "high",
+        "reasons": [
+          "洪水（想定最大規模）: 0.5〜3m（1階床上）"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 2
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "神奈川県横浜市都筑区中川４": {
+      "checked_at": "2026-10-09",
+      "geocode": {
+        "lat": 35.559467,
+        "lng": 139.566956,
+        "title": "神奈川県横浜市都筑区中川四丁目",
+        "matches": 1,
+        "source": "gsi",
+        "query": "神奈川県横浜市都筑区中川四丁目",
+        "precision": "chome"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "low",
+        "reasons": [
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
     }
   },
   "stations": {
@@ -4863,10 +5083,169 @@
         },
         "unknown_colors": []
       }
+    },
+    "中川": {
+      "checked_at": "2026-10-09",
+      "geocode": {
+        "lat": 35.5629066,
+        "lng": 139.5699517,
+        "title": "中川駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "low",
+        "reasons": [
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "蒲生": {
+      "checked_at": "2026-10-09",
+      "geocode": {
+        "lat": 35.8673508,
+        "lng": 139.7915927,
+        "title": "蒲生駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "high",
+        "reasons": [
+          "洪水（想定最大規模）: 0.5〜3m（1階床上）"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 2
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "馬込沢": {
+      "checked_at": "2026-10-09",
+      "geocode": {
+        "lat": 35.7414343,
+        "lng": 139.9924483,
+        "title": "馬込沢駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "medium",
+        "reasons": [
+          "周辺150m以内に 洪水（想定最大規模） 0.5〜3m（1階床上） の区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 2
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
     }
   },
   "layer_check": {
-    "checked_at": "2026-10-02",
+    "checked_at": "2026-10-09",
     "layers": {
       "flood": "available",
       "hanran": "available",
