@@ -2027,6 +2027,66 @@ const stationCommuteData = {
         "route_summary": "馬込沢→[乗換2回]→東京",
         "lines_used": "東武アーバンパークライン,総武線快速,丸ノ内線",
         "exit_info": ""
+    },
+    "今羽": {
+        "line": "",
+        "train_min": 1,
+        "station_to_office_min": 16,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 16,
+        "transit_walk_min": 0,
+        "route_summary": "今羽→[乗換1回]→大手町(東京都)",
+        "lines_used": "ニューシャトル,高崎線",
+        "exit_info": ""
+    },
+    "東宮原": {
+        "line": "",
+        "train_min": 40,
+        "station_to_office_min": 59,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 16,
+        "transit_walk_min": 3,
+        "route_summary": "東宮原→[乗換1回]→大手町(東京都)",
+        "lines_used": "ニューシャトル,高崎線",
+        "exit_info": ""
+    },
+    "宮原": {
+        "line": "",
+        "train_min": 48,
+        "station_to_office_min": 55,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 4,
+        "transit_walk_min": 3,
+        "route_summary": "宮原→[乗換1回]→大手町(東京都)",
+        "lines_used": "湘南新宿ライン,丸ノ内線",
+        "exit_info": ""
+    },
+    "北戸田": {
+        "line": "",
+        "train_min": 41,
+        "station_to_office_min": 48,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 4,
+        "transit_walk_min": 3,
+        "route_summary": "北戸田→[乗換1回]→大手町(東京都)",
+        "lines_used": "埼京線,丸ノ内線",
+        "exit_info": ""
+    },
+    "東我孫子": {
+        "line": "",
+        "train_min": 60,
+        "station_to_office_min": 69,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 6,
+        "transit_walk_min": 3,
+        "route_summary": "東我孫子→[乗換1回]→大手町(東京都)",
+        "lines_used": "成田線,常磐線各停",
+        "exit_info": ""
     }
 };
 
