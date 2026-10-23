@@ -2087,6 +2087,42 @@ const stationCommuteData = {
         "route_summary": "東我孫子→[乗換1回]→大手町(東京都)",
         "lines_used": "成田線,常磐線各停",
         "exit_info": ""
+    },
+    "稲田堤": {
+        "line": "",
+        "train_min": 45,
+        "station_to_office_min": 53,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 5,
+        "transit_walk_min": 3,
+        "route_summary": "稲田堤→[乗換1回]→大手町(東京都)",
+        "lines_used": "南武線,田園都市線",
+        "exit_info": ""
+    },
+    "習志野": {
+        "line": "",
+        "train_min": 37,
+        "station_to_office_min": 46,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 6,
+        "transit_walk_min": 3,
+        "route_summary": "習志野→[乗換1回]→大手町(東京都)",
+        "lines_used": "京成松戸線,東葉高速線",
+        "exit_info": ""
+    },
+    "船橋競馬場": {
+        "line": "",
+        "train_min": 35,
+        "station_to_office_min": 49,
+        "transfers": 2,
+        "arrival_station": "東京",
+        "arrival_walk_min": 8,
+        "transit_walk_min": 6,
+        "route_summary": "船橋競馬場→[乗換2回]→東京",
+        "lines_used": "京成本線,総武線快速,丸ノ内線",
+        "exit_info": ""
     }
 };
 
