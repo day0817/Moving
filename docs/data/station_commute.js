@@ -2123,6 +2123,102 @@ const stationCommuteData = {
         "route_summary": "船橋競馬場→[乗換2回]→東京",
         "lines_used": "京成本線,総武線快速,丸ノ内線",
         "exit_info": ""
+    },
+    "千鳥町": {
+        "line": "",
+        "train_min": 33,
+        "station_to_office_min": 49,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 13,
+        "transit_walk_min": 3,
+        "route_summary": "千鳥町→[乗換1回]→大手町(東京都)",
+        "lines_used": "池上線,京浜東北線",
+        "exit_info": ""
+    },
+    "武蔵新田": {
+        "line": "",
+        "train_min": 42,
+        "station_to_office_min": 50,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 5,
+        "transit_walk_min": 3,
+        "route_summary": "武蔵新田→[乗換1回]→大手町(東京都)",
+        "lines_used": "東急多摩川線,目黒線",
+        "exit_info": ""
+    },
+    "下丸子": {
+        "line": "",
+        "train_min": 40,
+        "station_to_office_min": 48,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 5,
+        "transit_walk_min": 3,
+        "route_summary": "下丸子→[乗換1回]→大手町(東京都)",
+        "lines_used": "東急多摩川線,目黒線",
+        "exit_info": ""
+    },
+    "久が原": {
+        "line": "",
+        "train_min": 33,
+        "station_to_office_min": 49,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 13,
+        "transit_walk_min": 3,
+        "route_summary": "久が原→[乗換1回]→大手町(東京都)",
+        "lines_used": "池上線,京浜東北線",
+        "exit_info": ""
+    },
+    "御嶽山": {
+        "line": "",
+        "train_min": 35,
+        "station_to_office_min": 50,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 12,
+        "transit_walk_min": 3,
+        "route_summary": "御嶽山→[乗換1回]→大手町(東京都)",
+        "lines_used": "池上線,山手線",
+        "exit_info": ""
+    },
+    "沼部": {
+        "line": "",
+        "train_min": 36,
+        "station_to_office_min": 44,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 5,
+        "transit_walk_min": 3,
+        "route_summary": "沼部→[乗換1回]→大手町(東京都)",
+        "lines_used": "東急多摩川線,目黒線",
+        "exit_info": ""
+    },
+    "バス20分 (バス停)北習志野": {
+        "line": "",
+        "train_min": 40,
+        "station_to_office_min": 47,
+        "transfers": 0,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 7,
+        "transit_walk_min": 0,
+        "route_summary": "バス20分 (バス停)北習志野→大手町(東京都)",
+        "lines_used": "東葉高速線",
+        "exit_info": ""
+    },
+    "京成幕張本郷": {
+        "line": "",
+        "train_min": 45,
+        "station_to_office_min": 54,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 6,
+        "transit_walk_min": 3,
+        "route_summary": "京成幕張本郷→[乗換1回]→大手町(東京都)",
+        "lines_used": "中央・総武線各停,東西線",
+        "exit_info": ""
     }
 };
 

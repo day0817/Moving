@@ -3148,5 +3148,385 @@
     "parking_fee": 0.0,
     "parking_dist": 0,
     "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110794605/?bc=100534167641": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料/屋内駐"
+  },
+  "https://suumo.jp/chintai/jnc_000110707153/?bc=100533652305": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000108079693/?bc=100534298377": {
+    "parking_fee": 1.1946,
+    "parking_dist": 181,
+    "parking_text": "近隣181m11946円"
+  },
+  "https://suumo.jp/chintai/jnc_000110682173/?bc=100344232714": {
+    "parking_fee": 1.98,
+    "parking_dist": 0,
+    "parking_text": "敷地内19800円/平置駐"
+  },
+  "https://suumo.jp/chintai/jnc_000110517794/?bc=100519178325": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料/平置駐"
+  },
+  "https://suumo.jp/chintai/jnc_000104882759/?bc=100523180085": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110444308/?bc=100533761429": {
+    "parking_fee": 1.5,
+    "parking_dist": 0,
+    "parking_text": "敷地内15000円"
+  },
+  "https://suumo.jp/chintai/jnc_000110538773/?bc=100507017473": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000108803437/?bc=100507017164": {
+    "parking_fee": 1.566,
+    "parking_dist": 470,
+    "parking_text": "近隣470m15660円"
+  },
+  "https://suumo.jp/chintai/jnc_000098196046/?bc=100533407354": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110707712/?bc=100533676864": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000107783115/?bc=100528921264": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110597234/?bc=100523346340": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000109702247/?bc=100527732129": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料/平置駐"
+  },
+  "https://suumo.jp/chintai/jnc_000109702248/?bc=100525970967": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000109383055/?bc=100525588896": {
+    "parking_fee": 1.1,
+    "parking_dist": 0,
+    "parking_text": "敷地内11000円"
+  },
+  "https://suumo.jp/chintai/jnc_000109944629/?bc=100532887854": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110702922/?bc=100519533044": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110077595/?bc=100531927586": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000109208969/?bc=100495971963": {
+    "parking_fee": 1.6632,
+    "parking_dist": 450,
+    "parking_text": "近隣450m16632円"
+  },
+  "https://suumo.jp/chintai/jnc_000109728593/?bc=100526181379": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000107529897/?bc=100509531627": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110169762/?bc=100530268349": {
+    "parking_fee": 1.65,
+    "parking_dist": 0,
+    "parking_text": "敷地内16500円"
+  },
+  "https://suumo.jp/chintai/jnc_000106894511/?bc=100516327477": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110396002/?bc=100534550957": {
+    "parking_fee": 0.7216,
+    "parking_dist": 229,
+    "parking_text": "近隣229m7216円"
+  },
+  "https://suumo.jp/chintai/jnc_000110706339/?bc=100533694538": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000107937609/?bc=100507064170": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110631203/?bc=100533243092": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110491040/?bc=100533500179": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110575111/?bc=100532721175": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110075785/?bc=100524206030": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110117126/?bc=100529245027": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料/平置駐"
+  },
+  "https://suumo.jp/chintai/jnc_000108682108/?bc=100532683762": {
+    "parking_fee": 0.7,
+    "parking_dist": 888,
+    "parking_text": "近隣888m7000円"
+  },
+  "https://suumo.jp/chintai/jnc_000107709326/?bc=100531740060": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110490930/?bc=100532026635": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料/駐2台可"
+  },
+  "https://suumo.jp/chintai/jnc_000110700618/?bc=100533638760": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料/平置駐"
+  },
+  "https://suumo.jp/chintai/jnc_000110700617/?bc=100533638740": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料/平置駐"
+  },
+  "https://suumo.jp/chintai/jnc_000110201236/?bc=100459274237": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000108508967/?bc=100516815413": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110447262/?bc=100531788124": {
+    "parking_fee": 1.0,
+    "parking_dist": 0,
+    "parking_text": "敷地内10000円"
+  },
+  "https://suumo.jp/chintai/jnc_000110372838/?bc=100531079945": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110675718/?bc=100525750343": {
+    "parking_fee": 0.77,
+    "parking_dist": 0,
+    "parking_text": "敷地内7700円/シャッタ付車庫"
+  },
+  "https://suumo.jp/chintai/jnc_000037413358/?bc=100525455998": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110638877/?bc=100533170424": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000103439513/?bc=100507037450": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110710462/?bc=100529251050": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000107154638/?bc=100517805819": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110749717/?bc=100534019263": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000109617038/?bc=100525349017": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110732216/?bc=100504625413": {
+    "parking_fee": 1.1,
+    "parking_dist": 0,
+    "parking_text": "敷地内11000円/平置駐"
+  },
+  "https://suumo.jp/chintai/jnc_000109488444/?bc=100532368155": {
+    "parking_fee": 1.1,
+    "parking_dist": 0,
+    "parking_text": "敷地内11000円/平置駐"
+  },
+  "https://suumo.jp/chintai/jnc_000110782082/?bc=100473116439": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000065928040/?bc=100534101684": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000073277039/?bc=100477082980": {
+    "parking_fee": 1.87,
+    "parking_dist": 0,
+    "parking_text": "敷地内18700円"
+  },
+  "https://suumo.jp/chintai/jnc_000106451002/?bc=100518874518": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110649035/?bc=100533470695": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000109911330/?bc=100533348796": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000109957381/?bc=100527999628": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110694315/?bc=100533405768": {
+    "parking_fee": 1.1,
+    "parking_dist": 0,
+    "parking_text": "敷地内11000円"
+  },
+  "https://suumo.jp/chintai/jnc_000110644940/?bc=100533347983": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110515629/?bc=100532342014": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110373405/?bc=100530811455": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000108666580/?bc=100533684972": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110382336/?bc=100506731203": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110706749/?bc=100533686424": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000089194870/?bc=100523803786": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110366257/?bc=100530883448": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110309825/?bc=100513670965": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000108065584/?bc=100521233577": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000079908884/?bc=100516388204": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110110104/?bc=100529262986": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110722051/?bc=100528356771": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110418203/?bc=100532122672": {
+    "parking_fee": 0.77,
+    "parking_dist": 0,
+    "parking_text": "敷地内7700円"
+  },
+  "https://suumo.jp/chintai/jnc_000109883234/?bc=100531878807": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000108170653/?bc=100528805395": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
+  },
+  "https://suumo.jp/chintai/jnc_000110559765/?bc=100505715089": {
+    "parking_fee": 0.0,
+    "parking_dist": 0,
+    "parking_text": "付無料"
   }
 }
