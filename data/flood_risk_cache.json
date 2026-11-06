@@ -2902,6 +2902,117 @@
         },
         "unknown_colors": []
       }
+    },
+    "埼玉県三郷市中央５": {
+      "checked_at": "2026-11-06",
+      "geocode": {
+        "lat": 35.832989,
+        "lng": 139.875259,
+        "title": "埼玉県三郷市中央五丁目",
+        "matches": 1,
+        "source": "gsi",
+        "query": "埼玉県三郷市中央五丁目",
+        "precision": "chome"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "high",
+        "reasons": [
+          "洪水（想定最大規模）: 0.5〜3m（1階床上）",
+          "周辺150m以内に 洪水（想定最大規模） 5〜10m（2階軒下以上） の区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 4
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "神奈川県川崎市麻生区王禅寺西３": {
+      "checked_at": "2026-11-06",
+      "geocode": {
+        "lat": 35.595249,
+        "lng": 139.515259,
+        "title": "神奈川県川崎市麻生区王禅寺西三丁目",
+        "matches": 1,
+        "source": "gsi",
+        "query": "神奈川県川崎市麻生区王禅寺西三丁目",
+        "precision": "chome"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "low",
+        "reasons": [
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
     }
   },
   "stations": {
@@ -6549,10 +6660,171 @@
         },
         "unknown_colors": []
       }
+    },
+    "三郷中央": {
+      "checked_at": "2026-11-06",
+      "geocode": {
+        "lat": 35.823457,
+        "lng": 139.8784581,
+        "title": "三郷中央駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "high",
+        "reasons": [
+          "洪水（想定最大規模）: 0.5〜3m（1階床上）",
+          "周辺150m以内に 洪水（想定最大規模） 3〜5m（2階床上） の区域",
+          "周辺150m以内に家屋倒壊等氾濫想定区域（河岸侵食）"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 3
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "新百合ヶ丘": {
+      "checked_at": "2026-11-06",
+      "geocode": {
+        "lat": 35.6028374,
+        "lng": 139.507635,
+        "title": "新百合ヶ丘駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "low",
+        "reasons": [
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "百合ヶ丘": {
+      "checked_at": "2026-11-06",
+      "geocode": {
+        "lat": 35.6090394,
+        "lng": 139.516108,
+        "title": "百合ヶ丘駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "low",
+        "reasons": [
+          "周辺150m以内に土砂災害警戒区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          }
+        },
+        "unknown_colors": []
+      }
     }
   },
   "layer_check": {
-    "checked_at": "2026-10-30",
+    "checked_at": "2026-11-06",
     "layers": {
       "flood": "available",
       "hanran": "available",

@@ -2219,6 +2219,30 @@ const stationCommuteData = {
         "route_summary": "京成幕張本郷→[乗換1回]→大手町(東京都)",
         "lines_used": "中央・総武線各停,東西線",
         "exit_info": ""
+    },
+    "光が丘": {
+        "line": "",
+        "train_min": 45,
+        "station_to_office_min": 52,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 4,
+        "transit_walk_min": 3,
+        "route_summary": "光が丘→[乗換1回]→大手町(東京都)",
+        "lines_used": "大江戸線,半蔵門線",
+        "exit_info": ""
+    },
+    "新八柱": {
+        "line": "",
+        "train_min": 38,
+        "station_to_office_min": 46,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 5,
+        "transit_walk_min": 3,
+        "route_summary": "新八柱→[乗換1回]→大手町(東京都)",
+        "lines_used": "武蔵野線,常磐線各停",
+        "exit_info": ""
     }
 };
 

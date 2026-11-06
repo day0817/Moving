@@ -1,6 +1,6 @@
 // 自動生成ファイル（scripts/check_flood_risk.py）。直接編集しないこと。
 // 手動評価・被害実績は data/flood_risk_notes.json を編集して再生成する。
-const floodRiskUpdatedAt = "2026/10/30";
+const floodRiskUpdatedAt = "2026/11/06";
 const floodRiskData = {
   "layers": {
     "flood": {
@@ -418,24 +418,22 @@ const floodRiskData = {
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.773170,139.894501&z=16&base=pale"
       }
     },
-    "千葉県松戸市幸谷": {
-      "level": "high",
+    "千葉県松戸市松戸新田": {
+      "level": "low",
       "source": "auto",
       "history": [],
       "auto": {
         "status": "ok",
-        "level": "high",
-        "checked_at": "2026/10/30",
+        "level": "low",
+        "checked_at": "2026/09/26",
         "reasons": [
-          "周辺300m以内に 洪水（想定最大規模） 3〜5m（2階床上） の区域",
-          "周辺300m以内に 高潮（想定最大規模） 0.5m未満（床下程度） の区域",
-          "土砂災害警戒区域の区域内"
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
         ],
         "layers": {
           "flood": {
             "status": "ok",
             "center": 0,
-            "nearby": 3
+            "nearby": 0
           },
           "hanran": {
             "status": "ok",
@@ -450,7 +448,7 @@ const floodRiskData = {
           "hightide": {
             "status": "ok",
             "center": 0,
-            "nearby": 1
+            "nearby": 0
           },
           "tsunami": {
             "status": "ok",
@@ -462,19 +460,24 @@ const floodRiskData = {
           },
           "dosya": {
             "status": "ok",
-            "center": 1,
-            "nearby": 1
+            "center": 0,
+            "nearby": 0
           }
         },
         "unknown_colors": []
       },
+      "manual": {
+        "level": "low",
+        "reason": "常磐線の東の下総台地。台地の谷底でなければ低リスク",
+        "date": "2026/09/23"
+      },
       "point": {
-        "lat": 35.825691,
-        "lng": 139.923447,
-        "title": "千葉県松戸市幸谷",
+        "lat": 35.785995,
+        "lng": 139.917679,
+        "title": "千葉県松戸市松戸新田",
         "source": "gsi",
         "precision": "town",
-        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.825691,139.923447&z=16&base=pale"
+        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.785995,139.917679&z=16&base=pale"
       }
     },
     "千葉県松戸市栄町５": {
@@ -722,63 +725,6 @@ const floodRiskData = {
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.715862,140.048935&z=16&base=pale"
       }
     },
-    "千葉県船橋市藤原７": {
-      "level": "medium",
-      "source": "auto",
-      "history": [],
-      "auto": {
-        "status": "ok",
-        "level": "medium",
-        "checked_at": "2026/10/09",
-        "reasons": [
-          "周辺150m以内に 洪水（想定最大規模） 0.5〜3m（1階床上） の区域"
-        ],
-        "layers": {
-          "flood": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 2
-          },
-          "hanran": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "kagan": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "hightide": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "tsunami": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "naisui": {
-            "status": "unavailable"
-          },
-          "dosya": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          }
-        },
-        "unknown_colors": []
-      },
-      "point": {
-        "lat": 35.743088,
-        "lng": 139.986755,
-        "title": "千葉県船橋市藤原七丁目",
-        "source": "gsi",
-        "precision": "chome",
-        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.743088,139.986755&z=16&base=pale"
-      }
-    },
     "千葉県船橋市西習志野１": {
       "level": "low",
       "source": "auto",
@@ -1023,6 +969,64 @@ const floodRiskData = {
         "source": "gsi",
         "precision": "chome",
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.881683,139.643707&z=16&base=pale"
+      }
+    },
+    "埼玉県三郷市中央５": {
+      "level": "high",
+      "source": "auto",
+      "history": [],
+      "auto": {
+        "status": "ok",
+        "level": "high",
+        "checked_at": "2026/11/06",
+        "reasons": [
+          "洪水（想定最大規模）: 0.5〜3m（1階床上）",
+          "周辺150m以内に 洪水（想定最大規模） 5〜10m（2階軒下以上） の区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 4
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      },
+      "point": {
+        "lat": 35.832989,
+        "lng": 139.875259,
+        "title": "埼玉県三郷市中央五丁目",
+        "source": "gsi",
+        "precision": "chome",
+        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.832989,139.875259&z=16&base=pale"
       }
     },
     "埼玉県川口市西川口４": {
@@ -1633,65 +1637,6 @@ const floodRiskData = {
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.748005,139.611603&z=16&base=pale"
       }
     },
-    "東京都葛飾区金町２": {
-      "level": "high",
-      "source": "auto",
-      "history": [],
-      "auto": {
-        "status": "ok",
-        "level": "high",
-        "checked_at": "2026/10/02",
-        "reasons": [
-          "洪水（想定最大規模）: 0.5〜3m（1階床上）",
-          "周辺150m以内に 洪水（想定最大規模） 3〜5m（2階床上） の区域",
-          "高潮（想定最大規模）: 0.5〜3m（1階床上）"
-        ],
-        "layers": {
-          "flood": {
-            "status": "ok",
-            "center": 2,
-            "nearby": 3
-          },
-          "hanran": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "kagan": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "hightide": {
-            "status": "ok",
-            "center": 2,
-            "nearby": 2
-          },
-          "tsunami": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "naisui": {
-            "status": "unavailable"
-          },
-          "dosya": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          }
-        },
-        "unknown_colors": []
-      },
-      "point": {
-        "lat": 35.764145,
-        "lng": 139.870316,
-        "title": "東京都葛飾区金町二丁目",
-        "source": "gsi",
-        "precision": "chome",
-        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.764145,139.870316&z=16&base=pale"
-      }
-    },
     "東京都葛飾区高砂６": {
       "level": "high",
       "source": "auto",
@@ -1807,6 +1752,63 @@ const floodRiskData = {
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.752274,139.546585&z=16&base=pale"
       }
     },
+    "神奈川県川崎市麻生区王禅寺西３": {
+      "level": "low",
+      "source": "auto",
+      "history": [],
+      "auto": {
+        "status": "ok",
+        "level": "low",
+        "checked_at": "2026/11/06",
+        "reasons": [
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      },
+      "point": {
+        "lat": 35.595249,
+        "lng": 139.515259,
+        "title": "神奈川県川崎市麻生区王禅寺西三丁目",
+        "source": "gsi",
+        "precision": "chome",
+        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.595249,139.515259&z=16&base=pale"
+      }
+    },
     "神奈川県横浜市神奈川区松見町４": {
       "level": "low",
       "source": "auto",
@@ -1867,63 +1869,6 @@ const floodRiskData = {
         "source": "gsi",
         "precision": "chome",
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.503750,139.639984&z=16&base=pale"
-      }
-    },
-    "神奈川県横浜市都筑区中川４": {
-      "level": "low",
-      "source": "auto",
-      "history": [],
-      "auto": {
-        "status": "ok",
-        "level": "low",
-        "checked_at": "2026/10/09",
-        "reasons": [
-          "調べた範囲に浸水・土砂災害の想定区域はありません"
-        ],
-        "layers": {
-          "flood": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "hanran": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "kagan": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "hightide": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "tsunami": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "naisui": {
-            "status": "unavailable"
-          },
-          "dosya": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          }
-        },
-        "unknown_colors": []
-      },
-      "point": {
-        "lat": 35.559467,
-        "lng": 139.566956,
-        "title": "神奈川県横浜市都筑区中川四丁目",
-        "source": "gsi",
-        "precision": "chome",
-        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.559467,139.566956&z=16&base=pale"
       }
     }
   },
@@ -2050,6 +1995,65 @@ const floodRiskData = {
         "source": "station",
         "precision": "station",
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.789292,139.929204&z=16&base=pale"
+      }
+    },
+    "三郷中央": {
+      "level": "high",
+      "source": "auto",
+      "history": [],
+      "auto": {
+        "status": "ok",
+        "level": "high",
+        "checked_at": "2026/11/06",
+        "reasons": [
+          "洪水（想定最大規模）: 0.5〜3m（1階床上）",
+          "周辺150m以内に 洪水（想定最大規模） 3〜5m（2階床上） の区域",
+          "周辺150m以内に家屋倒壊等氾濫想定区域（河岸侵食）"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 3
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      },
+      "point": {
+        "lat": 35.823457,
+        "lng": 139.8784581,
+        "title": "三郷中央駅",
+        "source": "station",
+        "precision": "station",
+        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.823457,139.878458&z=16&base=pale"
       }
     },
     "上本郷": {
@@ -2238,63 +2242,6 @@ const floodRiskData = {
         "source": "station",
         "precision": "station",
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.883488,139.637421&z=16&base=pale"
-      }
-    },
-    "中川": {
-      "level": "low",
-      "source": "auto",
-      "history": [],
-      "auto": {
-        "status": "ok",
-        "level": "low",
-        "checked_at": "2026/10/09",
-        "reasons": [
-          "調べた範囲に浸水・土砂災害の想定区域はありません"
-        ],
-        "layers": {
-          "flood": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "hanran": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "kagan": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "hightide": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "tsunami": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "naisui": {
-            "status": "unavailable"
-          },
-          "dosya": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          }
-        },
-        "unknown_colors": []
-      },
-      "point": {
-        "lat": 35.5629066,
-        "lng": 139.5699517,
-        "title": "中川駅",
-        "source": "station",
-        "precision": "station",
-        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.562907,139.569952&z=16&base=pale"
       }
     },
     "久が原": {
@@ -2529,64 +2476,6 @@ const floodRiskData = {
         "source": "station",
         "precision": "station",
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.672623,140.042125&z=16&base=pale"
-      }
-    },
-    "京成金町": {
-      "level": "high",
-      "source": "auto",
-      "history": [],
-      "auto": {
-        "status": "ok",
-        "level": "high",
-        "checked_at": "2026/10/02",
-        "reasons": [
-          "洪水（想定最大規模）: 0.5〜3m（1階床上）",
-          "高潮（想定最大規模）: 0.5〜3m（1階床上）"
-        ],
-        "layers": {
-          "flood": {
-            "status": "ok",
-            "center": 2,
-            "nearby": 2
-          },
-          "hanran": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "kagan": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "hightide": {
-            "status": "ok",
-            "center": 2,
-            "nearby": 2
-          },
-          "tsunami": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "naisui": {
-            "status": "unavailable"
-          },
-          "dosya": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          }
-        },
-        "unknown_colors": []
-      },
-      "point": {
-        "lat": 35.7686276,
-        "lng": 139.8704721,
-        "title": "京成金町駅",
-        "source": "station",
-        "precision": "station",
-        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.768628,139.870472&z=16&base=pale"
       }
     },
     "京成高砂": {
@@ -3551,6 +3440,63 @@ const floodRiskData = {
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.808769,139.678916&z=16&base=pale"
       }
     },
+    "新八柱": {
+      "level": "low",
+      "source": "auto",
+      "history": [],
+      "auto": {
+        "status": "ok",
+        "level": "low",
+        "checked_at": "2026/09/26",
+        "reasons": [
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      },
+      "point": {
+        "lat": 35.7919514,
+        "lng": 139.9383839,
+        "title": "新八柱駅",
+        "source": "station",
+        "precision": "station",
+        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.791951,139.938384&z=16&base=pale"
+      }
+    },
     "新松戸": {
       "level": "extreme",
       "source": "auto",
@@ -3624,12 +3570,64 @@ const floodRiskData = {
     },
     "新百合ヶ丘": {
       "level": "low",
-      "source": "manual",
+      "source": "auto",
       "history": [],
+      "auto": {
+        "status": "ok",
+        "level": "low",
+        "checked_at": "2026/11/06",
+        "reasons": [
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      },
       "manual": {
         "level": "low",
         "reason": "多摩丘陵（斜面は土砂災害に注意）",
         "date": "2026/09/23"
+      },
+      "point": {
+        "lat": 35.6028374,
+        "lng": 139.507635,
+        "title": "新百合ヶ丘駅",
+        "source": "station",
+        "precision": "station",
+        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.602837,139.507635&z=16&base=pale"
       }
     },
     "新越谷": {
@@ -4250,6 +4248,63 @@ const floodRiskData = {
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.621113,139.569546&z=16&base=pale"
       }
     },
+    "百合ヶ丘": {
+      "level": "low",
+      "source": "auto",
+      "history": [],
+      "auto": {
+        "status": "ok",
+        "level": "low",
+        "checked_at": "2026/11/06",
+        "reasons": [
+          "周辺150m以内に土砂災害警戒区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          }
+        },
+        "unknown_colors": []
+      },
+      "point": {
+        "lat": 35.6090394,
+        "lng": 139.516108,
+        "title": "百合ヶ丘駅",
+        "source": "station",
+        "precision": "station",
+        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.609039,139.516108&z=16&base=pale"
+      }
+    },
     "石神井公園": {
       "level": "low",
       "source": "auto",
@@ -4608,6 +4663,63 @@ const floodRiskData = {
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.828123,139.690380&z=16&base=pale"
       }
     },
+    "薬園台": {
+      "level": "low",
+      "source": "auto",
+      "history": [],
+      "auto": {
+        "status": "ok",
+        "level": "low",
+        "checked_at": "2026/10/23",
+        "reasons": [
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      },
+      "point": {
+        "lat": 35.7101593,
+        "lng": 140.0377036,
+        "title": "薬園台駅",
+        "source": "station",
+        "precision": "station",
+        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.710159,140.037704&z=16&base=pale"
+      }
+    },
     "西川口": {
       "level": "high",
       "source": "auto",
@@ -4786,64 +4898,6 @@ const floodRiskData = {
         "source": "station",
         "precision": "station",
         "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.813959,139.801331&z=16&base=pale"
-      }
-    },
-    "金町": {
-      "level": "high",
-      "source": "auto",
-      "history": [],
-      "auto": {
-        "status": "ok",
-        "level": "high",
-        "checked_at": "2026/09/26",
-        "reasons": [
-          "洪水（想定最大規模）: 0.5〜3m（1階床上）",
-          "周辺150m以内に 高潮（想定最大規模） 0.5〜3m（1階床上） の区域"
-        ],
-        "layers": {
-          "flood": {
-            "status": "ok",
-            "center": 2,
-            "nearby": 2
-          },
-          "hanran": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "kagan": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "hightide": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 2
-          },
-          "tsunami": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          },
-          "naisui": {
-            "status": "unavailable"
-          },
-          "dosya": {
-            "status": "ok",
-            "center": 0,
-            "nearby": 0
-          }
-        },
-        "unknown_colors": []
-      },
-      "point": {
-        "lat": 35.7695843,
-        "lng": 139.8706926,
-        "title": "金町駅",
-        "source": "station",
-        "precision": "station",
-        "map_url": "https://disaportal.gsi.go.jp/maps/?ll=35.769584,139.870693&z=16&base=pale"
       }
     },
     "馬橋": {
