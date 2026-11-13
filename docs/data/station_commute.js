@@ -2243,6 +2243,18 @@ const stationCommuteData = {
         "route_summary": "新八柱→[乗換1回]→大手町(東京都)",
         "lines_used": "武蔵野線,常磐線各停",
         "exit_info": ""
+    },
+    "天王町": {
+        "line": "",
+        "train_min": 34,
+        "station_to_office_min": 51,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 14,
+        "transit_walk_min": 3,
+        "route_summary": "天王町→[乗換1回]→大手町(東京都)",
+        "lines_used": "相鉄本線,東海道線",
+        "exit_info": ""
     }
 };
 

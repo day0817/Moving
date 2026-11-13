@@ -3013,6 +3013,117 @@
         },
         "unknown_colors": []
       }
+    },
+    "千葉県船橋市中野木１": {
+      "checked_at": "2026-11-13",
+      "geocode": {
+        "lat": 35.702595,
+        "lng": 140.013199,
+        "title": "千葉県船橋市中野木一丁目",
+        "matches": 1,
+        "source": "gsi",
+        "query": "千葉県船橋市中野木一丁目",
+        "precision": "chome"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "low",
+        "reasons": [
+          "調べた範囲に浸水・土砂災害の想定区域はありません"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "神奈川県横浜市保土ヶ谷区月見台": {
+      "checked_at": "2026-11-13",
+      "geocode": {
+        "lat": 35.449223,
+        "lng": 139.59639,
+        "title": "神奈川県横浜市保土ケ谷区月見台",
+        "matches": 1,
+        "source": "gsi",
+        "query": "神奈川県横浜市保土ヶ谷区月見台",
+        "precision": "town"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "medium",
+        "reasons": [
+          "周辺300m以内に 洪水（想定最大規模） 0.5〜3m（1階床上） の区域",
+          "周辺300m以内に土砂災害警戒区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 2
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          }
+        },
+        "unknown_colors": []
+      }
     }
   },
   "stations": {
@@ -6821,10 +6932,122 @@
         },
         "unknown_colors": []
       }
+    },
+    "保土ケ谷": {
+      "checked_at": "2026-11-13",
+      "geocode": {
+        "lat": 35.446676,
+        "lng": 139.5997178,
+        "title": "保土ケ谷駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "high",
+        "reasons": [
+          "洪水（想定最大規模）: 0.5m未満（床下程度）",
+          "周辺150m以内に 洪水（想定最大規模） 0.5〜3m（1階床上） の区域",
+          "周辺150m以内に家屋倒壊等氾濫想定区域（河岸侵食）",
+          "周辺150m以内に土砂災害警戒区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 1,
+            "nearby": 2
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "天王町": {
+      "checked_at": "2026-11-13",
+      "geocode": {
+        "lat": 35.4540049,
+        "lng": 139.6026308,
+        "title": "天王町駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "high",
+        "reasons": [
+          "洪水（想定最大規模）: 0.5〜3m（1階床上）",
+          "高潮（想定最大規模）: 0.5〜3m（1階床上）",
+          "津波: 0.5〜3m（1階床上）",
+          "周辺150m以内に家屋倒壊等氾濫想定区域（河岸侵食）"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 2
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 2
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 2
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
     }
   },
   "layer_check": {
-    "checked_at": "2026-11-06",
+    "checked_at": "2026-11-13",
     "layers": {
       "flood": "available",
       "hanran": "available",
