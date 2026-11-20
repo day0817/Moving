@@ -3124,6 +3124,62 @@
         },
         "unknown_colors": []
       }
+    },
+    "東京都足立区島根３": {
+      "checked_at": "2026-11-20",
+      "geocode": {
+        "lat": 35.779602,
+        "lng": 139.794495,
+        "title": "東京都足立区島根三丁目",
+        "matches": 1,
+        "source": "gsi",
+        "query": "東京都足立区島根三丁目",
+        "precision": "chome"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "extreme",
+        "reasons": [
+          "洪水（想定最大規模）: 3〜5m（2階床上）",
+          "周辺150m以内に 高潮（想定最大規模） 0.5m未満（床下程度） の区域"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 3,
+            "nearby": 3
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 1
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
     }
   },
   "stations": {
@@ -7044,10 +7100,119 @@
         },
         "unknown_colors": []
       }
+    },
+    "新柴又": {
+      "checked_at": "2026-11-20",
+      "geocode": {
+        "lat": 35.7511074,
+        "lng": 139.8791747,
+        "title": "新柴又駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "high",
+        "reasons": [
+          "洪水（想定最大規模）: 0.5〜3m（1階床上）",
+          "周辺150m以内に 洪水（想定最大規模） 3〜5m（2階床上） の区域",
+          "高潮（想定最大規模）: 0.5〜3m（1階床上）"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 3
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 2
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
+    },
+    "西新井": {
+      "checked_at": "2026-11-20",
+      "geocode": {
+        "lat": 35.7760626,
+        "lng": 139.789634,
+        "title": "西新井駅",
+        "source": "station",
+        "precision": "station"
+      },
+      "hazard": {
+        "status": "ok",
+        "level": "extreme",
+        "reasons": [
+          "洪水（想定最大規模）: 3〜5m（2階床上）",
+          "高潮（想定最大規模）: 0.5〜3m（1階床上）"
+        ],
+        "layers": {
+          "flood": {
+            "status": "ok",
+            "center": 3,
+            "nearby": 3
+          },
+          "hanran": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "kagan": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "hightide": {
+            "status": "ok",
+            "center": 2,
+            "nearby": 2
+          },
+          "tsunami": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          },
+          "naisui": {
+            "status": "unavailable"
+          },
+          "dosya": {
+            "status": "ok",
+            "center": 0,
+            "nearby": 0
+          }
+        },
+        "unknown_colors": []
+      }
     }
   },
   "layer_check": {
-    "checked_at": "2026-11-13",
+    "checked_at": "2026-11-20",
     "layers": {
       "flood": "available",
       "hanran": "available",

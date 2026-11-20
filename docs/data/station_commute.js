@@ -2255,6 +2255,66 @@ const stationCommuteData = {
         "route_summary": "天王町→[乗換1回]→大手町(東京都)",
         "lines_used": "相鉄本線,東海道線",
         "exit_info": ""
+    },
+    "梅島": {
+        "line": "",
+        "train_min": 31,
+        "station_to_office_min": 39,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 5,
+        "transit_walk_min": 3,
+        "route_summary": "梅島→[乗換1回]→大手町(東京都)",
+        "lines_used": "東武スカイツリーライン,東西線",
+        "exit_info": ""
+    },
+    "新柴又": {
+        "line": "",
+        "train_min": 27,
+        "station_to_office_min": 36,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 6,
+        "transit_walk_min": 3,
+        "route_summary": "新柴又→[乗換1回]→大手町(東京都)",
+        "lines_used": "北総線,半蔵門線",
+        "exit_info": ""
+    },
+    "上石神井": {
+        "line": "",
+        "train_min": 28,
+        "station_to_office_min": 38,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 7,
+        "transit_walk_min": 3,
+        "route_summary": "上石神井→[乗換1回]→大手町(東京都)",
+        "lines_used": "新宿線,東西線",
+        "exit_info": ""
+    },
+    "北朝霞": {
+        "line": "",
+        "train_min": 36,
+        "station_to_office_min": 46,
+        "transfers": 1,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 7,
+        "transit_walk_min": 3,
+        "route_summary": "北朝霞→[乗換1回]→大手町(東京都)",
+        "lines_used": "東武東上線,丸ノ内線",
+        "exit_info": ""
+    },
+    "北上尾": {
+        "line": "",
+        "train_min": 43,
+        "station_to_office_min": 55,
+        "transfers": 0,
+        "arrival_station": "大手町(東京都)",
+        "arrival_walk_min": 12,
+        "transit_walk_min": 0,
+        "route_summary": "北上尾→大手町(東京都)",
+        "lines_used": "高崎線",
+        "exit_info": ""
     }
 };
 
